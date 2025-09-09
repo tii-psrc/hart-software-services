@@ -470,3 +470,18 @@ size_t ymodem_receive(uint8_t *buffer, size_t bufferSize)
 
     return result;
 }
+
+void flush_ymodem_footer(void)
+{
+#if 0
+  int i;
+#endif
+  char *rx_bytes;
+  size_t buf_len;
+
+  uart_getline(&rx_bytes, &buf_len);
+#if 0
+  for (i=0; i<buf_len; i++)
+    mHSS_PRINTF("[%d] 0x%02X\r\n", i, rx_bytes[0]);
+#endif
+}

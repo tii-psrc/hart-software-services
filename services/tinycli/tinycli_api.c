@@ -142,6 +142,7 @@ static void tinyCLI_MemTest_(void);
 static void tinyCLI_UnsupportedBootMechanism_(char const * const pName);
 #if IS_ENABLED(CONFIG_SERVICE_YMODEM)
 static void tinyCLI_YModem_(void);
+static void tinyCLI_YModemPayload_(void);
 #endif
 #if IS_ENABLED(CONFIG_SERVICE_SCRUB)
 static void tinyCLI_Scrub_(void);
@@ -178,6 +179,7 @@ static void display_help_(struct tinycli_cmd const * const pCmds, size_t arraySi
 
 enum CmdId {
     CMD_YMODEM,
+    CMD_YMODEM_PAYLOAD,
     CMD_BOOT,
     CMD_RESET,
     CMD_HELP,
@@ -281,6 +283,7 @@ static const struct tinycli_cmd qspiCmds[] = {
 static const struct tinycli_cmd toplevelCmds[] = {
 #if IS_ENABLED(CONFIG_SERVICE_YMODEM)
     { CMD_YMODEM,  "YMODEM",  "Run YMODEM utility to download an image to DDR.", tinyCLI_YModem_ },
+    { CMD_YMODEM_PAYLOAD,     "CUSTOM_PAYLOAD",     "Select boot via YMODEM payload.", tinyCLI_YModemPayload_ },
 #endif
 #if IS_ENABLED(CONFIG_SERVICE_BOOT)
     { CMD_BOOT,    "BOOT",    "Quit TinyCLI and return to regular boot process.", tinyCLI_Boot_ },
@@ -313,6 +316,7 @@ static const struct tinycli_cmd toplevelCmds[] = {
 static struct tinycli_toplevel_cmd_safe toplevelCmdsSafeAfterBootFlags[] = {
 #if IS_ENABLED(CONFIG_SERVICE_YMODEM)
     { CMD_YMODEM,  true },
+    { CMD_YMODEM_PAYLOAD,  true },
 #endif
 #if IS_ENABLED(CONFIG_SERVICE_BOOT)
     { CMD_BOOT,    false },
@@ -884,6 +888,11 @@ static void tinyCLI_YModem_(void)
 {
     void hss_loader_ymodem_loop(void);
     hss_loader_ymodem_loop();
+}
+
+static void tinyCLI_YModemPayload_(void)
+{
+    HSS_BootSelectYModemPayload();
 }
 #endif
 

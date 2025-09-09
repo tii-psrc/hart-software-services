@@ -34,6 +34,12 @@
 #  include "opensbi_service.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_YMODEM)
+#  include "ymodem.h"
+#  include "ddr_service.h"
+#  include "uart_helper.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 #  include "qspi_service.h"
 #endif
@@ -83,6 +89,7 @@ static bool getBootImageFromQSPI_(struct HSS_Storage *pStorage, struct HSS_BootI
 static bool getBootImageFromMMC_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 static bool getBootImageFromSpiFlash_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 static bool getBootImageFromPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
+static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 
 
 //
@@ -132,6 +139,17 @@ static struct HSS_Storage payloadStorage_ = {
     .flushWriteBuffer = NULL
 };
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_YMODEM)
+static struct HSS_Storage ymodemPayload_ = {
+    .name = "YMODEM_PAYLOAD",
+    .getBootImage = getBootImageFromYModemPayload_,
+    .init = NULL,
+    .readBlock = NULL,
+    .writeBlock = NULL,
+    .getInfo = NULL,
+    .flushWriteBuffer = NULL
+};
+#endif
 
 static struct HSS_Storage *pStorages[] =
 {
@@ -147,11 +165,14 @@ static struct HSS_Storage *pStorages[] =
 #if IS_ENABLED(CONFIG_SERVICE_BOOT_USE_PAYLOAD)
 	&payloadStorage_,
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_YMODEM)
+	&ymodemPayload_,
+#endif
 };
 
 static struct HSS_Storage *pDefaultStorage = NULL;
 
-#if IS_ENABLED(CONFIG_SERVICE_MMC) || IS_ENABLED(CONFIG_SERVICE_QSPI) || (IS_ENABLED(CONFIG_SERVICE_SPI) && (SPI_FLASH_BOOT_ENABLED))
+#if IS_ENABLED(CONFIG_SERVICE_MMC) || IS_ENABLED(CONFIG_SERVICE_QSPI) || (IS_ENABLED(CONFIG_SERVICE_SPI) && (SPI_FLASH_BOOT_ENABLED)) || IS_ENABLED(CONFIG_SERVICE_YMODEM)
 struct HSS_BootImage bootImage __attribute__((aligned(8)));
 #elif IS_ENABLED(CONFIG_SERVICE_BOOT_USE_PAYLOAD)
 //
@@ -600,6 +621,110 @@ void HSS_BootSelectSPI(void)
     HSS_Register_Boot_Image(NULL);
 #else
     (void)getBootImageFromSpiFlash_;
+#endif
+}
+
+#if IS_ENABLED(CONFIG_SERVICE_BOOT) && IS_ENABLED(CONFIG_SERVICE_YMODEM)
+
+#define custom_uart_printf(hartid, ...) do {  \
+  char buf[1024]; \
+  sbi_sprintf(buf, " " __VA_ARGS__); \
+  uart_putstring(hartid, buf); \
+} while (0)
+
+static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const pBootImage)
+{
+  int i;
+
+  custom_uart_printf(hartid, "HSS Boot Image Header\r\n");
+
+  custom_uart_printf(hartid, "  - magic              : 0x%08X \r\n", pBootImage->magic);
+  custom_uart_printf(hartid, "  - version            : 0x%08X \r\n", pBootImage->version);
+  custom_uart_printf(hartid, "  - headerLength       : 0x%08X(%d) \r\n", pBootImage->headerLength, pBootImage->headerLength);
+  custom_uart_printf(hartid, "  - headerCrc          : 0x%08X \r\n", pBootImage->headerCrc);
+  custom_uart_printf(hartid, "  - chunkTableOffset   : 0x%08X \r\n", pBootImage->chunkTableOffset);
+  custom_uart_printf(hartid, "  - ziChunkTableOffset : 0x%08X \r\n", pBootImage->ziChunkTableOffset);
+  custom_uart_printf(hartid, "  - set name           : %s     \r\n", pBootImage->set_name);
+  custom_uart_printf(hartid, "  - bootImageLength    : 0x%08X(%d) \r\n", pBootImage->bootImageLength, pBootImage->bootImageLength);
+
+  for (i=0; i<MAX_NUM_HARTS-1; i++) {
+    custom_uart_printf(hartid, "    - U54 hart[%d].entryPoint    : 0x%08X \r\n", i+1, pBootImage->hart[i].entryPoint);
+    custom_uart_printf(hartid, "    - U54 hart[%d].privMode      : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].privMode);
+    custom_uart_printf(hartid, "    - U54 hart[%d].flags         : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].flags);
+    custom_uart_printf(hartid, "    - U54 hart[%d].numChunks     : 0x%08X \r\n", i+1, pBootImage->hart[i].numChunks);
+    custom_uart_printf(hartid, "    - U54 hart[%d].firstChunk    : 0x%08X \r\n", i+1, pBootImage->hart[i].firstChunk);
+    custom_uart_printf(hartid, "    - U54 hart[%d].lastChunk     : 0x%08X \r\n", i+1, pBootImage->hart[i].lastChunk);
+    custom_uart_printf(hartid, "    - U54 hart[%d].name          : %s     \r\n", i+1, pBootImage->hart[i].name);
+  }
+
+  custom_uart_printf(hartid, "  - signature.digest   : ");
+  for (i=0; i<48; i++) {
+    if (i % 0x10 == 0)
+      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
+    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.digest[i]);
+  }
+  custom_uart_printf(hartid, "\r\n");
+
+  custom_uart_printf(hartid, "  - signature.ecdsaSig   : ");
+  for (i=0; i<96; i++) {
+    if (i % 0x10 == 0)
+      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
+    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.ecdsaSig[i]);
+  }
+  custom_uart_printf(hartid, "\r\n");
+}
+#endif
+
+static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage)
+{
+  bool result = false;
+
+#if IS_ENABLED(CONFIG_SERVICE_BOOT) && IS_ENABLED(CONFIG_SERVICE_YMODEM)
+  uint32_t receivedCount = 0u;
+  uint8_t *pDest = (uint8_t *)(CONFIG_SERVICE_BOOT_DDR_TARGET_ADDR);
+  uint32_t g_rx_size = HSS_DDRHi_GetSize();
+
+  assert(ppBootImage);
+
+  uart_putstring(HSS_HART_E51, (char *)"Attempting to receive payload.bin via YMODEM ...\r\n");
+  uart_putstring(HSS_HART_U54_1, (char *)"Attempting to receive payload.bin via YMODEM ...\r\n");
+  receivedCount = ymodem_receive(pDest, g_rx_size);
+  flush_ymodem_footer();
+  if (receivedCount == 0) {
+    uart_putstring(HSS_HART_E51, (char *)"YMODEM failed to receive file...\r\n");
+    uart_putstring(HSS_HART_U54_1, (char *)"YMODEM failed to receive file...\r\n");
+
+    return result;
+  }
+
+  uart_putstring(HSS_HART_E51, (char *)"Done......\r\n");
+  uart_putstring(HSS_HART_U54_1, (char *)"Done......\r\n");
+
+  memcpy((void *)&bootImage, (void *)pDest, sizeof(struct HSS_BootImage));
+
+  result = HSS_Boot_VerifyMagic(&bootImage);
+  if (!result) {
+    uart_putstring(HSS_HART_E51, (char *)"HSS_Boot_VerifyMagic() failed...\n");
+    uart_putstring(HSS_HART_U54_1, (char *)"HSS_Boot_VerifyMagic() failed...\n");
+  } else {
+    __print_boot_img_info(HSS_HART_E51, &bootImage);
+    __print_boot_img_info(HSS_HART_U54_1, &bootImage);
+
+    *ppBootImage = (struct HSS_BootImage *)pDest;
+  }
+#endif
+
+  return result;
+}
+
+void HSS_BootSelectYModemPayload(void)
+{
+#if IS_ENABLED(CONFIG_SERVICE_YMODEM)
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Selecting YMODEM PAYLOAD as boot source ...\n");
+    pDefaultStorage = &ymodemPayload_;
+    HSS_Register_Boot_Image(NULL);
+#else
+    (void)getBootImageFromYModemPayload_;
 #endif
 }
 

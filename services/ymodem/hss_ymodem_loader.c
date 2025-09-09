@@ -282,6 +282,7 @@ void hss_loader_ymodem_loop(void)
                 mHSS_PUTS("\nAttempting to receive .bin file using YMODEM (CTRL-C to cancel)"
                     "\n");
                 receivedCount = ymodem_receive(pBuffer, g_rx_size);
+                flush_ymodem_footer();
                 if (receivedCount == 0) {
                     HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
                     mHSS_PUTS("\nYMODEM failed to receive file successfully\n\n");

@@ -70,6 +70,7 @@ typedef enum {
 void HSS_Debug_Highlight(HSS_Debug_LogLevel_t logLevel);
 
 #ifndef __SBI_CONSOLE_H__
+int sbi_sprintf(const char *fmt, ...);
 int sbi_printf(const char *fmt, ...);
 void sbi_puts(const char *buf);
 void sbi_putc(char c);

@@ -658,7 +658,7 @@ static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const
   }
 
   custom_uart_printf(hartid, "  - signature.digest   : ");
-  for (i=0; i<48; i++) {
+  for (i=0; i<sizeof(pBootImage->signature.digest); i++) {
     if (i % 0x10 == 0)
       custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
     custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.digest[i]);
@@ -666,7 +666,7 @@ static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const
   custom_uart_printf(hartid, "\r\n");
 
   custom_uart_printf(hartid, "  - signature.ecdsaSig   : ");
-  for (i=0; i<96; i++) {
+  for (i=0; i<sizeof(pBootImage->signature.ecdsaSig); i++) {
     if (i % 0x10 == 0)
       custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
     custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.ecdsaSig[i]);

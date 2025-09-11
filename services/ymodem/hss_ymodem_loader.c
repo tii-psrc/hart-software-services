@@ -72,6 +72,7 @@
 static bool hss_loader_qspi_init(void);
 static bool hss_loader_qspi_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCount);
 static bool hss_loader_qspi_erase(void);
+static bool initialized = false;
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_MMC)
@@ -82,13 +83,14 @@ static bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t recei
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static bool hss_loader_qspi_init(void)
 {
-    static bool initialized = false;
     bool result = false;
 
-    if (!initialized) {
-        result = HSS_QSPIInit();
-        initialized = true;
-    }
+    if (initialized)
+      return initialized;
+
+    result = HSS_QSPIInit();
+    initialized = result;
+
     return result;
 }
 

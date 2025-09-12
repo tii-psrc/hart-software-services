@@ -11,36 +11,36 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "scai_fpga_common.h" // Common low-level interface
 
-// --- W25N Flash Command Opcodes ---
+// W25N Flash Command Opcodes
 typedef enum {
-    W25N_CMD_WRITE_ENABLE        = 0x06,
-    W25N_CMD_GET_FEATURES        = 0x0F,
-    W25N_CMD_SET_FEATURES        = 0x1F,
-    W25N_CMD_PAGE_DATA_READ      = 0x13,
-    W25N_CMD_READ_DATA           = 0x03,
-    W25N_CMD_QUAD_READ_DATA      = 0xEB,
-    W25N_CMD_PROGRAM_DATA_LOAD   = 0x02,
-    W25N_CMD_QUAD_PROG_DATA_LOAD = 0x32,
-    W25N_CMD_PROGRAM_EXECUTE     = 0x10,
-    W25N_CMD_BLOCK_ERASE         = 0xD8,
-    W25N_CMD_READ_ID             = 0x9F,
-    W25N_CMD_DEVICE_RESET        = 0xFF
+    W25N_CMD_WRITE_ENABLE               = 0x06,
+    W25N_CMD_GET_FEATURES               = 0x0F,
+    W25N_CMD_SET_FEATURES               = 0x1F,
+    W25N_CMD_PAGE_DATA_READ             = 0x13,
+    W25N_CMD_READ_DATA                  = 0x03,
+    W25N_CMD_QUAD_READ_DATA             = 0xEB,
+    W25N_CMD_PROGRAM_DATA_LOAD          = 0x02,
+    W25N_CMD_QUAD_PROG_DATA_LOAD        = 0x32,
+    W25N_CMD_PROGRAM_EXECUTE            = 0x10,
+    W25N_CMD_BLOCK_ERASE                = 0xD8,
+    W25N_CMD_READ_ID                    = 0x9F,
+    W25N_CMD_DEVICE_RESET               = 0xFF
 } w25n_command_t;
 
-// --- W25N Feature/Register Addresses ---
+// W25N Feature/Register Addresses
 typedef enum {
-    W25N_REG_STATUS       = 0xC0,
-    W25N_REG_PROTECTION   = 0xA0,
-    W25N_REG_CONFIG       = 0xB0
+    W25N_REG_STATUS                     = 0xC0,
+    W25N_REG_PROTECTION                 = 0xA0,
+    W25N_REG_CONFIG                     = 0xB0
 } w25n_register_t;
 
-// --- Constants from device datasheet ---
-static const uint32_t PAGE_SIZE_BYTES = 2048;
-static const uint32_t PAGES_PER_BLOCK = 64;
-static const uint16_t TOTAL_BLOCKS = 1024;
-static const uint32_t BLOCK_SIZE_BYTES = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+// Constants from device datasheet
+static const uint32_t PAGE_SIZE_BYTES   = 2048;
+static const uint32_t PAGES_PER_BLOCK   = 64;
+static const uint16_t TOTAL_BLOCKS      = 1024;
+static const uint32_t BLOCK_SIZE_BYTES  = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
 
-// --- Static Helper Functions ---
+// Static Helper Functions
 
 /**
  * @brief Converts a logical byte address to the physical format for W25N.
@@ -96,13 +96,18 @@ void Scai_W25_Fpga_Flash_init(mss_qspi_io_format io_format) {
 }
 
 void Scai_W25_Fpga_Flash_readid(uint8_t* id_buf) {
-    if (!id_buf) return;
+    if (!id_buf) {
+        return;
+    }
+
     const uint8_t cmd[2] = {W25N_CMD_READ_ID, 0x00}; // JEDEC ID command requires one dummy byte
     QSPI_FPGA_IF_transfer(cmd, 2, id_buf, 3, MSS_QSPI_NORMAL, false);
 }
 
 uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (!buf || len == 0) return 1;
+    if (!buf || len == 0) {
+        return 1;
+    }
 
     uint8_t cmd[5];
     uint32_t current_addr = addr;
@@ -119,7 +124,9 @@ uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         cmd[2] = (uint8_t)(page_addr);
         QSPI_FPGA_IF_transfer(cmd, 3, NULL, 0, MSS_QSPI_NORMAL, false);
 
-        if (wait_flash_ready() != 0) return 1;
+        if (wait_flash_ready() != 0) {
+            return 1;
+        }
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
@@ -162,7 +169,9 @@ uint8_t Scai_W25_Fpga_Flash_erase_block(uint16_t block_nb) {
 }
 
 uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (!buf || len == 0) return 1;
+    if (!buf || len == 0) {
+        return 1;
+    }
 
     uint8_t cmd[4];
     uint32_t current_addr = addr;
@@ -193,7 +202,9 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
         cmd[3] = (uint8_t)(page_addr);
         QSPI_FPGA_IF_transfer(cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
         
-        if (wait_flash_ready() != 0) return 1;
+        if (wait_flash_ready() != 0) {
+            return 1;
+        }
 
         current_addr += write_len;
         current_buf += write_len;
@@ -203,7 +214,10 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
 }
 
 void Scai_W25_Fpga_Flash_read_status_regs(uint8_t* regs_buf) {
-    if (!regs_buf) return;
+    if (!regs_buf) {
+        return;
+    }
+    
     regs_buf[0] = get_feature(W25N_REG_PROTECTION);
     regs_buf[1] = get_feature(W25N_REG_CONFIG);
     regs_buf[2] = get_feature(W25N_REG_STATUS);

@@ -25,27 +25,40 @@ static const uintptr_t QSPI_FPGA_BASE_ADDR = 0x40000000UL;
 //------------------------------------------------------------------------------
 
 typedef enum {
-    QSPI_DATA_REG_OFFSET  = 0x00,
-    QSPI_CTRL1_REG_OFFSET = 0x04,
-    QSPI_STATUS_REG_OFFSET  = 0x04
+    QSPI_DATA_REG_OFFSET                    = 0x00,
+    QSPI_CTRL1_REG_OFFSET                   = 0x04,
+    QSPI_STATUS_REG_OFFSET                  = 0x04
 } qspi_reg_offset_t;
 
 // Bitmasks for the Control Register (CTRL1)
 typedef enum {
-    QSPI_CTRL1_CE_ACTIVATE  = (1u << 0),
-    QSPI_CTRL1_BYTE_MODE    = (1u << 3), // 0 = Word, 1 = Byte
-    QSPI_CTRL1_QUAD_MODE    = (1u << 4), // 0 = x1, 1 = x4
-    QSPI_CTRL1_START_OP     = (1u << 9)
+    QSPI_CTRL1_CE_ACTIVATE                  = (1u << 0),
+    QSPI_CTRL1_BYTE_MODE                    = (1u << 3), // 0 = Word, 1 = Byte
+    QSPI_CTRL1_QUAD_MODE                    = (1u << 4), // 0 = x1, 1 = x4
+    QSPI_CTRL1_START_OP                     = (1u << 9)
 } qspi_ctrl1_mask_t;
 
 // Bit shifts for the Control Register (CTRL1)
 typedef enum {
-    QSPI_CTRL1_TX_COUNT_SHIFT = 10,
-    QSPI_CTRL1_RX_COUNT_SHIFT = 21
+    QSPI_CTRL1_TX_COUNT_SHIFT               = 10,
+    QSPI_CTRL1_RX_COUNT_SHIFT               = 21
 } qspi_ctrl1_shift_t;
 
 // Bitmask for the Status Register
 static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);
+
+extern bool g_is_common_initialized;
+
+/**
+ * @brief Checks if the common QSPI interface has been initialized.
+ * @return true if initialized, false otherwise.
+ */
+static inline bool is_initialized(void) {
+    if (!g_is_common_initialized) {
+        return false;
+    }
+    return true;
+}
 
 //------------------------------------------------------------------------------
 // Public Function Prototypes

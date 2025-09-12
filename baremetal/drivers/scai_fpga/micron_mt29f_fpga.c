@@ -14,33 +14,37 @@
 
 // --- MT29F Flash Command Opcodes ---
 typedef enum {
-    MT29F_CMD_WRITE_ENABLE       = 0x06,
-    MT29F_CMD_GET_FEATURES       = 0x0F,
-    MT29F_CMD_SET_FEATURES       = 0x1F,
-    MT29F_CMD_PAGE_READ_TO_CACHE = 0x13,
-    MT29F_CMD_READ_FROM_CACHE_X1 = 0x03,
-    MT29F_CMD_READ_FROM_CACHE_X4 = 0x6B,
-    MT29F_CMD_PROGRAM_LOAD_X1    = 0x02,
-    MT29F_CMD_PROGRAM_LOAD_X4    = 0x32,
-    MT29F_CMD_PROGRAM_EXECUTE    = 0x10,
-    MT29F_CMD_BLOCK_ERASE        = 0xD8,
-    MT29F_CMD_READ_ID            = 0x9F,
-    MT29F_CMD_RESET_DEVICE       = 0xFF
+    MT29F_CMD_WRITE_ENABLE               = 0x06,
+    MT29F_CMD_GET_FEATURES               = 0x0F,
+    MT29F_CMD_SET_FEATURES               = 0x1F,
+    MT29F_CMD_PAGE_READ_TO_CACHE         = 0x13,
+    MT29F_CMD_READ_FROM_CACHE_X1         = 0x03,
+    MT29F_CMD_READ_FROM_CACHE_X4         = 0x6B,
+    MT29F_CMD_PROGRAM_LOAD_X1            = 0x02,
+    MT29F_CMD_PROGRAM_LOAD_X4            = 0x32,
+    MT29F_CMD_PROGRAM_EXECUTE            = 0x10,
+    MT29F_CMD_BLOCK_ERASE                = 0xD8,
+    MT29F_CMD_READ_ID                    = 0x9F,
+    MT29F_CMD_RESET_DEVICE               = 0xFF
 } mt29f_command_t;
 
 // --- MT29F Feature/Register Addresses ---
 typedef enum {
-    MT29F_REG_STATUS       = 0xC0,
-    MT29F_REG_LOCK         = 0xA0,
-    MT29F_REG_CONFIG       = 0xB0,
-    MT29F_REG_DIE_SELECT   = 0xD0
+    MT29F_REG_STATUS                     = 0xC0,
+    MT29F_REG_LOCK                       = 0xA0,
+    MT29F_REG_CONFIG                     = 0xB0,
+    MT29F_REG_DIE_SELECT                 = 0xD0
 } mt29f_register_t;
 
 // --- Constants from device datasheet ---
-static const uint32_t PAGE_SIZE_BYTES = 4096;
-static const uint32_t PAGES_PER_BLOCK = 64;
-static const uint16_t TOTAL_BLOCKS = 4096; // 2048 blocks/die * 2 die
-static const uint32_t BLOCK_SIZE_BYTES = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+static const uint32_t PAGE_SIZE_BYTES    = 4096;
+static const uint32_t PAGES_PER_BLOCK    = 64;
+static const uint16_t TOTAL_BLOCKS       = 4096;    // 2048 blocks/die * 2 die
+static const uint32_t BLOCK_SIZE_BYTES   = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+
+// --- Command Lengths ---
+static const uint32_t READ_CMD_LEN_X1 = 4; // Opcode + 2-byte Addr + 1 Dummy Byte
+static const uint32_t READ_CMD_LEN_X4 = 5; // Opcode + 2-byte Addr + 2 Dummy Bytes
 
 // --- Static Helper Functions ---
 
@@ -88,13 +92,18 @@ void SCAI_MT29_Flash_init(mss_qspi_io_format io_format) {
 }
 
 void SCAI_MT29_Flash_readid(uint8_t* id_buf) {
-    if (!id_buf) return;
+    if (!id_buf) {
+        return;
+    }
+
     const uint8_t cmd = MT29F_CMD_READ_ID;
     QSPI_FPGA_IF_transfer(&cmd, 1, id_buf, 2, MSS_QSPI_NORMAL, false);
 }
 
 uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (!buf || len == 0) return 1;
+    if (!buf || len == 0) {
+        return 1;
+    }
 
     uint8_t cmd[5];
     uint32_t current_addr = addr;
@@ -112,7 +121,9 @@ uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         cmd[3] = (uint8_t)(row_addr);
         QSPI_FPGA_IF_transfer(cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
 
-        if (wait_flash_ready() != 0) return 1;
+        if (wait_flash_ready() != 0) {
+            return 1;
+        }
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
@@ -121,11 +132,11 @@ uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         cmd[2] = (uint8_t)(col_addr);
         cmd[3] = 0; // Dummy byte
         cmd[4] = 0; // Extra dummy byte for some modes
-        uint32_t cmd_len = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? 5 : 4;
+        uint32_t cmd_len = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? READ_CMD_LEN_X4 : READ_CMD_LEN_X1;
         QSPI_FPGA_IF_transfer(cmd, cmd_len, current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
 
-        current_addr += read_len;
-        current_buf += read_len;
+        current_addr  += read_len;
+        current_buf   += read_len;
         remaining_len -= read_len;
     }
     return 0;
@@ -189,20 +200,24 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
         cmd[3] = (uint8_t)(page_addr);
         QSPI_FPGA_IF_transfer(cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
         
-        if (wait_flash_ready() != 0) return 1;
+        if (wait_flash_ready() != 0) {
+            return 1;
+        }
 
-        current_addr += write_len;
-        current_buf += write_len;
+        current_addr  += write_len;
+        current_buf   += write_len;
         remaining_len -= write_len;
     }
     return 0;
 }
 
 void SCAI_MT29_Flash_read_status_regs(uint8_t* buf) {
-    if (!buf) return;
+    if (!buf) {
+        return;
+    }
+
     buf[0] = get_feature(MT29F_REG_LOCK);
     buf[1] = get_feature(MT29F_REG_CONFIG);
     buf[2] = get_feature(MT29F_REG_STATUS);
     buf[3] = get_feature(MT29F_REG_DIE_SELECT);
 }
-

@@ -14,6 +14,10 @@
 #include "drivers/mss/mss_qspi/mss_qspi.h" // For mss_qspi_io_format enum
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Initializes the driver and the MT29F flash device.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
@@ -65,6 +69,10 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
  * (Lock, Config, Status, Die Select). Must not be NULL.
  */
 void SCAI_MT29_Flash_read_status_regs(uint8_t * buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MICRON_MT29F_FPGA_H
 

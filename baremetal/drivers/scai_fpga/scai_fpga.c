@@ -124,6 +124,11 @@ scai_flash_type_t get_scai_flash_type(void) {
 // This function, called by HSS, initializes the default driver.
 // Subsequent drivers are initialized on-demand by scai_set_flash_chip.
 void Flash_init(mss_qspi_io_format io_format) {
+    if (!g_active_driver) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
+        return;
+    }
+    
     if (io_format < MSS_QSPI_NORMAL || io_format > MSS_QSPI_QUAD_FULL) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid MSS QSPI I/O format: %u\n", io_format);
         return;

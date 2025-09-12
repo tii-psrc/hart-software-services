@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 size_t ymodem_receive(uint8_t *buffer, size_t bufferSize);
+void flush_ymodem_footer(void);
 
 #ifdef __cplusplus
 }

@@ -57,6 +57,9 @@
 #  if IS_ENABLED(CONFIG_SERVICE_QSPI_MICRON_MQ25T)
 #    include "micron_mt25q.h"
 #  endif
+#  if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+#    include "scai_fpga.h"
+#  endif
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_MMC)

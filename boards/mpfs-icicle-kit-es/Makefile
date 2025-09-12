@@ -94,6 +94,24 @@ EXTRA_SRCS-$(CONFIG_SERVICE_QSPI) += \
 $(BINDIR)/baremetal/drivers/micron_mt25q/micron_mt25q.o: CFLAGS=$(CFLAGS_GCCEXT)
 endif
 
+ifdef CONFIG_SERVICE_SCAI_FPGA
+INCLUDES += \
+	-Ibaremetal/drivers/scai_fpga \
+
+EXTRA_SRCS-$(CONFIG_SERVICE_SCAI_FPGA) += \
+	baremetal/drivers/scai_fpga/scai_fpga.c \
+	baremetal/drivers/scai_fpga/scai_fpga_common.c \
+	baremetal/drivers/scai_fpga/winbond_w25n01gv_fpga.c \
+	baremetal/drivers/scai_fpga/micron_mt29f_fpga.c \
+	baremetal/drivers/scai_fpga/winbond_w25n01gv_direct.c
+
+$(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga_common.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/micron_mt29f_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_direct.o: CFLAGS=$(CFLAGS_GCCEXT)
+endif
+
 
 ################################################################################################
 #

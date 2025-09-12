@@ -123,6 +123,9 @@ static void tinyCLI_Boot_(void);
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static void tinyCLI_QSPI_Scan_(void);
 static void tinyCLI_QSPI_Erase_(void);
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+static void tinyCLI_SCAI_FLASH_TEST_(void);
+#endif
 #endif
 static void tinyCLI_QSPI_(void);
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -221,6 +224,8 @@ enum CmdId {
 
     CMD_QSPI_ERASE,
     CMD_QSPI_SCAN,
+
+    CMD_QSPI_FPGA_TEST,
 };
 
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -275,6 +280,9 @@ static const struct tinycli_cmd bootCmds[] = {
 static const struct tinycli_cmd qspiCmds[] = {
     { CMD_QSPI_ERASE,   "ERASE",     "ERASE QSPI Flash", tinyCLI_QSPI_Erase_ },
     { CMD_QSPI_SCAN,    "SCAN",      "Scan QSPI Flash for bad blocks", tinyCLI_QSPI_Scan_ },
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+    { CMD_QSPI_FPGA_TEST, "TEST", "Run QSPI FPGA test", tinyCLI_SCAI_FLASH_TEST_ }
+#endif
 };
 #endif
 
@@ -819,6 +827,29 @@ static void tinyCLI_Monitor_(void)
 {
     if (!dispatch_command_(monitorCmds, ARRAY_SIZE(monitorCmds), 2u)) {
         display_help_(monitorCmds, ARRAY_SIZE(monitorCmds), 2u);
+    }
+}
+#endif
+
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+
+extern uint8_t scai_flash_test(uint8_t chipNumber);
+
+static void tinyCLI_SCAI_FLASH_TEST_(void)
+{
+    if (argc_tokenCount > 2u) {
+        const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+
+        uint8_t result = scai_flash_test(chipNumber);
+        if (result == 0u) {
+            mHSS_PRINTF("QSPI FPGA chip %u test passed\n", chipNumber);
+        } else {
+            mHSS_PRINTF("QSPI FPGA chip %u test failed with code %u\n", chipNumber, result);
+        }
+    } else {
+        mHSS_PUTS("Usage:\n"
+            "\tqspi fpga_test <chip_number>\n"
+            "\n");
     }
 }
 #endif

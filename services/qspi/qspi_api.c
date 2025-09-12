@@ -34,6 +34,9 @@
 #if IS_ENABLED(CONFIG_SERVICE_QSPI_MICRON_MQ25T)
 #  include "micron_mt25q.h"
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+#  include "scai_fpga.h"
+#endif
 #if IS_ENABLED(CONFIG_SERVICE_WDOG)
 #  include "wdog_service.h"
 #endif
@@ -249,7 +252,7 @@ static void copyCacheToFlashBlocks_(size_t byteOffset, size_t byteCount)
         if (pLogicalBlockDesc[physicalBlockOffset].inCache) {
             if (pLogicalBlockDesc[physicalBlockOffset].dirtyCache) {
                 const size_t physicalBlockByteOffset = physicalBlockOffset * blockSize;
-#if IS_ENABLED(CONFIG_SERVICE_QSPI_WINBOND_W25N01GV)
+#if IS_ENABLED(CONFIG_SERVICE_QSPI_WINBOND_W25N01GV) || IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
                 status = Flash_erase_block(physicalBlockOffset);
 #else
                 status = flashEraseSector(physicalBlockOffset);
@@ -417,7 +420,7 @@ void HSS_QSPI_FlushWriteBuffer(void)
 
 void HSS_QSPI_FlashChipErase(void)
 {
-#if IS_ENABLED(CONFIG_SERVICE_QSPI_WINBOND_W25N01GV)
+#if IS_ENABLED(CONFIG_SERVICE_QSPI_WINBOND_W25N01GV) || IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
     for (uint32_t blockIndex = 0u; blockIndex < blockCount; blockIndex++) {
         HSS_ShowProgress(blockCount, blockCount - blockIndex);
         Flash_erase_block(blockIndex);

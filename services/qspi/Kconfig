@@ -38,6 +38,14 @@ config SERVICE_QSPI_WINBOND_W25N01GV_FPGA
 
 		If you don't know what to do here, say N.
 
+config SERVICE_SCAI_FPGA
+	bool "SCAI FPGA Flash Support"
+	depends on SERVICE_QSPI
+	help
+		This feature enables support for SCAI FPGA flash devices.
+
+		If you don't know what to do here, say N.
+
 endchoice
 
 endmenu

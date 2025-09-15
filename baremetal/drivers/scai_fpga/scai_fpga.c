@@ -7,6 +7,7 @@
  */
 #include "mpfs_hal/mss_hal.h"
 #include "hss_debug.h"
+#include "hss_types.h"
 
 #include "scai_fpga.h"
 #include "micron_mt29f_fpga.h"
@@ -14,47 +15,46 @@
 #include "winbond_w25n01gv_direct.h"
 
 #include <string.h>
-#include <types.h>
 
 // Driver Definitions
 // Declarations of the driver structs for each supported flash type.
 // Each struct contains function pointers to the specific implementations
 static const scai_flash_driver_t winbond_w25n01_fpga_driver = {
-    .init = Scai_W25_Fpga_Flash_init,
-    .read_id = Scai_W25_Fpga_Flash_readid,
-    .read = Scai_W25_Fpga_Flash_read,
-    .erase = Scai_W25_Fpga_Flash_erase,
-    .erase_block = Scai_W25_Fpga_Flash_erase_block,
-    .program = Scai_W25_Fpga_Flash_program,
-    .read_status_regs = Scai_W25_Fpga_Flash_read_status_regs,
-    .scan_for_bad_blocks = Scai_W25_Fpga_Flash_scan_for_bad_blocks,
-    .read_bb_lut = Scai_W25_Fpga_Flash_read_bb_lut,
-    .add_entry_to_bb_lut = Scai_W25_Fpga_Flash_add_entry_to_bb_lut
+    .init                = Scai_W25_Fpga_Flash_init,
+    .read_id             = Scai_W25_Fpga_Flash_readid,
+    .read                = Scai_W25_Fpga_Flash_read,
+    .erase               = Scai_W25_Fpga_Flash_erase,
+    .erase_block         = Scai_W25_Fpga_Flash_erase_block,
+    .program             = Scai_W25_Fpga_Flash_program,
+    .read_status_regs    = Scai_W25_Fpga_Flash_read_status_regs,
+    .scan_for_bad_blocks = NULL, // Scai_W25_Fpga_Flash_scan_for_bad_blocks,
+    .read_bb_lut         = NULL, // Scai_W25_Fpga_Flash_read_bb_lut,
+    .add_entry_to_bb_lut = NULL  // Scai_W25_Fpga_Flash_add_entry_to_bb_lut
 };
 
 static const scai_flash_driver_t w25n01_direct_driver = {
-    .init = Scai_W25_Flash_init,
-    .read_id = Scai_W25_Flash_readid,
-    .read = Scai_W25_Flash_read,
-    .erase = Scai_W25_Flash_erase,
-    .erase_block = Scai_W25_Flash_erase_block,
-    .program = Scai_W25_Flash_program,
-    .read_status_regs = Scai_W25_Flash_read_status_regs,
+    .init                = Scai_W25_Flash_init,
+    .read_id             = Scai_W25_Flash_readid,
+    .read                = Scai_W25_Flash_read,
+    .erase               = Scai_W25_Flash_erase,
+    .erase_block         = Scai_W25_Flash_erase_block,
+    .program             = Scai_W25_Flash_program,
+    .read_status_regs    = Scai_W25_Flash_read_status_regs,
     .scan_for_bad_blocks = Scai_W25_Flash_scan_for_bad_blocks,
-    .read_bb_lut = Scai_W25_Flash_read_bb_lut,
+    .read_bb_lut         = Scai_W25_Flash_read_bb_lut,
     .add_entry_to_bb_lut = Scai_W25_Flash_add_entry_to_bb_lut
 };
 
 static const scai_flash_driver_t micron_mt29f_driver = {
-    .init = SCAI_MT29_Flash_init,
-    .read_id = SCAI_MT29_Flash_readid,
-    .read = SCAI_MT29_Flash_read,
-    .erase = SCAI_MT29_Flash_erase,
-    .erase_block = SCAI_MT29_Flash_erase_block,
-    .program = SCAI_MT29_Flash_program,
-    .read_status_regs = SCAI_MT29_Flash_read_status_regs,
+    .init                = SCAI_MT29_Flash_init,
+    .read_id             = SCAI_MT29_Flash_readid,
+    .read                = SCAI_MT29_Flash_read,
+    .erase               = SCAI_MT29_Flash_erase,
+    .erase_block         = SCAI_MT29_Flash_erase_block,
+    .program             = SCAI_MT29_Flash_program,
+    .read_status_regs    = SCAI_MT29_Flash_read_status_regs,
     .scan_for_bad_blocks = NULL, // Not applicable for this flash type
-    .read_bb_lut = NULL,         // Not applicable for this flash type
+    .read_bb_lut         = NULL, // Not applicable for this flash type
     .add_entry_to_bb_lut = NULL  // Not applicable for this flash type
 };
 
@@ -64,6 +64,19 @@ static const scai_flash_driver_t micron_mt29f_driver = {
 static const scai_flash_driver_t* g_active_driver = &w25n01_direct_driver;
 static scai_flash_type_t g_active_flash_type = SCAI_WINBOND_W25N01_DIRECT;
 static bool g_is_initialized[SCAI_MEM_TYPES_QUANTITY] = { false };
+
+// Inline helper function for driver validation
+static inline bool is_driver_ready(void) {
+    if (!g_active_driver) {
+        // mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
+        return false;
+    }
+    if (!g_is_initialized[g_active_flash_type]) {
+        // mHSS_DEBUG_PRINTF(LOG_ERROR, "Active SCAI flash driver is not initialized.\n");
+        return false;
+    }
+    return true;
+}
 
 // =============================================================================
 // SCAI Management Functions
@@ -128,7 +141,7 @@ void Flash_init(mss_qspi_io_format io_format) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
         return;
     }
-    
+
     if (io_format < MSS_QSPI_NORMAL || io_format > MSS_QSPI_QUAD_FULL) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid MSS QSPI I/O format: %u\n", io_format);
         return;
@@ -165,7 +178,7 @@ uint8_t Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
 
     if (!buf) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash_read: NULL buffer provided.\n");
-        return SCAI_FLASH_ERROR
+        return SCAI_FLASH_ERROR;
     }
 
     if (len == 0) {

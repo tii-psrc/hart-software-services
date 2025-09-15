@@ -13,13 +13,8 @@ extern "C" {
 #endif
 
 #include "drivers/mss/mss_qspi/mss_qspi.h"
-#include <stdint.h>
-#include <stdbool.h>
-
-// Forward declaration for the Bad Block Look-Up Table entry structure.
-// winbond_w25n01gv.h and winbond_w25n01gv_direct.h define this structure.
-struct w25_bb_lut_entry;
-typedef struct w25_bb_lut_entry w25_bb_lut_entry_t;
+#include "hss_types.h"
+#include "winbond_w25n01gv_direct.h"
 
 // Struct with the function pointers for a generic flash driver interface
 typedef struct {
@@ -49,24 +44,6 @@ typedef enum {
     SCAI_FLASH_SUCCESS = 0,
     SCAI_FLASH_ERROR   = 1
 } scai_flash_status_t;
-
-// Make global state visible to the inline function
-extern const scai_flash_driver_t* g_active_driver;
-extern scai_flash_type_t g_active_flash_type;
-extern bool g_is_initialized[];
-
-// Inline helper function for driver validation
-static inline bool is_driver_ready(void) {
-    if (!g_active_driver) {
-        // mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
-        return false;
-    }
-    if (!g_is_initialized[g_active_flash_type]) {
-        // mHSS_DEBUG_PRINTF(LOG_ERROR, "Active SCAI flash driver is not initialized.\n");
-        return false;
-    }
-    return true;
-}
 
 // Wrapper functions for the currently active flash driver
 void Flash_init(mss_qspi_io_format io_format);

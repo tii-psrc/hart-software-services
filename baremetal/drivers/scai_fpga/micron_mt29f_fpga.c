@@ -12,6 +12,8 @@
 #include "micron_mt29f_fpga.h"
 #include "scai_fpga_common.h" // Common low-level interface
 
+#include "hss_types.h"
+
 // --- MT29F Flash Command Opcodes ---
 typedef enum {
     MT29F_CMD_WRITE_ENABLE               = 0x06,

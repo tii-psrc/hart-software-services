@@ -11,6 +11,8 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "scai_fpga_common.h" // Common low-level interface
 
+#include "hss_types.h"
+
 // W25N Flash Command Opcodes
 typedef enum {
     W25N_CMD_WRITE_ENABLE               = 0x06,
@@ -38,7 +40,7 @@ typedef enum {
 static const uint32_t PAGE_SIZE_BYTES   = 2048;
 static const uint32_t PAGES_PER_BLOCK   = 64;
 static const uint16_t TOTAL_BLOCKS      = 1024;
-static const uint32_t BLOCK_SIZE_BYTES  = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+// static const uint32_t BLOCK_SIZE_BYTES  = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
 
 // Static Helper Functions
 
@@ -206,8 +208,8 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
             return 1;
         }
 
-        current_addr += write_len;
-        current_buf += write_len;
+        current_addr  += write_len;
+        current_buf   += write_len;
         remaining_len -= write_len;
     }
     return 0;
@@ -217,7 +219,7 @@ void Scai_W25_Fpga_Flash_read_status_regs(uint8_t* regs_buf) {
     if (!regs_buf) {
         return;
     }
-    
+
     regs_buf[0] = get_feature(W25N_REG_PROTECTION);
     regs_buf[1] = get_feature(W25N_REG_CONFIG);
     regs_buf[2] = get_feature(W25N_REG_STATUS);
@@ -239,4 +241,3 @@ uint32_t Scai_W25_Fpga_Flash_scan_for_bad_blocks(uint16_t* bad_blocks_buf) {
     (void)bad_blocks_buf; // Suppress unused parameter warning
     return 0;
 }
-

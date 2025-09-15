@@ -25,8 +25,8 @@
  * APIs for the Winbond w25n01gv flash driver.
  * This driver uses the MPFS MSS QSPI driver interface.
  *=========================================================================*/
-#ifndef MSS_WINBOND_MT25Q_H_
-#define MSS_WINBOND_MT25Q_H_
+#ifndef MSS_WINBOND_W25N01GV_DIRECT_H_
+#define MSS_WINBOND_W25N01GV_DIRECT_H_
 
 #include <stdint.h>
 #include "drivers/mss/mss_qspi/mss_qspi.h"
@@ -209,7 +209,7 @@ uint8_t Scai_W25_Flash_erase_block(uint16_t block_nb);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_program(uint8_t* buf, uint32_t addr, uint32_t len);
+uint8_t Scai_W25_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_scan_for_bad_blocks() function scans for bad blocks within the flash
@@ -341,4 +341,4 @@ void Flash_flush(void);
 }
 #endif
 
-#endif /* MSS_WINBOND_MT25Q_H_*/
+#endif /* MSS_WINBOND_W25N01GV_DIRECT_H_*/

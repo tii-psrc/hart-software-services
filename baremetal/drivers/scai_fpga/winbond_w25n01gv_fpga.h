@@ -12,11 +12,7 @@
 
 #include <stdint.h>
 #include "drivers/mss/mss_qspi/mss_qspi.h"
-
-// Forward declaration for the Bad Block Look-Up Table entry structure.
-// The full definition should be provided by the application logic.
-struct w25_bb_lut_entry;
-typedef struct w25_bb_lut_entry w25_bb_lut_entry_t;
+#include "winbond_w25n01gv_direct.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,4 +92,3 @@ uint8_t Scai_W25_Fpga_Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr);
 #endif
 
 #endif /* WINBOND_W25N01GV_FPGA_H */
-

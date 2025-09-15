@@ -268,7 +268,7 @@ uint8_t Scai_W25_Flash_erase_block(uint16_t block_index)
     return(status);
 }
 
-uint8_t Scai_W25_Flash_program(uint8_t* buf, uint32_t addr, uint32_t len)
+uint8_t Scai_W25_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
 {
     int32_t remaining_length = (int32_t)len;
     uint32_t target_page_offset = addr / PAGE_LENGTH;

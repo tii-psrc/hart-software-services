@@ -9,12 +9,22 @@
 
 #include "scai_fpga_common.h"
 
+#include "hss_types.h"
+
 // --- Static Global Pointers for Optimized Register Access ---
 static volatile uint32_t* g_qspi_data_reg;
 static volatile uint32_t* g_qspi_ctrl1_reg;
 static volatile const uint32_t* g_qspi_status_reg;
 static mss_qspi_io_format g_io_format;
 static bool g_is_common_initialized = false;
+
+// Static Helper Functions
+static inline bool is_initialized(void) {
+    if (!g_is_common_initialized) {
+        return false;
+    }
+    return true;
+}
 
 // =============================================================================
 // Public API Implementation

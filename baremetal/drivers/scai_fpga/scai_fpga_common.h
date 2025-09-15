@@ -47,19 +47,6 @@ typedef enum {
 // Bitmask for the Status Register
 static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);
 
-extern bool g_is_common_initialized;
-
-/**
- * @brief Checks if the common QSPI interface has been initialized.
- * @return true if initialized, false otherwise.
- */
-static inline bool is_initialized(void) {
-    if (!g_is_common_initialized) {
-        return false;
-    }
-    return true;
-}
-
 //------------------------------------------------------------------------------
 // Public Function Prototypes
 //------------------------------------------------------------------------------

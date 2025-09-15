@@ -75,4 +75,3 @@ void SCAI_MT29_Flash_read_status_regs(uint8_t * buf);
 #endif
 
 #endif // MICRON_MT29F_FPGA_H
-

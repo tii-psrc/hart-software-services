@@ -32,7 +32,7 @@ static inline bool is_initialized(void) {
 
 // Initialize global pointers for optimized access based on the defined base address
 void QSPI_FPGA_IF_init(mss_qspi_io_format io_format) {
-    if (g_is_common_initialized) {
+    if (is_initialized()) {
         // Already initialized, no action needed
         return;
     }
@@ -45,7 +45,7 @@ void QSPI_FPGA_IF_init(mss_qspi_io_format io_format) {
 }
 
 mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {
-    if (!g_is_common_initialized) {
+    if (!is_initialized()) {
         return MSS_QSPI_NORMAL;
     }
 
@@ -53,7 +53,7 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {
 }
 
 bool QSPI_FPGA_IF_wait_controller_idle(void) {
-    if (!g_is_common_initialized) {
+    if (!is_initialized()) {
         return false;
     }
 
@@ -68,7 +68,7 @@ bool QSPI_FPGA_IF_wait_controller_idle(void) {
 
 void QSPI_FPGA_IF_transfer(const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active) {
     // Basic safety checks
-    if (!g_is_common_initialized) {
+    if (!is_initialized()) {
         return;
     }
 

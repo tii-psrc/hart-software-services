@@ -263,7 +263,7 @@ SECTIONS
     .data.payload : ALIGN(16) 
     {
       _payload_start = .;
-      KEEP(boards/mpfs-navc/payload.o(.*))
+      KEEP(boards/scai-navc/payload.o(.*))
       _payload_end = .;
     }
 #endif

@@ -5,15 +5,15 @@
 1. Set configuration for definition
 
         $ cd $(HSS source)
-        $ cp boards/mpfs-navc/def_config .config # When navc firmware should be compiled
+        $ cp boards/scai-navc/def_config .config # When navc firmware should be compiled
 
 2. Choose build options if some features are needed to be changed
 
-        $ make BOARD=mpfs-navc menuconfig
+        $ make BOARD=scai-navc menuconfig
 
 3. Build
 
-        $ make BOARD=mpfs-navc -j 1
+        $ make BOARD=scai-navc -j 1
 
 - - - -
 
@@ -23,7 +23,7 @@ And, save changed values, and click generate button.
 As a result, new below files are updated automatically.
 
 <pre>
-mpfs-navc/mss_config/
+scai-navc/mss_config/
 ├── NAVC_MSS.cfg
 ├── NAVC_MSS.cxz
 ├── NAVC_MSS_Report.html

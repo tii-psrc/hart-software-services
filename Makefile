@@ -49,7 +49,7 @@ ifneq ("$(wildcard boards/${BOARD}/Makefile)","")
   include boards/${BOARD}/Makefile
 else
   ifndef BOARD
-    BOARD:=mpfs-navc
+    BOARD:=scai-navc
     export BOARD
     $(info INFO: BOARD not specified, defaulting to ${BOARD}) # default to navc if nothing found
     include boards/${BOARD}/Makefile

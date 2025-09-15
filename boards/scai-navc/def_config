@@ -6,7 +6,7 @@
 #
 # NAVC Design Configuration Options
 #
-CONFIG_SOC_FPGA_DESIGN_XML="boards/mpfs-navc/mss_config/NAVC_MSS_mss_cfg.xml"
+CONFIG_SOC_FPGA_DESIGN_XML="boards/scai-navc/mss_config/NAVC_MSS_mss_cfg.xml"
 # end of NAVC Design Configuration Options
 # end of Board/Design Configuration Options
 

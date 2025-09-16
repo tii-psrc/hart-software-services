@@ -356,3 +356,19 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Flash Test Passed ---\n");
     return SCAI_FLASH_SUCCESS;
 }
+
+uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
+    uint8_t id_buf[4];
+    if (flash_type >= SCAI_MEM_TYPES_QUANTITY) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
+        return 0;
+    }
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return 0;
+    }
+    Flash_readid(id_buf);
+    return (id_buf[0] << 24) | (id_buf[1] << 16) | (id_buf[2] << 8) | id_buf[3];
+}
+
+

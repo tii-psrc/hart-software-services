@@ -62,6 +62,7 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
 const scai_flash_driver_t* get_scai_flash_driver(void);
 scai_flash_type_t get_scai_flash_type(void);
 uint8_t scai_flash_test(scai_flash_type_t flash_type);
+uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type);
 
 #ifdef __cplusplus
 }

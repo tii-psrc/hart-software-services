@@ -840,7 +840,7 @@ static void tinyCLI_Monitor_(void)
 
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
 
-extern uint32_t SCAI_QSPI_ReadJEDECID(uint8_t chipNumber);
+extern uint32_t scai_flash_jedec_id(uint8_t chipNumber);
 extern uint8_t scai_flash_test(uint8_t chipNumber);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)
@@ -866,7 +866,7 @@ static void tinyCLI_SCAI_JEDEC_(void)
     if (argc_tokenCount > 2u) {
         const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
 
-        uint32_t jedecID = SCAI_QSPI_ReadJEDECID(chipNumber);
+        uint32_t jedecID = scai_flash_jedec_id(chipNumber);
         mHSS_PRINTF("QSPI FPGA chip %u JEDEC ID: 0x%06x\n", chipNumber, jedecID);
     } else {
         mHSS_PUTS("Usage:\n"

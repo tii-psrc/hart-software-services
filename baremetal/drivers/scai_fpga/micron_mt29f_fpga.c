@@ -13,6 +13,7 @@
 #include "scai_fpga_common.h" // Common low-level interface
 
 #include "hss_types.h"
+#include "hss_debug.h"
 
 static bool g_is_mt29f_initialized = false;
 
@@ -87,6 +88,15 @@ static void write_enable(void) {
     QSPI_FPGA_IF_transfer(&cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
+static uint8_t get_feature(mt29f_register_t feature_addr) {
+    const uint8_t cmd[] = {MT29F_CMD_GET_FEATURES, (uint8_t)feature_addr};
+    uint8_t result = 0;
+
+    QSPI_FPGA_IF_transfer(cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
+    
+    return result;
+}
+
 static uint8_t wait_flash_ready(void) {
     // Operations like erase can take time. This loop polls the status register.
     for (int i = 0; i < 10000; i++) {
@@ -95,15 +105,6 @@ static uint8_t wait_flash_ready(void) {
         }
     }
     return 1; // Timeout
-}
-
-static uint8_t get_feature(mt29f_register_t feature_addr) {
-    const uint8_t cmd[] = {MT29F_CMD_GET_FEATURES, (uint8_t)feature_addr};
-    uint8_t result = 0;
-
-    QSPI_FPGA_IF_transfer(cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
-    
-    return result;
 }
 
 static void set_feature(mt29f_register_t feature_addr, uint8_t value) {
@@ -159,7 +160,7 @@ void SCAI_MT29_Flash_readid(uint8_t* id_buf) {
         MT29F_CMD_READ_ID, 
         DUMMY_BYTE // JEDEC ID command requires one dummy byte
     };
-    QSPI_FPGA_IF_transfer(&cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer((uint8_t*)cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
 }
 
 uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {

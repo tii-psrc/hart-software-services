@@ -54,7 +54,7 @@ bool QSPI_FPGA_IF_wait_controller_idle(uintptr_t base_addr) {
             return true;
         }
     }
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Status reg value: 0x%X\n", *status_reg);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "> Status reg value: 0x%X\n", *status_reg);
     return false;
 }
 

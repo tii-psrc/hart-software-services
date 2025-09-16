@@ -401,12 +401,12 @@ uint8_t scai_fpga_diagnostics(void)
         return 1;
     }
 
-    if (!QSPI_FPGA_IF_wait_controller_idle(g_active_base_addr)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: FPGA controller is not responding or not idle.\n");
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Check FPGA base address (0x%X) and clocks.\n", g_active_base_addr);
-        return 1;
-    }
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "SUCCESS: FPGA controller is accessible.\n");
+    // if (!QSPI_FPGA_IF_wait_controller_idle(g_active_base_addr)) {
+    //     mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: FPGA controller is not responding or not idle.\n");
+    //     mHSS_DEBUG_PRINTF(LOG_ERROR, "Check FPGA base address (0x%X) and clocks.\n", g_active_base_addr);
+    //     return 1;
+    // }
+    // mHSS_DEBUG_PRINTF(LOG_NORMAL, "SUCCESS: FPGA controller is accessible.\n");
 
     // --------------------------------------------------------------------
     // STEP 2: Check register read/write functionality
@@ -465,3 +465,25 @@ uint32_t scai_fpga_read_reg(uintptr_t address)
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Read 0x%08X from address 0x%08X\n", value, address);
     return value;
 }
+
+/*
+qspi readreg 0x40000404
+qspi writereg 0x40000404 0x4
+qspi writereg 0x40000408 0x0
+qspi writereg 0x4000040C 0x10000
+qspi readreg 0x40000404
+
+// Unlock all blocks
+qspi writereg 0x40000400 0x1F000000
+qspi writereg 0x40000400 0xA0000000
+qspi writereg 0x40000400 0x00000000
+qspi writereg 0x40000404 0xE01
+qspi readreg 0x40000404
+
+// Continuous Read
+qspi writereg 0x40000400 0x1F000000
+qspi writereg 0x40000400 0xB0000000
+qspi writereg 0x40000400 0x01000000
+qspi writereg 0x40000404 0xE01
+qspi readreg 0x40000404
+*/

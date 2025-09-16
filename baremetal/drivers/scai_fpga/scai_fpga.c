@@ -390,6 +390,11 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
 uint8_t scai_fpga_diagnostics(void)
 {
     uint8_t read_data[256];
+    
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return SCAI_FLASH_ERROR;
+    }
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading block 10...\n");
     memset(read_data, 0, sizeof(read_data));

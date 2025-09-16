@@ -271,7 +271,7 @@ uint32_t Scai_W25_Flash_scan_for_bad_blocks(uint16_t* buf);
   @endcode
 
 */
-void Scai_W25_Flash_read_status_regs(uint8_t * buf);
+uint8_t Scai_W25_Flash_read_status_regs(void * regs_out);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_read_bb_lut() function reads the look up table (LUT) in the flash

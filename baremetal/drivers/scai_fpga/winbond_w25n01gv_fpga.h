@@ -68,7 +68,7 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
  * @param buf A buffer of at least 3 bytes to store the register values
  * (Protection, Configuration, Status). Must not be NULL.
  */
-void Scai_W25_Fpga_Flash_read_status_regs(uint8_t * buf);
+uint8_t Scai_W25_Fpga_Flash_read_status_regs(void * buf);
 
 /**
  * @brief Scans the device for factory-marked bad blocks.

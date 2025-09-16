@@ -55,6 +55,7 @@ typedef struct {
     uint8_t dummy;      // Dummy byte for timing
 } mt29f_read_cmd_t;
 
+// Configuration Register Bitfield
 typedef union {
     struct {
         uint8_t conti_rd : 1;    // Bit 0: Continuous Read Mode
@@ -77,6 +78,11 @@ static const uint8_t  DUMMY_BYTE         = 0xFF;
 static const uint8_t  MT29F_ROWSHIFT     = 13;
 static const uint16_t MT29F_COLMASK      = 0x1FFF;
 static const uint8_t  MT29F_JEDEC_SIZE   = 2;                                   // JEDEC ID is 2 bytes for MT29F
+static const uint16_t MT29F_TIMEOUT_ITER = 10000;                               // Timeout iterations for operations
+static const uint8_t  MT29F_UNLOCK_ALL   = 0x00;                               // Value to unlock all blocks
+
+// STatus register bits
+static const uint8_t MT29F_STATUS_OIP_B  = 0x01;
 
 // --- Static Helper Functions ---
 
@@ -112,8 +118,8 @@ static uint8_t get_feature(mt29f_register_t feature_addr) {
 
 static uint8_t wait_flash_ready(void) {
     // Operations like erase can take time. This loop polls the status register.
-    for (int i = 0; i < 10000; i++) {
-        if (!(get_feature(MT29F_REG_STATUS) & 0x01)) { // Check OIP (Operation In Progress) bit
+    for (int i = 0; i < MT29F_TIMEOUT_ITER; i++) {
+        if (!(get_feature(MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) { // Check OIP (Operation In Progress) bit
             return 0; // Success
         }
     }
@@ -128,7 +134,7 @@ static void set_feature(mt29f_register_t feature_addr, uint8_t value) {
 }
 
 static void unlock_all_blocks(void) {
-    set_feature(MT29F_REG_LOCK, 0x00);
+    set_feature(MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
 }
 
 // =============================================================================
@@ -269,8 +275,8 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
-        uint16_t col_addr = physical_addr & 0x1FFF;
-        uint32_t page_addr = physical_addr >> 13;
+        uint32_t page_addr     = physical_addr >> MT29F_ROWSHIFT;
+        uint16_t col_addr      = physical_addr & MT29F_COLMASK;
 
         write_enable();
 
@@ -309,13 +315,17 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
     return 0;
 }
 
-void SCAI_MT29_Flash_read_status_regs(uint8_t* buf) {
-    if (!buf || !is_initialized()) {
-        return;
+uint8_t SCAI_MT29_Flash_read_status_regs(void* regs_out) {
+    if (!regs_out || !is_initialized()) {
+        return 1; // Error
     }
 
-    buf[0] = get_feature(MT29F_REG_LOCK);
-    buf[1] = get_feature(MT29F_REG_CONFIG);
-    buf[2] = get_feature(MT29F_REG_STATUS);
-    buf[3] = get_feature(MT29F_REG_DIE_SELECT);
+    mt29f_status_regs_t* regs = (mt29f_status_regs_t*)regs_out;
+
+    regs->lock       = get_feature(MT29F_REG_LOCK);
+    regs->config     = get_feature(MT29F_REG_CONFIG);
+    regs->status     = get_feature(MT29F_REG_STATUS);
+    regs->die_select = get_feature(MT29F_REG_DIE_SELECT);
+    
+    return 0; // Success
 }

@@ -215,14 +215,17 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
     return 0;
 }
 
-void Scai_W25_Fpga_Flash_read_status_regs(uint8_t* regs_buf) {
-    if (!regs_buf) {
-        return;
+uint8_t Scai_W25_Fpga_Flash_read_status_regs(void * buf) {
+    if (!buf) {
+        return 1; // Error
     }
+
+    uint8_t* regs_buf = (uint8_t*)buf;
 
     regs_buf[0] = get_feature(W25N_REG_PROTECTION);
     regs_buf[1] = get_feature(W25N_REG_CONFIG);
     regs_buf[2] = get_feature(W25N_REG_STATUS);
+    return 0; // Success
 }
 
 // The following functions for Bad Block Management are placeholders

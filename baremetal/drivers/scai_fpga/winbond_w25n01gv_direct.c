@@ -324,11 +324,14 @@ uint8_t Scai_W25_Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba)
     return result;
 }
 
-void Scai_W25_Flash_read_status_regs(uint8_t * buf)
+uint8_t Scai_W25_Flash_read_status_regs(void* regs_out)
 {
+    uint8_t* buf = (uint8_t*)regs_out;
+
     read_statusreg(STATUS_REG_1, buf);
     read_statusreg(STATUS_REG_2, buf + 1);
     read_statusreg(STATUS_REG_3, buf + 2);
+    return 0; // success
 }
 
 uint8_t Scai_W25_Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr)

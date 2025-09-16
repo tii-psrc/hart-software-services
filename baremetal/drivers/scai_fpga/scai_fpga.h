@@ -24,7 +24,7 @@ typedef struct {
     uint8_t (*erase)(void);
     uint8_t (*erase_block)(uint16_t block_number);
     uint8_t (*program)(const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
-    void (*read_status_regs)(uint8_t* regs_buf);
+    uint8_t (*read_status_regs)(void* regs_out);
     uint32_t (*scan_for_bad_blocks)(uint16_t* bad_blocks_buf);
     uint8_t (*read_bb_lut)(w25_bb_lut_entry_t* lut_ptr);
     uint8_t (*add_entry_to_bb_lut)(uint16_t lba, uint16_t pba);
@@ -52,7 +52,7 @@ uint8_t Flash_read(uint8_t* rx_buf, uint32_t start_addr, uint32_t size);
 uint8_t Flash_erase(void);
 uint8_t Flash_erase_block(uint16_t block_number);
 uint8_t Flash_program(const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
-void Flash_read_status_regs(uint8_t* regs_buf);
+void Flash_read_status_regs(uint8_t* regs_out);
 uint32_t Flash_scan_for_bad_blocks(uint16_t* bad_blocks_buf);
 uint8_t Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr);
 uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba);

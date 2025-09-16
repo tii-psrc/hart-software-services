@@ -18,6 +18,13 @@
 extern "C" {
 #endif
 
+typedef struct {
+    uint8_t lock;
+    uint8_t config;
+    uint8_t status;
+    uint8_t die_select;
+} mt29f_status_regs_t;
+
 /**
  * @brief Initializes the driver and the MT29F flash device.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
@@ -68,7 +75,7 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
  * @param buf A buffer of at least 4 bytes to store the register values
  * (Lock, Config, Status, Die Select). Must not be NULL.
  */
-void SCAI_MT29_Flash_read_status_regs(uint8_t * buf);
+uint8_t SCAI_MT29_Flash_read_status_regs(void * regs_out);
 
 #ifdef __cplusplus
 }

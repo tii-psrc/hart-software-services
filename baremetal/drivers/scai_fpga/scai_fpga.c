@@ -379,7 +379,7 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
         return 0;
     }
-    if (scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_QUAD_FULL) != 0) {
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return 0;
     }
@@ -390,8 +390,8 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
 uint8_t scai_fpga_diagnostics(void)
 {
     uint8_t read_data[256];
-
-    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
+    
+    if (scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_QUAD_FULL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }

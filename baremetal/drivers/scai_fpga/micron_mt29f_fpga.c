@@ -55,6 +55,19 @@ typedef struct {
     uint8_t dummy;      // Dummy byte for timing
 } mt29f_read_cmd_t;
 
+typedef union {
+    struct {
+        uint8_t conti_rd : 1;    // Bit 0: Continuous Read Mode
+        uint8_t          : 1;    // Bit 1: Reserved
+        uint8_t lot_en   : 1;    // Bit 2: Lock OTP Area
+        uint8_t          : 1;    // Bit 3: Reserved
+        uint8_t ecc_en   : 1;    // Bit 4: Internal ECC Enable
+        uint8_t cfg      : 2;    // Bit 6:5: User-defined
+        uint8_t          : 1;    // Bit 7: Reserved
+    } bits;
+    uint8_t byte;
+} mt29f_config_reg_t;
+
 // --- Constants from device datasheet ---
 static const uint32_t PAGE_SIZE_BYTES    = 4096;
 static const uint32_t PAGES_PER_BLOCK    = 64;
@@ -138,10 +151,10 @@ void SCAI_MT29_Flash_init(mss_qspi_io_format io_format) {
         return;
     }
 
-    // Enable continuous read mode
-    uint8_t config_val = get_feature(MT29F_REG_CONFIG);
-    config_val |= 0x01;
-    set_feature(MT29F_REG_CONFIG, config_val);
+    mt29f_config_reg_t config_reg;
+    config_reg.byte = get_feature(MT29F_REG_CONFIG);
+    config_reg.bits.conti_rd = 1;
+    set_feature(MT29F_REG_CONFIG, config_reg.byte);
 
     // Unlock all blocks
     unlock_all_blocks();

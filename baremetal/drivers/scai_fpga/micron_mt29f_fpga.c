@@ -144,12 +144,12 @@ static void unlock_all_blocks(uintptr_t base_addr) {
  * for optimal performance.
  */
 void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
-    QSPI_FPGA_IF_init(io_format);
-
     if (is_initialized()) {
         // Already initialized, no action needed
         return;
     }
+    
+    QSPI_FPGA_IF_init(base_addr, io_format);
 
     mt29f_config_reg_t config_reg;
     config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);

@@ -86,7 +86,7 @@ static void write_enable(uintptr_t base_addr) {
 // =============================================================================
 
 void Scai_W25_Fpga_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
-    QSPI_FPGA_IF_init(io_format);
+    QSPI_FPGA_IF_init(base_addr, io_format);
     const uint8_t cmd = W25N_CMD_DEVICE_RESET;
     QSPI_FPGA_IF_transfer(base_addr, &cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
     wait_flash_ready(base_addr);

@@ -64,6 +64,9 @@ scai_flash_type_t get_scai_flash_type(void);
 uint8_t scai_flash_test(scai_flash_type_t flash_type);
 uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type);
 uint8_t scai_fpga_diagnostics(void);
+void scai_fpga_write_reg(uintptr_t address, uint32_t value);
+uint32_t scai_fpga_read_reg(uintptr_t address);
+
 
 
 #ifdef __cplusplus

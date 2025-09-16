@@ -21,7 +21,9 @@
 typedef enum {
     QSPI_DATA_REG_OFFSET                    = 0x00,
     QSPI_CTRL1_REG_OFFSET                   = 0x04,
-    QSPI_STATUS_REG_OFFSET                  = 0x04
+    QSPI_STATUS_REG_OFFSET                  = 0x04,
+    QSPI_CTRL2_REG_OFFSET                   = 0x08,
+    QSPI_CTRL3_REG_OFFSET                   = 0x0C
 } qspi_reg_offset_t;
 
 // Bitmasks for the Control Register (CTRL1)
@@ -40,6 +42,8 @@ typedef enum {
 
 // Bitmask for the Status Register
 static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);
+static const uint32_t Q_CTRL1_SET_nRESET    = (1u << 2);
+static const uint32_t Q_CTRL3_SET_nHOLD     = (1u << 16);
 
 //------------------------------------------------------------------------------
 // Public Function Prototypes
@@ -49,7 +53,7 @@ static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);
  * @brief Initializes the common QSPI interface module.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
  */
-void QSPI_FPGA_IF_init(mss_qspi_io_format io_format);
+void QSPI_FPGA_IF_init(uintptr_t base_addr, mss_qspi_io_format io_format);
 
 /**
  * @brief Gets the current I/O format.

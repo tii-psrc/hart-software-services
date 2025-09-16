@@ -22,8 +22,23 @@ static const uint16_t SCAI_FPG_IF_TIMEOUT = 10000; // Empirical timeout value
 // =============================================================================
 
 // Initialize global pointers for optimized access based on the defined base address
-void QSPI_FPGA_IF_init(mss_qspi_io_format io_format) {
+void QSPI_FPGA_IF_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     g_io_format = io_format;
+
+    volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+    volatile uint32_t* ctrl2_reg = (uint32_t*)(base_addr + QSPI_CTRL2_REG_OFFSET);
+    volatile uint32_t* ctrl3_reg = (uint32_t*)(base_addr + QSPI_CTRL3_REG_OFFSET);
+
+    // 1. Set default control register values
+    uint32_t ctrl1_val = Q_CTRL1_SET_nRESET;
+    // 2. Configure I/O format
+    uint32_t ctrl2_val = 0; // No auto operation
+    uint32_t ctrl3_val = Q_CTRL3_SET_nHOLD; // No Toggling, not hold
+
+    // Write initial values to the registers
+    *ctrl1_reg = ctrl1_val;
+    *ctrl2_reg = ctrl2_val;
+    *ctrl3_reg = ctrl3_val;
 }
 
 mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {

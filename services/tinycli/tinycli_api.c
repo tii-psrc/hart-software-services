@@ -127,6 +127,8 @@ static void tinyCLI_QSPI_Erase_(void);
 static void tinyCLI_SCAI_FLASH_TEST_(void);
 static void tinyCLI_SCAI_JEDEC_(void);
 static void tinyCLI_SCAI_debug_(void);
+static void tinyCLI_SCAI_write_reg_(void);
+static void tinyCLI_SCAI_read_reg_(void);
 #endif
 #endif
 static void tinyCLI_QSPI_(void);
@@ -232,6 +234,8 @@ enum CmdId {
     CMD_SCAI_FLASH_TEST,
     CMD_SCAI_JEDEC,
     CMD_SCAI_DEBUG,
+    CMD_SCAI_WRITE_REG,
+    CMD_SCAI_READ_REG,
 };
 
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -290,6 +294,8 @@ static const struct tinycli_cmd qspiCmds[] = {
     { CMD_SCAI_FLASH_TEST, "TEST", "Run QSPI FPGA test", tinyCLI_SCAI_FLASH_TEST_ },
     { CMD_SCAI_JEDEC, "JEDEC", "Read JEDEC ID", tinyCLI_SCAI_JEDEC_ },
     { CMD_SCAI_DEBUG, "DEBUG", "Run SCAI FPGA diagnostics", tinyCLI_SCAI_debug_ },
+    { CMD_SCAI_WRITE_REG, "WRITEREG", "Write to SCAI FPGA register", tinyCLI_SCAI_write_reg_ },
+    { CMD_SCAI_READ_REG, "READREG", "Read from SCAI FPGA register", tinyCLI_SCAI_read_reg_ },
 #endif
 };
 #endif
@@ -846,6 +852,8 @@ static void tinyCLI_Monitor_(void)
 extern uint32_t scai_flash_jedec_id(uint8_t chipNumber);
 extern uint8_t scai_flash_test(uint8_t chipNumber);
 extern uint8_t scai_fpga_diagnostics(void);
+extern void scai_fpga_write_reg(uintptr_t address, uint32_t value);
+extern uint32_t scai_fpga_read_reg(uintptr_t address);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)
 {
@@ -886,6 +894,34 @@ static void tinyCLI_SCAI_debug_(void)
         mHSS_PRINTF("SCAI FPGA diagnostics passed\n");
     } else {
         mHSS_PRINTF("SCAI FPGA diagnostics failed with code %u\n", result);
+    }
+}
+
+static void tinyCLI_SCAI_write_reg_(void)
+{
+    if (argc_tokenCount > 3u) {
+        const uint8_t address = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+        const uint32_t value = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+
+        scai_fpga_write_reg(address, value);
+        mHSS_PRINTF("QSPI FPGA reg 0x%02x written value 0x%08x\n", address, value);
+    } else {
+        mHSS_PUTS("Usage:\n"
+            "\tqspi write_reg <reg_offset> <value>\n"
+            "\n");
+    }
+}
+
+static void tinyCLI_SCAI_read_reg_(void) {
+    if (argc_tokenCount > 3u) {
+        const uint32_t address = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+
+        uint32_t value = scai_fpga_read_reg(address);
+        mHSS_PRINTF("QSPI FPGA reg 0x%02x read value 0x%08x\n", address, value);
+    } else {
+        mHSS_PUTS("Usage:\n"
+            "\tqspi read_reg <reg_offset>\n"
+            "\n");
     }
 }
 #endif

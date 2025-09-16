@@ -452,3 +452,16 @@ uint8_t scai_fpga_diagnostics(void)
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- All diagnostic steps passed successfully! ---\n");
     return 0;
 }
+
+void scai_fpga_write_reg(uintptr_t address, uint32_t value)
+{
+    *(volatile uint32_t*)address = value;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Wrote 0x%08X to address 0x%08X\n", value, address);
+}
+
+uint32_t scai_fpga_read_reg(uintptr_t address)
+{
+    uint32_t value = *(volatile uint32_t*)address;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Read 0x%08X from address 0x%08X\n", value, address);
+    return value;
+}

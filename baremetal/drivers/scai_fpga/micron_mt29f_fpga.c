@@ -140,7 +140,7 @@ void SCAI_MT29_Flash_init(mss_qspi_io_format io_format) {
     // Enable continuous read mode
     uint8_t config_val = get_feature(MT29F_REG_CONFIG);
     config_val |= 0x01;
-    set_feature(MT29F_REG_CONFIG, get_feature(MT29F_REG_CONFIG));
+    set_feature(MT29F_REG_CONFIG, config_val);
 
     // Unlock all blocks
     unlock_all_blocks();

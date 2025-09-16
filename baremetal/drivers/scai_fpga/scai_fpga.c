@@ -389,68 +389,22 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
 
 uint8_t scai_fpga_diagnostics(void)
 {
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting SCAI FPGA Diagnostics ---\n");
+    uint8_t read_data[256];
 
-    // --------------------------------------------------------------------
-    // STEP 1: Check FPGA controller accessibility
-    // --------------------------------------------------------------------
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Step 1] Checking communication with FPGA controller...\n");
-    uint8_t status = scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_NORMAL);
-    if (status != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: Failed to set SCAI flash chip to MT29F.\n");
-        return 1;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading block 10...\n");
+    memset(read_data, 0, sizeof(read_data));
+    if (Flash_read(read_data, 10 * 64 * 2048, sizeof(read_data)) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read failed.\n");
+        return 8;
     }
-
-    // if (!QSPI_FPGA_IF_wait_controller_idle(g_active_base_addr)) {
-    //     mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: FPGA controller is not responding or not idle.\n");
-    //     mHSS_DEBUG_PRINTF(LOG_ERROR, "Check FPGA base address (0x%X) and clocks.\n", g_active_base_addr);
-    //     return 1;
-    // }
-    // mHSS_DEBUG_PRINTF(LOG_NORMAL, "SUCCESS: FPGA controller is accessible.\n");
-
-    // --------------------------------------------------------------------
-    // STEP 2: Check register read/write functionality
-    // --------------------------------------------------------------------
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Step 2] Checking register read/write functionality...\n");
-
-    uint8_t original_config = get_feature(g_active_base_addr, MT29F_REG_CONFIG);
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "  - Original Config Reg (B0h) value: 0x%02X\n", original_config);
-
-    uint8_t test_val = original_config ^ 0x01; // Toggle LSB for test
-    set_feature(g_active_base_addr, MT29F_REG_CONFIG, test_val);
-    
-    uint8_t new_config = get_feature(g_active_base_addr, MT29F_REG_CONFIG);
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "  - Value after writing 0x%02X: 0x%02X\n", test_val, new_config);
-
-    // Restore original value
-    set_feature(g_active_base_addr, MT29F_REG_CONFIG, original_config);
-
-    if (new_config != test_val) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: Read-back value does not match written value.\n");
-        return 2;
+    for (size_t i = 0; i < 100; i++) {
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", read_data[i]);
+        if ((i & 0x0F) == 0x0F) {
+            mHSS_PUTS("\n");
+        }
     }
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "SUCCESS: Register read/write test passed.\n");
+    return SCAI_FLASH_SUCCESS;
 
-    // --------------------------------------------------------------------
-    // STEP 3: Check flash chip communication
-    // --------------------------------------------------------------------
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Step 3] Checking communication with MT29F flash chip...\n");
-    uint8_t id_buf[2] = {0};
-    SCAI_MT29_Flash_init(g_active_base_addr, MSS_QSPI_NORMAL);
-    SCAI_MT29_Flash_readid(g_active_base_addr, id_buf);
-    
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "  - JEDEC ID received: 0x%02X 0x%02X\n", id_buf[0], id_buf[1]);
-
-    if (id_buf[0] != 0x2C) { // Micron Manufacturer ID
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "FAILURE: Incorrect Manufacturer ID. Expected 0x2C.\n");
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "  - Check power, clocks, and wiring to the flash chip.\n");
-        return 3;
-    }
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "SUCCESS: Correct flash Manufacturer ID received.\n");
-
-    // --------------------------------------------------------------------
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- All diagnostic steps passed successfully! ---\n");
-    return 0;
 }
 
 void scai_fpga_write_reg(uintptr_t address, uint32_t value)

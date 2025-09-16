@@ -146,6 +146,7 @@ static void unlock_all_blocks(uintptr_t base_addr) {
 void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     if (is_initialized()) {
         // Already initialized, no action needed
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F already initialized.\n");
         return;
     }
     

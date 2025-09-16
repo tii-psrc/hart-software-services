@@ -10,11 +10,12 @@
 #include "scai_fpga_common.h"
 
 #include "hss_types.h"
+#include "hss_debug.h"
 
 //  Common SCAI FPGA interface state
 static mss_qspi_io_format g_io_format = MSS_QSPI_NORMAL;
 
-static const uint16_t SCAI_FPG_IF_TIMEOUT = 1000; // Empirical timeout value
+static const uint16_t SCAI_FPG_IF_TIMEOUT = 10000; // Empirical timeout value
 
 // =============================================================================
 // Public API Implementation
@@ -32,6 +33,7 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {
 bool QSPI_FPGA_IF_wait_controller_idle(uintptr_t base_addr) {
     volatile const uint32_t* status_reg = (uint32_t*)(base_addr + QSPI_STATUS_REG_OFFSET);
 
+    mHHS_DEBUG_PRINTF(LOG_DEBUG, "Address of status reg: 0x%X\n", (unsigned int)status_reg);
     for (int i = 0; i < SCAI_FPG_IF_TIMEOUT; i++) {
         if (*status_reg & QSPI_STATUS_IDLE_FLAG) {
             return true;

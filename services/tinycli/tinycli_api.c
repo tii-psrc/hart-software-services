@@ -913,14 +913,14 @@ static void tinyCLI_SCAI_write_reg_(void)
 }
 
 static void tinyCLI_SCAI_read_reg_(void) {
-    if (argc_tokenCount > 3u) {
+    if (argc_tokenCount > 2u) {
         const uint32_t address = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
 
         uint32_t value = scai_fpga_read_reg(address);
         mHSS_PRINTF("QSPI FPGA reg 0x%02x read value 0x%08x\n", address, value);
     } else {
         mHSS_PUTS("Usage:\n"
-            "\tqspi read_reg <reg_offset>\n"
+            "\tqspi readreg <reg_offset>\n"
             "\n");
     }
 }

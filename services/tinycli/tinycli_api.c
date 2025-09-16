@@ -126,6 +126,7 @@ static void tinyCLI_QSPI_Erase_(void);
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
 static void tinyCLI_SCAI_FLASH_TEST_(void);
 static void tinyCLI_SCAI_JEDEC_(void);
+static void tinyCLI_SCAI_debug_(void);
 #endif
 #endif
 static void tinyCLI_QSPI_(void);
@@ -230,6 +231,7 @@ enum CmdId {
 
     CMD_SCAI_FLASH_TEST,
     CMD_SCAI_JEDEC,
+    CMD_SCAI_DEBUG,
 };
 
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -287,6 +289,7 @@ static const struct tinycli_cmd qspiCmds[] = {
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
     { CMD_SCAI_FLASH_TEST, "TEST", "Run QSPI FPGA test", tinyCLI_SCAI_FLASH_TEST_ },
     { CMD_SCAI_JEDEC, "JEDEC", "Read JEDEC ID", tinyCLI_SCAI_JEDEC_ },
+    { CMD_SCAI_DEBUG, "DEBUG", "Run SCAI FPGA diagnostics", tinyCLI_SCAI_debug_ },
 #endif
 };
 #endif
@@ -842,6 +845,7 @@ static void tinyCLI_Monitor_(void)
 
 extern uint32_t scai_flash_jedec_id(uint8_t chipNumber);
 extern uint8_t scai_flash_test(uint8_t chipNumber);
+extern uint8_t scai_fpga_diagnostics(void);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)
 {
@@ -872,6 +876,16 @@ static void tinyCLI_SCAI_JEDEC_(void)
         mHSS_PUTS("Usage:\n"
             "\tqspi jedec <chip_number>\n"
             "\n");
+    }
+}
+
+static void tinyCLI_SCAI_debug_(void)
+{
+    uint8_t result = scai_fpga_diagnostics();
+    if (result == 0u) {
+        mHSS_PRINTF("SCAI FPGA diagnostics passed\n");
+    } else {
+        mHSS_PRINTF("SCAI FPGA diagnostics failed with code %u\n", result);
     }
 }
 #endif

@@ -54,59 +54,59 @@ static inline uint32_t logical_to_physical(uint32_t logical_addr) {
     return ((logical_addr & 0xFFFFF800UL) << 1) | (logical_addr & 0x000007FFUL);
 }
 
-static uint8_t get_feature(w25n_register_t feature_addr) {
+static uint8_t get_feature(uintptr_t base_addr, w25n_register_t feature_addr) {
     const uint8_t cmd[2] = {W25N_CMD_GET_FEATURES, (uint8_t)feature_addr};
     uint8_t result = 0;
-    QSPI_FPGA_IF_transfer(cmd, 2, &result, 1, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, cmd, 2, &result, 1, MSS_QSPI_NORMAL, false);
     return result;
 }
 
-static void set_feature(w25n_register_t feature_addr, uint8_t value) {
+static void set_feature(uintptr_t base_addr, w25n_register_t feature_addr, uint8_t value) {
     const uint8_t cmd[3] = {W25N_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
-    QSPI_FPGA_IF_transfer(cmd, 3, NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, cmd, 3, NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
-static uint8_t wait_flash_ready(void) {
+static uint8_t wait_flash_ready(uintptr_t base_addr) {
     // Operations like erase can take time. This loop polls the status register.
     for (int i = 0; i < 20000; i++) {
-        if (!(get_feature(W25N_REG_STATUS) & 0x01)) { // Check BUSY bit
+        if (!(get_feature(base_addr, W25N_REG_STATUS) & 0x01)) { // Check BUSY bit
             return 0; // Success
         }
     }
     return 1; // Timeout
 }
 
-static void write_enable(void) {
+static void write_enable(uintptr_t base_addr) {
     const uint8_t cmd = W25N_CMD_WRITE_ENABLE;
-    QSPI_FPGA_IF_transfer(&cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, &cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
 // =============================================================================
 // Public API Implementation
 // =============================================================================
 
-void Scai_W25_Fpga_Flash_init(mss_qspi_io_format io_format) {
+void Scai_W25_Fpga_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     QSPI_FPGA_IF_init(io_format);
     const uint8_t cmd = W25N_CMD_DEVICE_RESET;
-    QSPI_FPGA_IF_transfer(&cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
-    wait_flash_ready();
+    QSPI_FPGA_IF_transfer(base_addr, &cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
+    wait_flash_ready(base_addr);
 
     // Unlock all blocks and enable buffer mode, replicating soft-core driver logic
-    set_feature(W25N_REG_PROTECTION, 0x00);
-    uint8_t config_val = get_feature(W25N_REG_CONFIG);
-    set_feature(W25N_REG_CONFIG, config_val | 0x08); // Set BUF bit for buffer read mode
+    set_feature(base_addr, W25N_REG_PROTECTION, 0x00);
+    uint8_t config_val = get_feature(base_addr, W25N_REG_CONFIG);
+    set_feature(base_addr, W25N_REG_CONFIG, config_val | 0x08); // Set BUF bit for buffer read mode
 }
 
-void Scai_W25_Fpga_Flash_readid(uint8_t* id_buf) {
+void Scai_W25_Fpga_Flash_readid(uintptr_t base_addr, uint8_t* id_buf) {
     if (!id_buf) {
         return;
     }
 
     const uint8_t cmd[2] = {W25N_CMD_READ_ID, 0x00}; // JEDEC ID command requires one dummy byte
-    QSPI_FPGA_IF_transfer(cmd, 2, id_buf, 3, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, cmd, 2, id_buf, 3, MSS_QSPI_NORMAL, false);
 }
 
-uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
+uint8_t Scai_W25_Fpga_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, uint32_t len) {
     if (!buf || len == 0) {
         return 1;
     }
@@ -124,9 +124,9 @@ uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         cmd[0] = W25N_CMD_PAGE_DATA_READ;
         cmd[1] = (uint8_t)(page_addr >> 8);
         cmd[2] = (uint8_t)(page_addr);
-        QSPI_FPGA_IF_transfer(cmd, 3, NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer(base_addr, cmd, 3, NULL, 0, MSS_QSPI_NORMAL, false);
 
-        if (wait_flash_ready() != 0) {
+        if (wait_flash_ready(base_addr) != 0) {
             return 1;
         }
 
@@ -137,7 +137,7 @@ uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         cmd[2] = (uint8_t)(col_addr);
         cmd[3] = 0; // Dummy byte
         uint32_t cmd_len = 4; // Read command always has 1 dummy byte
-        QSPI_FPGA_IF_transfer(cmd, cmd_len, current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer(base_addr, cmd, cmd_len, current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
 
         current_addr += read_len;
         current_buf += read_len;
@@ -146,31 +146,31 @@ uint8_t Scai_W25_Fpga_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
     return 0;
 }
 
-uint8_t Scai_W25_Fpga_Flash_erase(void) {
+uint8_t Scai_W25_Fpga_Flash_erase(uintptr_t base_addr) {
     for (uint16_t i = 0; i < TOTAL_BLOCKS; ++i) {
-        if (Scai_W25_Fpga_Flash_erase_block(i) != 0) {
+        if (Scai_W25_Fpga_Flash_erase_block(base_addr, i) != 0) {
             return 1;
         }
     }
     return 0;
 }
 
-uint8_t Scai_W25_Fpga_Flash_erase_block(uint16_t block_nb) {
+uint8_t Scai_W25_Fpga_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb) {
     uint8_t cmd[4];
     uint32_t page_addr = (uint32_t)block_nb * PAGES_PER_BLOCK;
 
-    write_enable();
+    write_enable(base_addr);
 
     cmd[0] = W25N_CMD_BLOCK_ERASE;
     cmd[1] = 0; // Dummy byte
     cmd[2] = (uint8_t)(page_addr >> 8);
     cmd[3] = (uint8_t)(page_addr);
-    QSPI_FPGA_IF_transfer(cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
 
-    return wait_flash_ready();
+    return wait_flash_ready(base_addr);
 }
 
-uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len) {
+uint8_t Scai_W25_Fpga_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t addr, uint32_t len) {
     if (!buf || len == 0) {
         return 1;
     }
@@ -185,26 +185,26 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
         uint16_t col_addr = physical_addr & 0xFFF;
         uint32_t page_addr = physical_addr >> 12;
 
-        write_enable();
+        write_enable(base_addr);
 
         uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
         cmd[0] = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? W25N_CMD_QUAD_PROG_DATA_LOAD : W25N_CMD_PROGRAM_DATA_LOAD;
         cmd[1] = (uint8_t)(col_addr >> 8);
         cmd[2] = (uint8_t)(col_addr);
-        QSPI_FPGA_IF_transfer(cmd, 3, (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer(base_addr, cmd, 3, (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
         
-        if (wait_flash_ready() != 0) return 1;
+        if (wait_flash_ready(base_addr) != 0) return 1;
 
-        write_enable();
+        write_enable(base_addr);
 
         cmd[0] = W25N_CMD_PROGRAM_EXECUTE;
         cmd[1] = 0; // Dummy
         cmd[2] = (uint8_t)(page_addr >> 8);
         cmd[3] = (uint8_t)(page_addr);
-        QSPI_FPGA_IF_transfer(cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer(base_addr, cmd, 4, NULL, 0, MSS_QSPI_NORMAL, false);
         
-        if (wait_flash_ready() != 0) {
+        if (wait_flash_ready(base_addr) != 0) {
             return 1;
         }
 
@@ -215,30 +215,30 @@ uint8_t Scai_W25_Fpga_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t 
     return 0;
 }
 
-uint8_t Scai_W25_Fpga_Flash_read_status_regs(void * buf) {
+uint8_t Scai_W25_Fpga_Flash_read_status_regs(uintptr_t base_addr, void * buf) {
     if (!buf) {
         return 1; // Error
     }
 
     uint8_t* regs_buf = (uint8_t*)buf;
 
-    regs_buf[0] = get_feature(W25N_REG_PROTECTION);
-    regs_buf[1] = get_feature(W25N_REG_CONFIG);
-    regs_buf[2] = get_feature(W25N_REG_STATUS);
+    regs_buf[0] = get_feature(base_addr, W25N_REG_PROTECTION);
+    regs_buf[1] = get_feature(base_addr, W25N_REG_CONFIG);
+    regs_buf[2] = get_feature(base_addr, W25N_REG_STATUS);
     return 0; // Success
 }
 
 // The following functions for Bad Block Management are placeholders
 // as their implementation depends on a specific memory management strategy.
 
-uint8_t Scai_W25_Fpga_Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr) {
+uint8_t Scai_W25_Fpga_Flash_read_bb_lut(uintptr_t base_addr, w25_bb_lut_entry_t* lut_ptr) {
     // This requires reading a specific area of flash where the LUT is stored.
     // Placeholder - returns error.
     (void)lut_ptr; // Suppress unused parameter warning
     return 1;
 }
 
-uint32_t Scai_W25_Fpga_Flash_scan_for_bad_blocks(uint16_t* bad_blocks_buf) {
+uint32_t Scai_W25_Fpga_Flash_scan_for_bad_blocks(uintptr_t base_addr, uint16_t* bad_blocks_buf) {
     // This requires reading the spare area of every page to check the bad block marker.
     // Placeholder - returns 0 bad blocks found.
     (void)bad_blocks_buf; // Suppress unused parameter warning

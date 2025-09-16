@@ -33,13 +33,7 @@ typedef enum {
     MT29F_CMD_RESET_DEVICE               = 0xFF
 } mt29f_command_t;
 
-// --- MT29F Feature/Register Addresses ---
-typedef enum {
-    MT29F_REG_STATUS                     = 0xC0,
-    MT29F_REG_LOCK                       = 0xA0,
-    MT29F_REG_CONFIG                     = 0xB0,
-    MT29F_REG_DIE_SELECT                 = 0xD0
-} mt29f_register_t;
+
 
 typedef struct {
     uint8_t opcode;
@@ -102,39 +96,39 @@ static inline uint32_t logical_to_physical(uint32_t logical_addr) {
     // This calculation is based on the original soft-core driver's macro.
     return ((logical_addr & 0xFFFFF000UL) << 1) | (logical_addr & 0x00000FFFUL);
 }
-static void write_enable(void) {
+static void write_enable(uintptr_t base_addr) {
     const uint8_t cmd = MT29F_CMD_WRITE_ENABLE;
-    QSPI_FPGA_IF_transfer(&cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, &cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
-static uint8_t get_feature(mt29f_register_t feature_addr) {
+uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
     const uint8_t cmd[] = {MT29F_CMD_GET_FEATURES, (uint8_t)feature_addr};
     uint8_t result = 0;
 
-    QSPI_FPGA_IF_transfer(cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
     
     return result;
 }
 
-static uint8_t wait_flash_ready(void) {
+static uint8_t wait_flash_ready(uintptr_t base_addr) {
     // Operations like erase can take time. This loop polls the status register.
     for (int i = 0; i < MT29F_TIMEOUT_ITER; i++) {
-        if (!(get_feature(MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) { // Check OIP (Operation In Progress) bit
+        if (!(get_feature(base_addr, MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) { // Check OIP (Operation In Progress) bit
             return 0; // Success
         }
     }
     return 1; // Timeout
 }
 
-static void set_feature(mt29f_register_t feature_addr, uint8_t value) {
-    write_enable();
+void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
+    write_enable(base_addr);
     const uint8_t cmd[] = {MT29F_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
-    QSPI_FPGA_IF_transfer(cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
-    wait_flash_ready();
+    QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    wait_flash_ready(base_addr);
 }
 
-static void unlock_all_blocks(void) {
-    set_feature(MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
+static void unlock_all_blocks(uintptr_t base_addr) {
+    set_feature(base_addr, MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
 }
 
 // =============================================================================
@@ -149,7 +143,7 @@ static void unlock_all_blocks(void) {
  * It initializes the QSPI interface and configures the flash device
  * for optimal performance.
  */
-void SCAI_MT29_Flash_init(mss_qspi_io_format io_format) {
+void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     QSPI_FPGA_IF_init(io_format);
 
     if (is_initialized()) {
@@ -158,19 +152,19 @@ void SCAI_MT29_Flash_init(mss_qspi_io_format io_format) {
     }
 
     mt29f_config_reg_t config_reg;
-    config_reg.byte = get_feature(MT29F_REG_CONFIG);
+    config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);
     config_reg.bits.conti_rd = 1;
-    set_feature(MT29F_REG_CONFIG, config_reg.byte);
+    set_feature(base_addr, MT29F_REG_CONFIG, config_reg.byte);
 
     // Unlock all blocks
-    unlock_all_blocks();
+    unlock_all_blocks(base_addr);
 
     g_is_mt29f_initialized = true;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Micron MT29F configured.\n");
 
 }
 
-void SCAI_MT29_Flash_readid(uint8_t* id_buf) {
+void SCAI_MT29_Flash_readid(uintptr_t base_addr, uint8_t* id_buf) {
     if (!id_buf || !is_initialized()) {
         return;
     }
@@ -179,10 +173,10 @@ void SCAI_MT29_Flash_readid(uint8_t* id_buf) {
         MT29F_CMD_READ_ID, 
         DUMMY_BYTE // JEDEC ID command requires one dummy byte
     };
-    QSPI_FPGA_IF_transfer((uint8_t*)cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
 }
 
-uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
+uint8_t SCAI_MT29_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, uint32_t len) {
     if (!buf || len == 0 || !is_initialized()) {
         return 1;
     }
@@ -202,9 +196,9 @@ uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
             .row_addr_1 = (uint8_t)(row_addr >> 8),
             .row_addr_0 = (uint8_t)(row_addr)
         };
-        QSPI_FPGA_IF_transfer((uint8_t*)&page_read_cmd, sizeof(page_read_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&page_read_cmd, sizeof(page_read_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 
-        if (wait_flash_ready() != 0) {
+        if (wait_flash_ready(base_addr) != 0) {
             return 1;
         }
 
@@ -216,7 +210,7 @@ uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
         };
-        QSPI_FPGA_IF_transfer((uint8_t*)&read_cmd, sizeof(read_cmd), current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&read_cmd, sizeof(read_cmd), current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
 
         current_addr  += read_len;
         current_buf   += read_len;
@@ -225,20 +219,20 @@ uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
     return 0;
 }
 
-uint8_t SCAI_MT29_Flash_erase(void) {
+uint8_t SCAI_MT29_Flash_erase(uintptr_t base_addr) {
     if (!is_initialized()) {
         return 1;
     }
 
     for (uint16_t i = 0; i < TOTAL_BLOCKS; ++i) {
-        if (SCAI_MT29_Flash_erase_block(i) != 0) {
+        if (SCAI_MT29_Flash_erase_block(base_addr, i) != 0) {
             return 1;
         }
     }
     return 0;
 }
 
-uint8_t SCAI_MT29_Flash_erase_block(uint16_t block_nb) {
+uint8_t SCAI_MT29_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb) {
     if (!is_initialized() || block_nb >= TOTAL_BLOCKS) {
         return 1;
     }
@@ -247,7 +241,7 @@ uint8_t SCAI_MT29_Flash_erase_block(uint16_t block_nb) {
     uint32_t physical_addr = logical_to_physical(logical_addr);
     uint32_t row_addr      = physical_addr >> MT29F_ROWSHIFT;
 
-    write_enable();
+    write_enable(base_addr);
 
     mt29f_page_read_cmd_t erase_cmd = {
         .opcode     = MT29F_CMD_BLOCK_ERASE,
@@ -255,12 +249,12 @@ uint8_t SCAI_MT29_Flash_erase_block(uint16_t block_nb) {
         .row_addr_1 = (uint8_t)(row_addr >> 8),
         .row_addr_0 = (uint8_t)(row_addr)
     };
-    QSPI_FPGA_IF_transfer((uint8_t*)&erase_cmd, sizeof(erase_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&erase_cmd, sizeof(erase_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 
-    return wait_flash_ready();
+    return wait_flash_ready(base_addr);
 }
 
-uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len) {
+uint8_t SCAI_MT29_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t addr, uint32_t len) {
     if (!buf || (len == 0) || !is_initialized()) {
         return 1;
     }
@@ -278,7 +272,7 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
         uint32_t page_addr     = physical_addr >> MT29F_ROWSHIFT;
         uint16_t col_addr      = physical_addr & MT29F_COLMASK;
 
-        write_enable();
+        write_enable(base_addr);
 
         uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
@@ -288,13 +282,13 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
         };
-        QSPI_FPGA_IF_transfer((uint8_t*)&prog_load_cmd, sizeof(prog_load_cmd), (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&prog_load_cmd, sizeof(prog_load_cmd), (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
 
-        if (wait_flash_ready() != 0) {
+        if (wait_flash_ready(base_addr) != 0) {
             return 1;
         }
 
-        write_enable();
+        write_enable(base_addr);
 
         mt29f_page_read_cmd_t prog_exec_cmd = {
             .opcode     = MT29F_CMD_PROGRAM_EXECUTE,
@@ -302,9 +296,9 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
             .row_addr_1 = (uint8_t)(page_addr >> 8),
             .row_addr_0 = (uint8_t)(page_addr)
         };
-        QSPI_FPGA_IF_transfer((uint8_t*)&prog_exec_cmd, sizeof(prog_exec_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&prog_exec_cmd, sizeof(prog_exec_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
         
-        if (wait_flash_ready() != 0) {
+        if (wait_flash_ready(base_addr) != 0) {
             return 1;
         }
 
@@ -315,17 +309,17 @@ uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
     return 0;
 }
 
-uint8_t SCAI_MT29_Flash_read_status_regs(void* regs_out) {
+uint8_t SCAI_MT29_Flash_read_status_regs(uintptr_t base_addr, void* regs_out) {
     if (!regs_out || !is_initialized()) {
         return 1; // Error
     }
 
     mt29f_status_regs_t* regs = (mt29f_status_regs_t*)regs_out;
 
-    regs->lock       = get_feature(MT29F_REG_LOCK);
-    regs->config     = get_feature(MT29F_REG_CONFIG);
-    regs->status     = get_feature(MT29F_REG_STATUS);
-    regs->die_select = get_feature(MT29F_REG_DIE_SELECT);
+    regs->lock       = get_feature(base_addr, MT29F_REG_LOCK);
+    regs->config     = get_feature(base_addr, MT29F_REG_CONFIG);
+    regs->status     = get_feature(base_addr, MT29F_REG_STATUS);
+    regs->die_select = get_feature(base_addr, MT29F_REG_DIE_SELECT);
     
     return 0; // Success
 }

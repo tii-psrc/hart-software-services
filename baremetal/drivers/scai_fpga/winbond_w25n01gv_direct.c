@@ -141,7 +141,7 @@ static void wait_for_rx_complete(void)
 }
 #endif
 
-void Scai_W25_Flash_init(mss_qspi_io_format io_format)
+void Scai_W25_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format)
 {
     volatile uint8_t transmit_buffer[2];
     volatile uint8_t receive_buffer[3];
@@ -190,7 +190,7 @@ void Scai_W25_Flash_init(mss_qspi_io_format io_format)
     write_statusreg(STATUS_REG_2, status_reg2_value);
 }
 
-void Scai_W25_Flash_readid(uint8_t* buf)
+void Scai_W25_Flash_readid(uintptr_t base_addr, uint8_t* buf)
 {
     const uint8_t command_buf[1] __attribute__ ((aligned (4))) = {READ_ID_OPCODE};
 
@@ -204,7 +204,7 @@ void Scai_W25_Flash_readid(uint8_t* buf)
 #endif
 }
 
-uint8_t Scai_W25_Flash_read(uint8_t* pDst, uint32_t srcAddr, uint32_t len)
+uint8_t Scai_W25_Flash_read(uintptr_t base_addr, uint8_t* pDst, uint32_t srcAddr, uint32_t len)
 {
     /* We only deal with reads from page boundaries for now */
     assert((srcAddr % PAGE_LENGTH) == 0);
@@ -240,7 +240,7 @@ uint8_t Scai_W25_Flash_read(uint8_t* pDst, uint32_t srcAddr, uint32_t len)
     return result;
 }
 
-uint8_t Scai_W25_Flash_erase(void)
+uint8_t Scai_W25_Flash_erase(uintptr_t base_addr)
 {
     uint16_t block_index;
     uint8_t status = 0xFFu;
@@ -254,7 +254,7 @@ uint8_t Scai_W25_Flash_erase(void)
     return(status);
 }
 
-uint8_t Scai_W25_Flash_erase_block(uint16_t block_index)
+uint8_t Scai_W25_Flash_erase_block(uintptr_t base_addr, uint16_t block_index)
 {
     uint8_t status = 0xFFu;
 
@@ -268,7 +268,7 @@ uint8_t Scai_W25_Flash_erase_block(uint16_t block_index)
     return(status);
 }
 
-uint8_t Scai_W25_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
+uint8_t Scai_W25_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t addr, uint32_t len)
 {
     int32_t remaining_length = (int32_t)len;
     uint32_t target_page_offset = addr / PAGE_LENGTH;
@@ -300,7 +300,7 @@ uint8_t Scai_W25_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len)
     return status;
 }
 
-uint8_t Scai_W25_Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba)
+uint8_t Scai_W25_Flash_add_entry_to_bb_lut(uintptr_t base_addr, uint16_t lba, uint16_t pba)
 {
     uint8_t result = 0u;
     uint8_t status;
@@ -324,7 +324,7 @@ uint8_t Scai_W25_Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba)
     return result;
 }
 
-uint8_t Scai_W25_Flash_read_status_regs(void* regs_out)
+uint8_t Scai_W25_Flash_read_status_regs(uintptr_t base_addr, void* regs_out)
 {
     uint8_t* buf = (uint8_t*)regs_out;
 
@@ -334,7 +334,7 @@ uint8_t Scai_W25_Flash_read_status_regs(void* regs_out)
     return 0; // success
 }
 
-uint8_t Scai_W25_Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr)
+uint8_t Scai_W25_Flash_read_bb_lut(uintptr_t base_addr, w25_bb_lut_entry_t* lut_ptr)
 {
     uint8_t num_bb = 0u;
     uint8_t buf[4 * NUM_LUTS] = { 0u };
@@ -364,7 +364,7 @@ uint8_t Scai_W25_Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr)
     return num_bb;
 }
 
-uint32_t Scai_W25_Flash_scan_for_bad_blocks(uint16_t* buf)
+uint32_t Scai_W25_Flash_scan_for_bad_blocks(uintptr_t base_addr, uint16_t* buf)
 {
     uint32_t bad_count;
     bad_count = 0u;

@@ -25,17 +25,33 @@ typedef struct {
     uint8_t die_select;
 } mt29f_status_regs_t;
 
+// debug
+
+// --- MT29F Feature/Register Addresses ---
+typedef enum {
+    MT29F_REG_STATUS                     = 0xC0,
+    MT29F_REG_LOCK                       = 0xA0,
+    MT29F_REG_CONFIG                     = 0xB0,
+    MT29F_REG_DIE_SELECT                 = 0xD0
+} mt29f_register_t;
+
+uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr);
+void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value);
+
+
+// _debug
+
 /**
  * @brief Initializes the driver and the MT29F flash device.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
  */
-void SCAI_MT29_Flash_init(mss_qspi_io_format io_format);
+void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format);
 
 /**
  * @brief Reads the JEDEC ID from the flash device.
  * @param id_buf A buffer of at least 2 bytes to store the manufacturer and device ID. Must not be NULL.
  */
-void SCAI_MT29_Flash_readid(uint8_t* id_buf);
+void SCAI_MT29_Flash_readid(uintptr_t base_addr, uint8_t* id_buf);
 
 /**
  * @brief Reads a block of data from the flash. Handles page boundaries correctly.
@@ -44,21 +60,21 @@ void SCAI_MT29_Flash_readid(uint8_t* id_buf);
  * @param len The number of bytes to read.
  * @return 0 on success, 1 on failure (timeout or invalid parameters).
  */
-uint8_t SCAI_MT29_Flash_read(uint8_t* buf, uint32_t addr, uint32_t len);
+uint8_t SCAI_MT29_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, uint32_t len);
 
 /**
  * @brief Erases the entire flash device by erasing all blocks sequentially.
  * @note This is a long-running operation.
  * @return 0 on success, 1 on failure.
  */
-uint8_t SCAI_MT29_Flash_erase(void);
+uint8_t SCAI_MT29_Flash_erase(uintptr_t base_addr);
 
 /**
  * @brief Erases a single block of the flash device.
  * @param block_nb The logical block number to erase (0 to 4095).
  * @return 0 on success, 1 on failure.
  */
-uint8_t SCAI_MT29_Flash_erase_block(uint16_t block_nb);
+uint8_t SCAI_MT29_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb);
 
 /**
  * @brief Programs (writes) data to the flash.
@@ -68,14 +84,14 @@ uint8_t SCAI_MT29_Flash_erase_block(uint16_t block_nb);
  * @param len The number of bytes to write.
  * @return 0 on success, 1 on failure.
  */
-uint8_t SCAI_MT29_Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len);
+uint8_t SCAI_MT29_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t addr, uint32_t len);
 
 /**
  * @brief Reads the four main feature/status registers of the flash device.
  * @param buf A buffer of at least 4 bytes to store the register values
  * (Lock, Config, Status, Die Select). Must not be NULL.
  */
-uint8_t SCAI_MT29_Flash_read_status_regs(void * regs_out);
+uint8_t SCAI_MT29_Flash_read_status_regs(uintptr_t base_addr, void * regs_out);
 
 #ifdef __cplusplus
 }

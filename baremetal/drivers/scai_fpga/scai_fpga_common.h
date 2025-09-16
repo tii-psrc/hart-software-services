@@ -15,12 +15,6 @@
 #include "drivers/mss/mss_qspi/mss_qspi.h" // For mss_qspi_io_format enum
 
 //------------------------------------------------------------------------------
-// QSPI Controller Configuration
-//------------------------------------------------------------------------------
-// Base address of your QSPI controller on the FIC3 bus.
-static const uintptr_t QSPI_FPGA_BASE_ADDR = 0x40000000UL;
-
-//------------------------------------------------------------------------------
 // QSPI Controller Register Definitions
 //------------------------------------------------------------------------------
 
@@ -67,7 +61,7 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void);
  * @brief Waits for the QSPI controller's state machine to become idle.
  * @return true if idle is reached within the timeout, false otherwise.
  */
-bool QSPI_FPGA_IF_wait_controller_idle(void);
+bool QSPI_FPGA_IF_wait_controller_idle(uintptr_t base_addr);
 
 /**
  * @brief A versatile low-level helper for most QSPI transactions.
@@ -78,6 +72,6 @@ bool QSPI_FPGA_IF_wait_controller_idle(void);
  * @param format The I/O format for this specific transfer.
  * @param keep_ce_active Set to true to keep Chip Enable asserted after the transfer.
  */
-void QSPI_FPGA_IF_transfer(const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
+void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
 
 #endif // SCAI_FPGA_COMMON_H

@@ -18,16 +18,16 @@ extern "C" {
 
 // Struct with the function pointers for a generic flash driver interface
 typedef struct {
-    void (*init)(mss_qspi_io_format io_format);
-    void (*read_id)(uint8_t* id_buf);
-    uint8_t (*read)(uint8_t* rx_buf, uint32_t start_addr, uint32_t size);
-    uint8_t (*erase)(void);
-    uint8_t (*erase_block)(uint16_t block_number);
-    uint8_t (*program)(const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
-    uint8_t (*read_status_regs)(void* regs_out);
-    uint32_t (*scan_for_bad_blocks)(uint16_t* bad_blocks_buf);
-    uint8_t (*read_bb_lut)(w25_bb_lut_entry_t* lut_ptr);
-    uint8_t (*add_entry_to_bb_lut)(uint16_t lba, uint16_t pba);
+    void (*init)(uintptr_t base_addr, mss_qspi_io_format io_format);
+    void (*read_id)(uintptr_t base_addr, uint8_t* id_buf);
+    uint8_t (*read)(uintptr_t base_addr, uint8_t* rx_buf, uint32_t start_addr, uint32_t size);
+    uint8_t (*erase)(uintptr_t base_addr);
+    uint8_t (*erase_block)(uintptr_t base_addr, uint16_t block_number);
+    uint8_t (*program)(uintptr_t base_addr, const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
+    uint8_t (*read_status_regs)(uintptr_t base_addr, void* regs_out);
+    uint32_t (*scan_for_bad_blocks)(uintptr_t base_addr, uint16_t* bad_blocks_buf);
+    uint8_t (*read_bb_lut)(uintptr_t base_addr, w25_bb_lut_entry_t* lut_ptr);
+    uint8_t (*add_entry_to_bb_lut)(uintptr_t base_addr, uint16_t lba, uint16_t pba);
 } scai_flash_driver_t;
 
 // Enum to identify the different supported flash memory types
@@ -63,6 +63,8 @@ const scai_flash_driver_t* get_scai_flash_driver(void);
 scai_flash_type_t get_scai_flash_type(void);
 uint8_t scai_flash_test(scai_flash_type_t flash_type);
 uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type);
+uint8_t scai_fpga_diagnostics(void);
+
 
 #ifdef __cplusplus
 }

@@ -32,10 +32,10 @@ typedef struct {
 
 // Enum to identify the different supported flash memory types
 typedef enum {
-    SCAI_MICRON_MT29F,
-    SCAI_WINBOND_W25N01_FPGA,
-    SCAI_MICRON_MT25Q,
-    SCAI_WINBOND_W25N01_DIRECT,
+    SCAI_MICRON_MT29F          = 0,
+    SCAI_WINBOND_W25N01_FPGA   = 1,
+    SCAI_MICRON_MT25Q          = 2,
+    SCAI_WINBOND_W25N01_DIRECT = 3,
     SCAI_MEM_TYPES_QUANTITY
 } scai_flash_type_t;
 

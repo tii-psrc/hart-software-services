@@ -14,10 +14,6 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "winbond_w25n01gv_direct.h"
 
-// debug 
-#include "scai_fpga_common.h"
-// _debug
-
 #include <string.h>
 
 // Driver Definitions

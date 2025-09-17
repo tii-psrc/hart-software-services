@@ -25,22 +25,6 @@ typedef struct {
     uint8_t die_select;
 } mt29f_status_regs_t;
 
-// debug
-
-// --- MT29F Feature/Register Addresses ---
-typedef enum {
-    MT29F_REG_STATUS                     = 0xC0,
-    MT29F_REG_LOCK                       = 0xA0,
-    MT29F_REG_CONFIG                     = 0xB0,
-    MT29F_REG_DIE_SELECT                 = 0xD0
-} mt29f_register_t;
-
-uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr);
-void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value);
-
-
-// _debug
-
 /**
  * @brief Initializes the driver and the MT29F flash device.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).

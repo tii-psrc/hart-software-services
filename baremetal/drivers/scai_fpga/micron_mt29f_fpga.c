@@ -33,7 +33,13 @@ typedef enum {
     MT29F_CMD_RESET_DEVICE               = 0xFF
 } mt29f_command_t;
 
-
+// --- MT29F Feature/Register Addresses ---
+typedef enum {
+    MT29F_REG_STATUS                     = 0xC0,
+    MT29F_REG_LOCK                       = 0xA0,
+    MT29F_REG_CONFIG                     = 0xB0,
+    MT29F_REG_DIE_SELECT                 = 0xD0
+} mt29f_register_t;
 
 typedef struct {
     uint8_t opcode;
@@ -101,7 +107,7 @@ static void write_enable(uintptr_t base_addr) {
     QSPI_FPGA_IF_transfer(base_addr, &cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
-uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
+static uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
     const uint8_t cmd[] = {MT29F_CMD_GET_FEATURES, (uint8_t)feature_addr};
     uint8_t result = 0;
 
@@ -110,7 +116,7 @@ uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
     return result;
 }
 
-static uint8_t wait_flash_ready(uintptr_t base_addr) {
+static static uint8_t wait_flash_ready(uintptr_t base_addr) {
     // Operations like erase can take time. This loop polls the status register.
     for (int i = 0; i < MT29F_TIMEOUT_ITER; i++) {
         if (!(get_feature(base_addr, MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) { // Check OIP (Operation In Progress) bit
@@ -120,7 +126,7 @@ static uint8_t wait_flash_ready(uintptr_t base_addr) {
     return 1; // Timeout
 }
 
-void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
+static void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
     write_enable(base_addr);
     const uint8_t cmd[] = {MT29F_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
     QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);

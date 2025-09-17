@@ -25,6 +25,17 @@ typedef struct {
     uint8_t die_select;
 } mt29f_status_regs_t;
 
+typedef enum {
+    SCAI_MT29F_CHIP_0 = 0,
+    SCAI_MT29F_CHIP_1 = 1,
+    SCAI_MT29F_CHIP_2 = 2,
+    SCAI_MT29F_CHIP_3 = 3,
+    SCAI_MT29F_CHIP_4 = 4,
+    SCAI_MT29F_CHIP_5 = 5,
+    SCAI_MT29F_CHIP_6 = 6,
+    SCAI_MT29F_CHIP_7 = 7
+} scai_mt29f_chip_select_t;
+
 /**
  * @brief Initializes the driver and the MT29F flash device.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).

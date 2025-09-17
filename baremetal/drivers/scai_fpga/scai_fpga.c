@@ -58,13 +58,34 @@ static const scai_flash_driver_t micron_mt29f_driver = {
     .add_entry_to_bb_lut = NULL  // Not applicable for this flash type
 };
 
-static const uintptr_t APB_BASE_ADDRESS        = 0x40000000UL;
-static const uintptr_t QSPIs0_BASE_ADDRESS     = APB_BASE_ADDRESS + 0x0300L;
-static const uintptr_t QSPIs1_BASE_ADDRESS     = APB_BASE_ADDRESS + 0x0400L;
+static const uintptr_t MSS_APB_BASE_ADDRESS    = 0x40000000UL;
+static const uintptr_t QSPI_0_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0300L;
+static const uintptr_t QSPI_1_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0400L;
+static const uintptr_t QSPI_2_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0500L;
 
-static const uintptr_t MT29F_BASE_ADDR         = QSPIs1_BASE_ADDRESS;
-static const uintptr_t W25N01_FPGA_BASE_ADDR   = QSPIs0_BASE_ADDRESS;
+static const uintptr_t W25N01_FPGA_BASE_ADDR   = QSPI_0_BASE_ADDRESS;
 static const uintptr_t W25N01_DIRECT_BASE_ADDR = 0; // It's not used in direct mode
+
+// static const uintptr_t MT29F_BASE_ADDR         = QSPI_1_BASE_ADDRESS;
+static const uintptr_t MT29F_CHIP_0_BASE_ADDR  = QSPI_1_BASE_ADDRESS +  0; // Die 0
+static const uintptr_t MT29F_CHIP_1_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 16; // Die 1
+static const uintptr_t MT29F_CHIP_2_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 32; // Die 2
+static const uintptr_t MT29F_CHIP_3_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 48; // Die 3
+static const uintptr_t MT29F_CHIP_4_BASE_ADDR  = QSPI_2_BASE_ADDRESS +  0; // Die 4
+static const uintptr_t MT29F_CHIP_5_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 16; // Die 5
+static const uintptr_t MT29F_CHIP_6_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 32; // Die 6
+static const uintptr_t MT29F_CHIP_7_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 48; // Die 7
+
+static const uintptr_t MT29F_BASE_ADDRS[] = {
+    MT29F_CHIP_0_BASE_ADDR,
+    MT29F_CHIP_1_BASE_ADDR,
+    MT29F_CHIP_2_BASE_ADDR,
+    MT29F_CHIP_3_BASE_ADDR,
+    MT29F_CHIP_4_BASE_ADDR,
+    MT29F_CHIP_5_BASE_ADDR,
+    MT29F_CHIP_6_BASE_ADDR,
+    MT29F_CHIP_7_BASE_ADDR
+};
 
 // Module State
 // Pointers to the currently active driver and its type.
@@ -87,6 +108,16 @@ static inline bool is_driver_ready(void) {
     return true;
 }
 
+static inline bool find_Mt29_chip_index(uintptr_t base_addr, uint8_t* chip_index_out) {
+    for (uint8_t i = 0; i < sizeof(MT29F_BASE_ADDRS)/sizeof(MT29F_BASE_ADDRS[0]); i++) {
+        if (MT29F_BASE_ADDRS[i] == base_addr) {
+            *chip_index_out = i;
+            return true;
+        }
+    }
+    return false; // Address not found
+}
+
 // =============================================================================
 // SCAI Management Functions
 // =============================================================================
@@ -105,15 +136,27 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
                 g_active_base_addr = W25N01_FPGA_BASE_ADDR;
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Winbond W25N01 FPGA flash driver.\n");
                 break;
-            case SCAI_MICRON_MT29F:
-                g_active_driver = &micron_mt29f_driver;
-                g_active_base_addr = MT29F_BASE_ADDR;
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Micron MT29F FPGA flash driver.\n");
-                break;
             case SCAI_WINBOND_W25N01_DIRECT:
                 g_active_driver = &w25n01_direct_driver;
                 g_active_base_addr = W25N01_DIRECT_BASE_ADDR;
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Winbond W25N01 Direct flash driver.\n");
+                break;
+            case SCAI_MICRON_MT29F:
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F chip not specified, defaulting to Chip 0.\n");
+                g_active_driver = &micron_mt29f_driver;
+                g_active_base_addr = MT29F_BASE_ADDRS[0];
+                break;
+            case SCAI_MICRON_MT29F_CHIP_0:
+            case SCAI_MICRON_MT29F_CHIP_1:
+            case SCAI_MICRON_MT29F_CHIP_2:
+            case SCAI_MICRON_MT29F_CHIP_3:
+            case SCAI_MICRON_MT29F_CHIP_4:
+            case SCAI_MICRON_MT29F_CHIP_5:
+            case SCAI_MICRON_MT29F_CHIP_6:
+            case SCAI_MICRON_MT29F_CHIP_7:
+                g_active_driver = &micron_mt29f_driver;
+                g_active_base_addr = MT29F_BASE_ADDRS[flash_type - SCAI_MICRON_MT29F_CHIP_0];
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Micron MT29F FPGA flash driver, Chip %u.\n", flash_type - SCAI_MICRON_MT29F_CHIP_0);
                 break;
             case SCAI_MICRON_MT25Q:
                 mHSS_DEBUG_PRINTF(LOG_ERROR, "Micron MT25Q driver not implemented yet.\n");
@@ -352,6 +395,13 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash program failed.\n");
         return 6;
     }
+    
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Dump of first 16 bytes of test_data: ");
+    for (uint32_t j = 0; j < 16; j++) {
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", test_data[j]);
+    }
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n");
+
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading block 10...\n");
     memset(read_data, 0, sizeof(read_data));
@@ -359,6 +409,12 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read failed.\n");
         return 8;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Dump of first 16 bytes of read_data: ");
+    for (uint32_t j = 0; j < 16; j++) {
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", read_data[j]);
+    }
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n");
 
     if (memcmp(test_data, read_data, sizeof(test_data)) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Data mismatch after read/write cycle.\n");
@@ -384,25 +440,10 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
 }
 
 uint8_t scai_fpga_diagnostics(void)
-{
-    uint8_t read_data[256];
-    
+{    
     if (scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_QUAD_FULL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
-    }
-
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading block 10...\n");
-    memset(read_data, 0, sizeof(read_data));
-    if (Flash_read(read_data, 10 * 64 * 2048, sizeof(read_data)) != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read failed.\n");
-        return 8;
-    }
-    for (size_t i = 0; i < 100; i++) {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", read_data[i]);
-        if ((i & 0x0F) == 0x0F) {
-            mHSS_PUTS("\n");
-        }
     }
     return SCAI_FLASH_SUCCESS;
 

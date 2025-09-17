@@ -16,6 +16,7 @@
 #include "hss_debug.h"
 
 static bool g_is_mt29f_initialized = false;
+// static uint8_t g_active_die = SCAI_MT29F_CHIP_0; // Default to first die
 
 // --- MT29F Flash Command Opcodes ---
 typedef enum {
@@ -116,7 +117,7 @@ static uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
     return result;
 }
 
-static static uint8_t wait_flash_ready(uintptr_t base_addr) {
+static uint8_t wait_flash_ready(uintptr_t base_addr) {
     // Operations like erase can take time. This loop polls the status register.
     for (int i = 0; i < MT29F_TIMEOUT_ITER; i++) {
         if (!(get_feature(base_addr, MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) { // Check OIP (Operation In Progress) bit

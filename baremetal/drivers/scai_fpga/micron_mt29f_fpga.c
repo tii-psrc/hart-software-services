@@ -159,14 +159,19 @@ void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Initializing MT29F...\n");
     
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Configuring QSPI interface...\n");
     QSPI_FPGA_IF_init(base_addr, io_format);
 
+
     mt29f_config_reg_t config_reg;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Get feature...\n");
     config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);
     config_reg.bits.conti_rd = 1;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Set feature...\n");
     set_feature(base_addr, MT29F_REG_CONFIG, config_reg.byte);
 
     // Unlock all blocks
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Unlocking all blocks...\n");
     unlock_all_blocks(base_addr);
 
     g_is_mt29f_initialized = true;

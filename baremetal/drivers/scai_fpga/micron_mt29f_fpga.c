@@ -156,6 +156,8 @@ void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F already initialized.\n");
         return;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Initializing MT29F...\n");
     
     QSPI_FPGA_IF_init(base_addr, io_format);
 
@@ -168,7 +170,7 @@ void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     unlock_all_blocks(base_addr);
 
     g_is_mt29f_initialized = true;
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Micron MT29F configured.\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Micron MT29F configured.\n\n");
 
 }
 
@@ -176,6 +178,8 @@ void SCAI_MT29_Flash_readid(uintptr_t base_addr, uint8_t* id_buf) {
     if (!id_buf || !is_initialized()) {
         return;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "READID()\n");
 
     const uint8_t cmd[] = {
         MT29F_CMD_READ_ID, 

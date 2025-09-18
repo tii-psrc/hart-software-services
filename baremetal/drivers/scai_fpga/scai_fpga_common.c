@@ -81,12 +81,14 @@ mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in data_reg -> %p\n", (void*)data_reg);
     ctrl1_val |= QSPI_CTRL1_START_OP;
     ctrl1_val |= QSPI_CTRL1_CE_ACTIVATE;
 
+    // Write CTRL1
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", ctrl1_val);
     *ctrl1_reg = ctrl1_val;
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "T ctrl1_reg = 0x%08X\n", *ctrl1_reg);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 
     // Write FIFO
     for (uint32_t i = 0; i < tx_len; ++i) {
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "W data_reg = 0x%08X\n", ((uint32_t)tx_buffer[i]) << 24);
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", ((uint32_t)tx_buffer[i]) << 24);
         *data_reg = ((uint32_t)tx_buffer[i]) << 24;
     }
 
@@ -97,7 +99,7 @@ mHSS_DEBUG_PRINTF(LOG_NORMAL, "W data_reg = 0x%08X\n", ((uint32_t)tx_buffer[i]) 
     for (uint32_t i = 0; i < rx_len; ++i) {
         // rx_buffer[i] = (uint8_t)(*data_reg);
         uint32_t value = *data_reg;
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "r data_reg = 0x%08X\n", value);
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
         rx_buffer[i] = (uint8_t)(value >> 24);
     }
 
@@ -108,8 +110,9 @@ mHSS_DEBUG_PRINTF(LOG_NORMAL, "r data_reg = 0x%08X\n", value);
         final_ctrl_val |= QSPI_CTRL1_CE_ACTIVATE;
     }
 
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", ctrl1_val);
     *ctrl1_reg = final_ctrl_val;
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "T ctrl1_reg = 0x%08X\n", *ctrl1_reg);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 }
 
 /*

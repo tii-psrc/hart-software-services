@@ -65,11 +65,13 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     
     volatile uint32_t* data_reg = (uint32_t*)(base_addr + QSPI_DATA_REG_OFFSET);
     volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in ctrl1_reg -> %p\n", (void*)ctrl1_reg);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in data_reg -> %p\n", (void*)data_reg);
 
     // Construct CTRL1
     uint32_t ctrl1_val = 0;
-    ctrl1_val |= Q_CTRL1_SET_nRESET; // clear reset
-
+    ctrl1_val |= Q_CTRL1_SET_nRESET;
+    
     // choose BYTE mode
     ctrl1_val |= QSPI_CTRL1_BYTE_MODE; 
 
@@ -89,22 +91,24 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
 
     // Write FIFO
     for (uint32_t i = 0; i < tx_len; ++i) {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", tx_buffer[i]);
-        *data_reg = tx_buffer[i]; 
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", ((uint32_t)tx_buffer[i]) << 24);
+        *data_reg = ((uint32_t)tx_buffer[i]) << 24;
     }
 
-    QSPI_FPGA_IF_wait_controller_idle(base_addr);
+    bool idle_flag = QSPI_FPGA_IF_wait_controller_idle(base_addr);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "idle = %d\n", idle_flag);
 
     // Read FIFO
     for (uint32_t i = 0; i < rx_len; ++i) {
         // rx_buffer[i] = (uint8_t)(*data_reg);
         uint32_t value = *data_reg;
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
-        rx_buffer[i] = (uint8_t)(value);
+        rx_buffer[i] = (uint8_t)(value >> 24);
     }
 
-    // --- Очистка после операции ---
-    uint32_t final_ctrl_val = Q_CTRL1_SET_nRESET;
+    // Clen after operation
+    uint32_t final_ctrl_val = Q_CTRL1_SET_nRESET; // Начинаем с базового состояния
+
     if (keep_ce_active) {
         final_ctrl_val |= QSPI_CTRL1_CE_ACTIVATE;
     }

@@ -128,7 +128,7 @@ static uint8_t wait_flash_ready(uintptr_t base_addr) {
 }
 
 static void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
-    write_enable(base_addr);
+    // write_enable(base_addr);
     const uint8_t cmd[] = {MT29F_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
     QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
     wait_flash_ready(base_addr);

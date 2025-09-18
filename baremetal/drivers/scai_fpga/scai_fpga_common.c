@@ -69,8 +69,8 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     
     volatile uint32_t* data_reg = (uint32_t*)(base_addr + QSPI_DATA_REG_OFFSET);
     volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "ctrl1_reg -> 0x%zU\n", ctrl1_reg);
-mHSS_DEBUG_PRINTF(LOG_NORMAL, "data_reg -> 0x%zU\n", data_reg);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in ctrl1_reg -> %p\n", (void*)ctrl1_reg);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in data_reg -> %p\n", (void*)data_reg);
 
     uint32_t ctrl1_val = *ctrl1_reg;
 mHSS_DEBUG_PRINTF(LOG_NORMAL, "r ctrl1_reg = 0x%08X\n", ctrl1_val);

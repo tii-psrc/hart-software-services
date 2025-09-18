@@ -431,10 +431,14 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
         return 0;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Setting flash chip...\n");
     if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return 0;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading JEDEC ID...\n");
     Flash_readid(id_buf);
     return (id_buf[0] << 24) | (id_buf[1] << 16) | (id_buf[2] << 8) | id_buf[3];
 }

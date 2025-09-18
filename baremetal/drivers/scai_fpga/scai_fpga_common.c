@@ -62,6 +62,61 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     if ((!tx_buffer && tx_len > 0) || (!rx_buffer && rx_len > 0) || (base_addr == 0)) {
         return;
     }
+    
+    volatile uint32_t* data_reg = (uint32_t*)(base_addr + QSPI_DATA_REG_OFFSET);
+    volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in ctrl1_reg -> %p\n", (void*)ctrl1_reg);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "Address in data_reg -> %p\n", (void*)data_reg);
+
+    // Construct CTRL1
+    uint32_t ctrl1_val = 0;
+    ctrl1_val |= Q_CTRL1_SET_nRESET;
+
+    if (format == MSS_QSPI_QUAD_FULL) {
+        ctrl1_val |= QSPI_CTRL1_QUAD_MODE;
+    }
+
+    ctrl1_val |= (tx_len << QSPI_CTRL1_TX_COUNT_SHIFT) 
+               | (rx_len << QSPI_CTRL1_RX_COUNT_SHIFT);
+    ctrl1_val |= QSPI_CTRL1_START_OP;
+    ctrl1_val |= QSPI_CTRL1_CE_ACTIVATE;
+
+    *ctrl1_reg = ctrl1_val;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "T ctrl1_reg = 0x%08X\n", *ctrl1_reg);
+
+    // Write FIFO
+    for (uint32_t i = 0; i < tx_len; ++i) {
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "W data_reg = 0x%08X\n", ((uint32_t)tx_buffer[i]) << 24);
+        *data_reg = ((uint32_t)tx_buffer[i]) << 24;
+    }
+
+    bool idle_flag = QSPI_FPGA_IF_wait_controller_idle(base_addr);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "idle = %d\n", idle_flag);
+
+    // Read FIFO
+    for (uint32_t i = 0; i < rx_len; ++i) {
+        // rx_buffer[i] = (uint8_t)(*data_reg);
+        uint32_t value = *data_reg;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "r data_reg = 0x%08X\n", value);
+        rx_buffer[i] = (uint8_t)(value >> 24);
+    }
+
+    // Clen after operation
+    uint32_t final_ctrl_val = Q_CTRL1_SET_nRESET; // Начинаем с базового состояния
+
+    if (keep_ce_active) {
+        final_ctrl_val |= QSPI_CTRL1_CE_ACTIVATE;
+    }
+
+    *ctrl1_reg = final_ctrl_val;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "T ctrl1_reg = 0x%08X\n", *ctrl1_reg);
+}
+
+/*
+void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active) {
+    if ((!tx_buffer && tx_len > 0) || (!rx_buffer && rx_len > 0) || (base_addr == 0)) {
+        return;
+    }
 
     if (format < MSS_QSPI_NORMAL || format > MSS_QSPI_QUAD_FULL) {
         return;
@@ -130,3 +185,4 @@ mHSS_DEBUG_PRINTF(LOG_NORMAL, "r ctrl1_reg = 0x%08X\n", ctrl1_val);
 mHSS_DEBUG_PRINTF(LOG_NORMAL, "w ctrl1_reg = 0x%08X\n", ctrl1_val);
     *ctrl1_reg = ctrl1_val;
 }
+    */

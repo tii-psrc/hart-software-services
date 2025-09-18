@@ -128,10 +128,8 @@ static uint8_t wait_flash_ready(uintptr_t base_addr) {
 }
 
 static void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
-    // write_enable(base_addr);
     const uint8_t cmd[] = {MT29F_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
     QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
-    // wait_flash_ready(base_addr);
 }
 
 static void unlock_all_blocks(uintptr_t base_addr) {
@@ -166,8 +164,10 @@ void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     mt29f_config_reg_t config_reg;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Get feature...\n");
     config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Config = 0x%02X\n", config_reg.byte);
+
     config_reg.bits.conti_rd = 1;
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Set feature...\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Set feature... 0x%02X\n", config_reg.byte);
     set_feature(base_addr, MT29F_REG_CONFIG, config_reg.byte);
 
     // Unlock all blocks

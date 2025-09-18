@@ -73,18 +73,21 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     // Construct CTRL1
     QSPI_Ctrl1_Reg_t mt29f_ctrl1;
     mt29f_ctrl1.bits.reset       = 1;                                      // Clear RESET
-    mt29f_ctrl1.bits.data_mode   = 1;                                      // Byte mode
+    mt29f_ctrl1.bits.data_mode   = 0;                                      // Byte mode
     mt29f_ctrl1.bits.lane_width  = (format == MSS_QSPI_QUAD_FULL) ? 1 : 0; // Interface width
     mt29f_ctrl1.bits.tx_count    = tx_len;                                 // Number of bytes to transmit
     mt29f_ctrl1.bits.rx_count    = rx_len;                                 // Number of bytes to receive
-    mt29f_ctrl1.bits.start       = 1;                                      // Start transaction 
-    mt29f_ctrl1.bits.chip_enable = 1;                                      // CHIP_ENABLE
+    mt29f_ctrl1.bits.start       = 1;                                      // Start transaction
 
     // Write CTRL1
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
     *ctrl1_reg = mt29f_ctrl1.word;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
-
+ 
+    mt29f_ctrl1.bits.chip_enable = 1;       
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
+    *ctrl1_reg = mt29f_ctrl1.word;                               // CHIP_ENABLE
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 
     // Write FIFO
     for (uint32_t i = 0; i < tx_len; ++i) {
@@ -101,6 +104,92 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
         rx_buffer[i] = (uint8_t)(value & 0xFF);
     }
+
+    mt29f_ctrl1.bits.tx_count    = 0;                                 // Number of bytes to transmit
+    mt29f_ctrl1.bits.rx_count    = 0;                                 // Number of bytes to receive
+    mt29f_ctrl1.bits.start       = 0;                                 // Start transaction 
+
+    if (!keep_ce_active) {
+        mt29f_ctrl1.bits.chip_enable = 0;                                   
+    }
+
+    // Write CTRL1
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
+    *ctrl1_reg = mt29f_ctrl1.word;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
+}
+
+void QSPI_FPGA_IF_transfer_byte(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active) {
+    if ((!tx_buffer && tx_len > 0) || (!rx_buffer && rx_len > 0) || (base_addr == 0)) {
+        return;
+    }
+    
+    volatile uint32_t* data_reg = (uint32_t*)(base_addr + QSPI_DATA_REG_OFFSET);
+    volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+    volatile uint32_t* stat2_reg = (uint32_t*)(base_addr + QSPI_STATUS2_REG_OFFSET);
+
+
+    // Construct CTRL1
+    QSPI_Ctrl1_Reg_t mt29f_ctrl1;
+    mt29f_ctrl1.bits.reset       = 1;                                      // Clear RESET
+    mt29f_ctrl1.bits.data_mode   = 0;                                      // Byte mode
+    mt29f_ctrl1.bits.lane_width  = (format == MSS_QSPI_QUAD_FULL) ? 1 : 0; // Interface width
+    mt29f_ctrl1.bits.tx_count    = tx_len;                                 // Number of bytes to transmit
+    mt29f_ctrl1.bits.rx_count    = rx_len;                                 // Number of bytes to receive
+    mt29f_ctrl1.bits.start       = 1;                                      // Start transaction
+
+    // Write CTRL1
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
+    *ctrl1_reg = mt29f_ctrl1.word;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
+ 
+    mt29f_ctrl1.bits.chip_enable = 1;       
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
+    *ctrl1_reg = mt29f_ctrl1.word;                               // CHIP_ENABLE
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
+
+    // Write FIFO
+    for (uint32_t i = 0; i < tx_len; ++i) {
+        uint32_t data_to_write = (((uint32_t)tx_buffer[i]) << 24) | 0x00FFFFFF;
+
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", data_to_write);
+        *data_reg = data_to_write;
+    }
+
+    // Read FIFO
+    // for (uint32_t i = 0; i < rx_len; ++i) {
+    //     uint32_t value = *data_reg;
+    //     mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
+    //     rx_buffer[i] = (uint8_t)(value & 0xFF);
+    // }
+    uint32_t i = 0;
+    QSPI_Status2_Reg_t mt29f_status2;
+
+    while (i < rx_len) {
+        uint32_t rec_count = rx_len - i;
+        if (rec_count > 16) {
+            rec_count = 16;
+        }
+        i += rec_count;
+        
+        mt29f_status2.word = *stat2_reg;
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_2 = 0x%08X\n", mt29f_status2.word);
+
+        uint16_t count = mt29f_status2.bits.rx_fifo_rdcnt;
+        if (count > rec_count) {
+            count = rec_count;
+        }
+
+        for (uint16_t j = 0; j < count; ++j) {
+            uint32_t value = *data_reg;
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
+            rx_buffer[i - count + j] = (uint8_t)(value & 0xFF);
+        }
+
+    }
+
+    bool idle_flag = QSPI_FPGA_IF_wait_controller_idle(base_addr);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "idle = %d\n", idle_flag);
 
     mt29f_ctrl1.bits.tx_count    = 0;                                 // Number of bytes to transmit
     mt29f_ctrl1.bits.rx_count    = 0;                                 // Number of bytes to receive

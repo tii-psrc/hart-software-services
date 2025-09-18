@@ -121,6 +121,7 @@ typedef enum {
     QSPI_DATA_REG_OFFSET                    = 0x00,
     QSPI_CTRL1_REG_OFFSET                   = 0x04,
     QSPI_STATUS_REG_OFFSET                  = 0x04,
+    QSPI_STATUS2_REG_OFFSET                 = 0x08,
     QSPI_CTRL2_REG_OFFSET                   = 0x08,
     QSPI_CTRL3_REG_OFFSET                   = 0x0C
 } qspi_reg_offset_t;
@@ -162,5 +163,6 @@ bool QSPI_FPGA_IF_wait_controller_idle(uintptr_t base_addr);
  * @param keep_ce_active Set to true to keep Chip Enable asserted after the transfer.
  */
 void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
+void QSPI_FPGA_IF_transfer_byte(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
 
 #endif // SCAI_FPGA_COMMON_H

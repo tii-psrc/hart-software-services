@@ -69,8 +69,11 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     
     volatile uint32_t* data_reg = (uint32_t*)(base_addr + QSPI_DATA_REG_OFFSET);
     volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "ctrl1_reg -> 0x%zU\n", ctrl1_reg);
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "data_reg -> 0x%zU\n", data_reg);
 
     uint32_t ctrl1_val = *ctrl1_reg;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "r ctrl1_reg = 0x%08X\n", ctrl1_val);
 
     // Clear tx/rx counts, format, and WnB (byte mode) bits for a clean slate
     ctrl1_val &= ~((0x7FFu << QSPI_CTRL1_RX_COUNT_SHIFT) 
@@ -89,11 +92,15 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     // Always assert CE at the start of a transfer
     ctrl1_val |= QSPI_CTRL1_CE_ACTIVATE;
 
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "w ctrl1_reg = 0x%08X\n", ctrl1_val);
+    //Read 0x%08X from address 0x%08X\n", value, address);
     *ctrl1_reg = ctrl1_val;
 
     // Write command/data bytes to the FIFO
     for (uint32_t i = 0; i < tx_len; ++i) {
         // As per original soft-core driver, pack each byte into a 32-bit word.
+
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "w data_reg = 0x%08X\n", ((uint32_t)tx_buffer[i]) << 24);
         *data_reg = ((uint32_t)tx_buffer[i]) << 24;
     }
 
@@ -102,10 +109,14 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     // Read result bytes from the FIFO
     for (uint32_t i = 0; i < rx_len; ++i) {
         // Assumes the controller places the received byte in the LSB of the read data.
-        rx_buffer[i] = (uint8_t)(*data_reg);
+        uint32_t value = *data_reg;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "r data_reg = 0x%08X\n", value);
+        // rx_buffer[i] = (uint8_t)(*data_reg);
+        rx_buffer[i] = (uint8_t)(value >> 24);
     }
 
     ctrl1_val = *ctrl1_reg;
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "r ctrl1_reg = 0x%08X\n", ctrl1_val);
 
     // Deactivate CE if it wasn't requested to be kept active
     if (!keep_ce_active) {
@@ -116,5 +127,6 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     ctrl1_val &= ~(QSPI_CTRL1_START_OP 
                   | (0x7FFu << QSPI_CTRL1_RX_COUNT_SHIFT) 
                   | (0x7FFu << QSPI_CTRL1_TX_COUNT_SHIFT));
+mHSS_DEBUG_PRINTF(LOG_NORMAL, "w ctrl1_reg = 0x%08X\n", ctrl1_val);
     *ctrl1_reg = ctrl1_val;
 }

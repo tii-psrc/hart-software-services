@@ -164,11 +164,16 @@ void SCAI_MT29_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
     mt29f_config_reg_t config_reg;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Get feature...\n");
     config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Config = 0x%02X\n", config_reg.byte);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Feature %d = 0x%02X\n", MT29F_REG_CONFIG, config_reg.byte);
 
     config_reg.bits.conti_rd = 1;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Set feature... 0x%02X\n", config_reg.byte);
     set_feature(base_addr, MT29F_REG_CONFIG, config_reg.byte);
+
+    config_reg.byte = 0;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Get feature...\n");
+    config_reg.byte = get_feature(base_addr, MT29F_REG_CONFIG);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Feature %d = 0x%02X\n", MT29F_REG_CONFIG, config_reg.byte);
 
     // Unlock all blocks
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Unlocking all blocks...\n");

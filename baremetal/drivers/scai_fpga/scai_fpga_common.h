@@ -27,7 +27,7 @@ typedef union {
         uint32_t chip_enable    : 1;  // Bit 0:      Chip Enable (1=active) when software driven
         uint32_t nwp            : 1;  // Bit 1:      nWP line value
         uint32_t reset          : 1;  // Bit 2:      nReset line value (1=normal operation)
-        uint32_t data_byte      : 1;  // Bit 3:      Data interface (1=Byte, 0=Word)
+        uint32_t data_mode      : 1;  // Bit 3:      Data interface (1=Byte, 0=Word)
         uint32_t lane_width     : 1;  // Bit 4:      Interface usage (1=x4, 0=x1)
         uint32_t auto_mask      : 1;  // Bit 5:      Mask operation for auto mode
         uint32_t clk_div        : 3;  // Bits 8:6:   Clock divider
@@ -116,6 +116,14 @@ typedef union {
     } bits;
     uint32_t word;
 } QSPI_Status2_Reg_t;
+
+typedef enum {
+    QSPI_DATA_REG_OFFSET                    = 0x00,
+    QSPI_CTRL1_REG_OFFSET                   = 0x04,
+    QSPI_STATUS_REG_OFFSET                  = 0x04,
+    QSPI_CTRL2_REG_OFFSET                   = 0x08,
+    QSPI_CTRL3_REG_OFFSET                   = 0x0C
+} qspi_reg_offset_t;
 
 // Bitmask for the Status Register
 static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);

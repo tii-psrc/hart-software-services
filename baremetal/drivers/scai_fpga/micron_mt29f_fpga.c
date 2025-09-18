@@ -105,14 +105,14 @@ static inline uint32_t logical_to_physical(uint32_t logical_addr) {
 }
 static void write_enable(uintptr_t base_addr) {
     const uint8_t cmd = MT29F_CMD_WRITE_ENABLE;
-    QSPI_FPGA_IF_transfer(base_addr, &cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer_byte(base_addr, &cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
 static uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {
     const uint8_t cmd[] = {MT29F_CMD_GET_FEATURES, (uint8_t)feature_addr};
     uint8_t result = 0;
 
-    QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer_byte(base_addr, cmd, sizeof(cmd), &result, sizeof(result), MSS_QSPI_NORMAL, false);
     
     return result;
 }
@@ -129,7 +129,7 @@ static uint8_t wait_flash_ready(uintptr_t base_addr) {
 
 static void set_feature(uintptr_t base_addr, mt29f_register_t feature_addr, uint8_t value) {
     const uint8_t cmd[] = {MT29F_CMD_SET_FEATURES, (uint8_t)feature_addr, value};
-    QSPI_FPGA_IF_transfer(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer_byte(base_addr, cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 }
 
 static void unlock_all_blocks(uintptr_t base_addr) {
@@ -190,7 +190,7 @@ void SCAI_MT29_Flash_readid(uintptr_t base_addr, uint8_t* id_buf) {
         MT29F_CMD_READ_ID, 
         DUMMY_BYTE // JEDEC ID command requires one dummy byte
     };
-    QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)cmd, sizeof(cmd), id_buf, MT29F_JEDEC_SIZE, MSS_QSPI_NORMAL, false);
 }
 
 uint8_t SCAI_MT29_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, uint32_t len) {
@@ -213,7 +213,7 @@ uint8_t SCAI_MT29_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, u
             .row_addr_1 = (uint8_t)(row_addr >> 8),
             .row_addr_0 = (uint8_t)(row_addr)
         };
-        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&page_read_cmd, sizeof(page_read_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)&page_read_cmd, sizeof(page_read_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 
         if (wait_flash_ready(base_addr) != 0) {
             return 1;
@@ -227,7 +227,7 @@ uint8_t SCAI_MT29_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, u
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
         };
-        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&read_cmd, sizeof(read_cmd), current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)&read_cmd, sizeof(read_cmd), current_buf, read_len, QSPI_FPGA_IF_get_io_format(), false);
 
         current_addr  += read_len;
         current_buf   += read_len;
@@ -266,7 +266,7 @@ uint8_t SCAI_MT29_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb) {
         .row_addr_1 = (uint8_t)(row_addr >> 8),
         .row_addr_0 = (uint8_t)(row_addr)
     };
-    QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&erase_cmd, sizeof(erase_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+    QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)&erase_cmd, sizeof(erase_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
 
     return wait_flash_ready(base_addr);
 }
@@ -299,7 +299,7 @@ uint8_t SCAI_MT29_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
         };
-        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&prog_load_cmd, sizeof(prog_load_cmd), (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
+        QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)&prog_load_cmd, sizeof(prog_load_cmd), (uint8_t*)current_buf, write_len, QSPI_FPGA_IF_get_io_format(), false);
 
         if (wait_flash_ready(base_addr) != 0) {
             return 1;
@@ -313,7 +313,7 @@ uint8_t SCAI_MT29_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_
             .row_addr_1 = (uint8_t)(page_addr >> 8),
             .row_addr_0 = (uint8_t)(page_addr)
         };
-        QSPI_FPGA_IF_transfer(base_addr, (uint8_t*)&prog_exec_cmd, sizeof(prog_exec_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+        QSPI_FPGA_IF_transfer_byte(base_addr, (uint8_t*)&prog_exec_cmd, sizeof(prog_exec_cmd), NULL, 0, MSS_QSPI_NORMAL, false);
         
         if (wait_flash_ready(base_addr) != 0) {
             return 1;

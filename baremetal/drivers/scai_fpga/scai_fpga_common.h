@@ -17,28 +17,105 @@
 //------------------------------------------------------------------------------
 // QSPI Controller Register Definitions
 //------------------------------------------------------------------------------
+/**
+ * @brief CTRL1 Register (Write-Only, Offset +4)
+ * Configures and initiates a QSPI transaction.
+ */
 
-typedef enum {
-    QSPI_DATA_REG_OFFSET                    = 0x00,
-    QSPI_CTRL1_REG_OFFSET                   = 0x04,
-    QSPI_STATUS_REG_OFFSET                  = 0x04,
-    QSPI_CTRL2_REG_OFFSET                   = 0x08,
-    QSPI_CTRL3_REG_OFFSET                   = 0x0C
-} qspi_reg_offset_t;
+typedef union {
+    struct {
+        uint32_t chip_enable    : 1;  // Bit 0:      Chip Enable (1=active) when software driven
+        uint32_t nwp            : 1;  // Bit 1:      nWP line value
+        uint32_t reset          : 1;  // Bit 2:      nReset line value (1=normal operation)
+        uint32_t data_byte      : 1;  // Bit 3:      Data interface (1=Byte, 0=Word)
+        uint32_t lane_width     : 1;  // Bit 4:      Interface usage (1=x4, 0=x1)
+        uint32_t auto_mask      : 1;  // Bit 5:      Mask operation for auto mode
+        uint32_t clk_div        : 3;  // Bits 8:6:   Clock divider
+        uint32_t start          : 1;  // Bit 9:      Start transaction
+        uint32_t tx_count       : 11; // Bits 20:10: Words/Bytes to Transmit
+        uint32_t rx_count       : 11; // Bits 31:21: Words/Bytes to Receive
+    } bits;
+    uint32_t word;
+} QSPI_Ctrl1_Reg_t;
 
-// Bitmasks for the Control Register (CTRL1)
-typedef enum {
-    QSPI_CTRL1_CE_ACTIVATE                  = (1u << 0),
-    QSPI_CTRL1_BYTE_MODE                    = (1u << 3), // 0 = Word, 1 = Byte
-    QSPI_CTRL1_QUAD_MODE                    = (1u << 4), // 0 = x1, 1 = x4
-    QSPI_CTRL1_START_OP                     = (1u << 9)
-} qspi_ctrl1_mask_t;
+/**
+ * @brief CTRL2 Register (Write-Only, Offset +8)
+ * Configures automated operations.
+ */
+typedef union {
+    struct {
+        uint32_t auto_cmd       : 8;  // Bits 7:0:   Command for auto operation
+        uint32_t auto_mask      : 8;  // Bits 15:8:  Mask for auto operation
+        uint32_t auto_repeats   : 15; // Bits 30:16: Max retries for auto operation
+        uint32_t auto_enable    : 1;  // Bit 31:     Enable auto operation
+    } bits;
+    uint32_t word;
+} QSPI_Ctrl2_Reg_t;
 
-// Bit shifts for the Control Register (CTRL1)
-typedef enum {
-    QSPI_CTRL1_TX_COUNT_SHIFT               = 10,
-    QSPI_CTRL1_RX_COUNT_SHIFT               = 21
-} qspi_ctrl1_shift_t;
+/**
+ * @brief CTRL3 Register (Write-Only, Offset +12)
+ * Provides direct control over QSPI lines for GPIO/toggling.
+ */
+typedef union {
+    struct {
+        uint32_t g_out          : 7;  // Bits 6:0: GPIO output values (Rst,CE,CLK,D[3:0])
+        uint32_t g_ena          : 7;  // Bits 13:7: GPIO enable (1=output, 0=input)
+        uint32_t g_use_gpio     : 1;  // Bit 14: Use GPIO mode (1=GPIO, 0=QSPI)
+        uint32_t g_use_toggle   : 1;  // Bit 15: Use toggling mode
+        uint32_t nhold          : 1;  // Bit 16: nHold line value
+        uint32_t dummy_cnt      : 5;  // Bits 21:17: Number of dummy cycles
+        uint32_t                : 10; // Reserved
+    } bits;
+    uint32_t word;
+} QSPI_Ctrl3_Reg_t;
+
+/**
+ * @brief STATUS1 Register (Read-Only, Offset +4)
+ * Provides the primary status of the QSPI controller.
+ */
+typedef union {
+    struct {
+        uint32_t idle           : 1;  // Bit 0: Controller is idle
+        uint32_t rx_fifo_empty  : 1;  // Bit 1: RX FIFO is empty
+        uint32_t rx_fifo_full   : 1;  // Bit 2: RX FIFO is full
+        uint32_t tx_fifo_empty  : 1;  // Bit 3: TX FIFO is empty
+        uint32_t tx_fifo_full   : 1;  // Bit 4: TX FIFO is full
+        uint32_t err_overrun    : 1;  // Bit 5: Overrun error
+        uint32_t auto_op_ready  : 1;  // Bit 6: Auto operation is ready
+        uint32_t auto_op_error  : 1;  // Bit 7: Auto operation error
+        uint32_t lane_data      : 4;  // Bits 11:8: Current state of QSPI data out lines
+        uint32_t lane_clk       : 1;  // Bit 12: Current state of QSPI CLK line
+        uint32_t lane_ce        : 1;  // Bit 13: Current state of QSPI CE line
+        uint32_t lane_rst       : 1;  // Bit 14: Current state of QSPI RST line
+        uint32_t                : 1;  // Bit 15: Reserved
+        uint32_t lane_gpio_out  : 7;  // Bits 22:16: GPIO data out lines
+        uint32_t                : 1;  // Bit 23: Reserved
+        uint32_t lane_ext_data  : 4;  // Bits 27:24: External data lines
+        uint32_t lane_ext_clk   : 1;  // Bit 28: External CLK
+        uint32_t lane_ext_rst   : 1;  // Bit 29: External RST
+        uint32_t lane_ext_ce    : 1;  // Bit 30: External CE
+        uint32_t                : 1;  // Bit 31: Reserved
+    } bits;
+    uint32_t word;
+} QSPI_Status1_Reg_t;
+
+/**
+ * @brief STATUS2 Register (Read-Only, Offset +8)
+ * Provides FIFO status and counters.
+ */
+typedef union {
+    struct {
+        uint32_t rx_fifo_full   : 1;  // Bit 0: RX FIFO is full
+        uint32_t rx_fifo_empty  : 1;  // Bit 1: RX FIFO is empty
+        uint32_t rx_fifo_rdcnt  : 7;  // Bits 8:2: RX FIFO read counter
+        uint32_t rx_fifo_wrcnt  : 7;  // Bits 15:9: RX FIFO write counter
+        uint32_t tx_fifo_full   : 1;  // Bit 16: TX FIFO is full
+        uint32_t tx_fifo_empty  : 1;  // Bit 17: TX FIFO is empty
+        uint32_t tx_fifo_rdcnt  : 7;  // Bits 24:18: TX FIFO read counter
+        uint32_t tx_fifo_wrcnt  : 7;  // Bits 31:25: TX FIFO write counter
+    } bits;
+    uint32_t word;
+} QSPI_Status2_Reg_t;
 
 // Bitmask for the Status Register
 static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);

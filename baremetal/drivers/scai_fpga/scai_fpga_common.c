@@ -99,7 +99,7 @@ void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32
     for (uint32_t i = 0; i < rx_len; ++i) {
         uint32_t value = *data_reg;
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_R = 0x%08X\n", value);
-        rx_buffer[i] = (uint8_t)(value && 0xFF);
+        rx_buffer[i] = (uint8_t)(value & 0xFF);
     }
 
     mt29f_ctrl1.bits.tx_count    = 0;                                 // Number of bytes to transmit

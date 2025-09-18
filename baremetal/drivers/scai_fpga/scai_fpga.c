@@ -432,12 +432,6 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
         return 0;
     }
 
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Setting flash chip...\n");
-    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
-        return 0;
-    }
-
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading JEDEC ID...\n");
     Flash_readid(id_buf);
     return (id_buf[0] << 24) | (id_buf[1] << 16) | (id_buf[2] << 8) | id_buf[3];
@@ -465,25 +459,3 @@ uint32_t scai_fpga_read_reg(uintptr_t address)
     // mHSS_DEBUG_PRINTF(LOG_NORMAL, "Read 0x%08X from address 0x%08X\n", value, address);
     return value;
 }
-
-/*
-qspi readreg 0x40000404
-qspi writereg 0x40000404 0x4
-qspi writereg 0x40000408 0x0
-qspi writereg 0x4000040C 0x10000
-qspi readreg 0x40000404
-
-// Unlock all blocks
-qspi writereg 0x40000400 0x1F000000
-qspi writereg 0x40000400 0xA0000000
-qspi writereg 0x40000400 0x00000000
-qspi writereg 0x40000404 0xE01
-qspi readreg 0x40000404
-
-// Continuous Read
-qspi writereg 0x40000400 0x1F000000
-qspi writereg 0x40000400 0xB0000000
-qspi writereg 0x40000400 0x01000000
-qspi writereg 0x40000404 0xE01
-qspi readreg 0x40000404
-*/

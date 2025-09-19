@@ -4,7 +4,7 @@
       <design_name>NAVC_MSS</design_name>
       <mpfs_part_no>MPFS250T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>09-03-2025_16:57:50</creation_date_time>
+      <creation_date_time>09-19-2025_15:49:53</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -2821,10 +2821,10 @@
             <field Type="RW" name="CFG_WTR_L_CRC_DM" offset="0" width="32">0xB</field>
           </register>
           <register address="0x00003C90" description="IP Blk = MC_BASE1 Access=RW " name="CFG_WR_CRC_DM">
-            <field Type="RW" name="CFG_WR_CRC_DM" offset="0" width="32">0x11</field>
+            <field Type="RW" name="CFG_WR_CRC_DM" offset="0" width="32">0xF</field>
           </register>
           <register address="0x00003C94" description="IP Blk = MC_BASE1 Access=RW " name="CFG_RFC1">
-            <field Type="RW" name="CFG_RFC1" offset="0" width="32">0x118</field>
+            <field Type="RW" name="CFG_RFC1" offset="0" width="32">0xEA</field>
           </register>
           <register address="0x00003C98" description="IP Blk = MC_BASE1 Access=RW " name="CFG_RFC2">
             <field Type="RW" name="CFG_RFC2" offset="0" width="32">0x0</field>
@@ -2995,31 +2995,31 @@
             <field Type="RW" name="CFG_AUTO_REF_EN" offset="0" width="32">0x1</field>
           </register>
           <register address="0x00004044" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RAS">
-            <field Type="RW" name="CFG_RAS" offset="0" width="32">0x1A</field>
+            <field Type="RW" name="CFG_RAS" offset="0" width="32">0x16</field>
           </register>
           <register address="0x00004048" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RCD">
-            <field Type="RW" name="CFG_RCD" offset="0" width="32">0xB</field>
+            <field Type="RW" name="CFG_RCD" offset="0" width="32">0x9</field>
           </register>
           <register address="0x0000404C" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RRD">
             <field Type="RW" name="CFG_RRD" offset="0" width="32">0x00000007</field>
           </register>
           <register address="0x00004050" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RP">
-            <field Type="RW" name="CFG_RP" offset="0" width="32">0xB</field>
+            <field Type="RW" name="CFG_RP" offset="0" width="32">0x9</field>
           </register>
           <register address="0x00004054" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RC">
-            <field Type="RW" name="CFG_RC" offset="0" width="32">0x25</field>
+            <field Type="RW" name="CFG_RC" offset="0" width="32">0x1F</field>
           </register>
           <register address="0x00004058" description="IP Blk = MC_BASE2 Access=RW " name="CFG_FAW">
-            <field Type="RW" name="CFG_FAW" offset="0" width="32">0x1C</field>
+            <field Type="RW" name="CFG_FAW" offset="0" width="32">0x18</field>
           </register>
           <register address="0x0000405C" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RFC">
             <field Type="RW" name="CFG_RFC" offset="0" width="32">0x00000076</field>
           </register>
           <register address="0x00004060" description="IP Blk = MC_BASE2 Access=RW " name="CFG_RTP">
-            <field Type="RW" name="CFG_RTP" offset="0" width="32">0x6</field>
+            <field Type="RW" name="CFG_RTP" offset="0" width="32">0x5</field>
           </register>
           <register address="0x00004064" description="IP Blk = MC_BASE2 Access=RW " name="CFG_WR">
-            <field Type="RW" name="CFG_WR" offset="0" width="32">0xC</field>
+            <field Type="RW" name="CFG_WR" offset="0" width="32">0xA</field>
           </register>
           <register address="0x00004068" description="IP Blk = MC_BASE2 Access=RW " name="CFG_WTR">
             <field Type="RW" name="CFG_WTR" offset="0" width="32">0x00000008</field>
@@ -3082,10 +3082,10 @@
             <field Type="RW" name="CFG_DLL_DISABLE" offset="0" width="32">0x0</field>
           </register>
           <register address="0x000040CC" description="IP Blk = MC_BASE2 Access=RW " name="CFG_REF_PER">
-            <field Type="RW" name="CFG_REF_PER" offset="0" width="32">0x1860</field>
+            <field Type="RW" name="CFG_REF_PER" offset="0" width="32">0x144B</field>
           </register>
           <register address="0x000040D0" description="IP Blk = MC_BASE2 Access=RW " name="CFG_STARTUP_DELAY">
-            <field Type="RW" name="CFG_STARTUP_DELAY" offset="0" width="32">0x27100</field>
+            <field Type="RW" name="CFG_STARTUP_DELAY" offset="0" width="32">0x20850</field>
           </register>
           <register address="0x000040D4" description="IP Blk = MC_BASE2 Access=RW " name="CFG_MEM_COLBITS">
             <field Type="RW" name="CFG_MEM_COLBITS" offset="0" width="32">0xA</field>
@@ -3172,13 +3172,13 @@
             <field Type="RW" name="CFG_MOD" offset="0" width="32">0x18</field>
           </register>
           <register address="0x0000418C" description="IP Blk = MC_BASE2 Access=RW " name="CFG_XS">
-            <field Type="RW" name="CFG_XS" offset="0" width="32">0x120</field>
+            <field Type="RW" name="CFG_XS" offset="0" width="32">0xF0</field>
           </register>
           <register address="0x00004190" description="IP Blk = MC_BASE2 Access=RW " name="CFG_XSDLL">
             <field Type="RW" name="CFG_XSDLL" offset="0" width="32">0x00000200</field>
           </register>
           <register address="0x00004194" description="IP Blk = MC_BASE2 Access=RW " name="CFG_XPR">
-            <field Type="RW" name="CFG_XPR" offset="0" width="32">0x120</field>
+            <field Type="RW" name="CFG_XPR" offset="0" width="32">0xF0</field>
           </register>
           <register address="0x00004198" description="IP Blk = MC_BASE2 Access=RW " name="CFG_AL_MODE">
             <field Type="RW" name="CFG_AL_MODE" offset="0" width="32">0x0</field>
@@ -3211,7 +3211,7 @@
             <field Type="RW" name="CFG_ZQ_CAL_TYPE" offset="0" width="32">0x0</field>
           </register>
           <register address="0x000041C0" description="IP Blk = MC_BASE2 Access=RW " name="CFG_ZQ_CAL_PER">
-            <field Type="RW" name="CFG_ZQ_CAL_PER" offset="0" width="32">0x27100</field>
+            <field Type="RW" name="CFG_ZQ_CAL_PER" offset="0" width="32">0x20850</field>
           </register>
           <register address="0x000041C4" description="IP Blk = MC_BASE2 Access=RW " name="CFG_AUTO_ZQ_CAL_EN">
             <field Type="RW" name="CFG_AUTO_ZQ_CAL_EN" offset="0" width="32">0x0</field>
@@ -3766,7 +3766,7 @@
             <field Type="RW" name="MSS_APB_AHB_CLK" offset="0" width="32">150000000</field>
           </register>
           <register address="28" description="DDR clock rate in Hz (clk rate x 2)" name="DDR_CLK">
-            <field Type="RW" name="DDR_CLK" offset="0" width="32">1600000000</field>
+            <field Type="RW" name="DDR_CLK" offset="0" width="32">1332000000</field>
           </register>
         </registers>
       </clocks>
@@ -4092,7 +4092,7 @@
             <field Type="RW" name="FBCK_SEL" offset="1" width="2">0x0</field>
             <field Type="RW" name="FOUTFB_SELMUX_EN" offset="3" width="1">0x0</field>
             <field Type="RSVD" name="RESERVE12" offset="4" width="4">0x0</field>
-            <field Type="RW" name="RFDIV" offset="8" width="6">0x1</field>
+            <field Type="RW" name="RFDIV" offset="8" width="6">0x19</field>
             <field Type="RSVD" name="RESERVE13" offset="14" width="2">0x0</field>
             <field Type="RSVD" name="RESERVE14" offset="16" width="12">0x0</field>
             <field Type="RSVD" name="RESERVE15" offset="28" width="4">0x0</field>
@@ -4171,7 +4171,7 @@
             <field Type="RSVD" name="RESERVE01" offset="30" width="2">0x0</field>
           </register>
           <register address="0x0000002C" description="SSCG registers 2" name="SSCG_REG_2">
-            <field Type="RW" name="INTIN" offset="0" width="12">0x20</field>
+            <field Type="RW" name="INTIN" offset="0" width="12">0x29A</field>
             <field Type="RO" name="INTMOD" offset="12" width="12">0x0</field>
             <field Type="RSVD" name="RESERVE02" offset="24" width="8">0x0</field>
           </register>

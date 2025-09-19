@@ -114,7 +114,7 @@ CONFIG_SERVICE_TINYCLI_TIMEOUT=1
 # end of Tiny Command Line Interface
 
 # CONFIG_SERVICE_UART is not set
-CONFIG_SERVICE_USBDMSC=y
+# CONFIG_SERVICE_USBDMSC is not set
 
 #
 # USB Device Mass Storage Class

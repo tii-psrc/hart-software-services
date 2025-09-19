@@ -10,8 +10,7 @@
 #ifndef SCAI_FPGA_COMMON_H
 #define SCAI_FPGA_COMMON_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "hss_types.h"
 #include "drivers/mss/mss_qspi/mss_qspi.h" // For mss_qspi_io_format enum
 
 //------------------------------------------------------------------------------
@@ -120,7 +119,7 @@ typedef union {
 typedef enum {
     QSPI_DATA_REG_OFFSET                    = 0x00,
     QSPI_CTRL1_REG_OFFSET                   = 0x04,
-    QSPI_STATUS_REG_OFFSET                  = 0x04,
+    QSPI_STATUS1_REG_OFFSET                  = 0x04,
     QSPI_STATUS2_REG_OFFSET                 = 0x08,
     QSPI_CTRL2_REG_OFFSET                   = 0x08,
     QSPI_CTRL3_REG_OFFSET                   = 0x0C
@@ -129,6 +128,17 @@ typedef enum {
 //------------------------------------------------------------------------------
 // Public API
 //------------------------------------------------------------------------------
+
+/**
+ * @brief A structure to hold the context for a single QSPI controller instance (channel).
+ * This includes its base address and a software copy of its control register state.
+ */
+typedef struct {
+    uintptr_t          base_addr;      // Hardware base address of the QSPI controller
+    QSPI_Ctrl1_Reg_t   ctrl1_state;    // Software copy of the CTRL1 register
+    bool               is_initialized; // True if the controller has been initialized
+    mss_qspi_io_format format;         // I/O format (e.g., MSS_QSPI_QUAD_FULL)
+} scai_fpga_channel_t;
 
 /**
  * @brief A structure to define all parameters for a single QSPI transaction.
@@ -148,7 +158,7 @@ typedef struct {
  * @brief Initializes the common QSPI interface module.
  * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
  */
-void QSPI_FPGA_IF_init(uintptr_t base_addr, mss_qspi_io_format io_format);
+void QSPI_FPGA_IF_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format);
 
 /**
  * @brief Gets the current I/O format.
@@ -162,6 +172,6 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void);
  * @param base_addr The base address of the QSPI controller instance.
  * @param params    A pointer to a struct containing all transaction parameters.
  */
-void scai_fpga_transaction(uintptr_t base_addr, const scai_fpga_transaction_t* params);
+void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
 
 #endif // SCAI_FPGA_COMMON_H

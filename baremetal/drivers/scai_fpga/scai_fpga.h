@@ -12,22 +12,21 @@
 extern "C" {
 #endif
 
-#include "drivers/mss/mss_qspi/mss_qspi.h"
 #include "hss_types.h"
 #include "winbond_w25n01gv_direct.h"
 
 // Struct with the function pointers for a generic flash driver interface
 typedef struct {
-    void (*init)(uintptr_t base_addr, mss_qspi_io_format io_format);
-    void (*read_id)(uintptr_t base_addr, uint8_t* id_buf);
-    uint8_t (*read)(uintptr_t base_addr, uint8_t* rx_buf, uint32_t start_addr, uint32_t size);
-    uint8_t (*erase)(uintptr_t base_addr);
-    uint8_t (*erase_block)(uintptr_t base_addr, uint16_t block_number);
-    uint8_t (*program)(uintptr_t base_addr, const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
-    uint8_t (*read_status_regs)(uintptr_t base_addr, void* regs_out);
-    uint32_t (*scan_for_bad_blocks)(uintptr_t base_addr, uint16_t* bad_blocks_buf);
-    uint8_t (*read_bb_lut)(uintptr_t base_addr, w25_bb_lut_entry_t* lut_ptr);
-    uint8_t (*add_entry_to_bb_lut)(uintptr_t base_addr, uint16_t lba, uint16_t pba);
+    void (*init)(scai_fpga_channel_t* channel, mss_qspi_io_format io_format);
+    void (*read_id)(scai_fpga_channel_t* channel, uint8_t* id_buf);
+    uint8_t (*read)(scai_fpga_channel_t* channel, uint8_t* rx_buf, uint32_t start_addr, uint32_t size);
+    uint8_t (*erase)(scai_fpga_channel_t* channel);
+    uint8_t (*erase_block)(scai_fpga_channel_t* channel, uint16_t block_number);
+    uint8_t (*program)(scai_fpga_channel_t* channel, const uint8_t* tx_buf, uint32_t start_addr, uint32_t size);
+    uint8_t (*read_status_regs)(scai_fpga_channel_t* channel, void* regs_out);
+    uint32_t (*scan_for_bad_blocks)(scai_fpga_channel_t* channel, uint16_t* bad_blocks_buf);
+    uint8_t (*read_bb_lut)(scai_fpga_channel_t* channel, w25_bb_lut_entry_t* lut_ptr);
+    uint8_t (*add_entry_to_bb_lut)(scai_fpga_channel_t* channel, uint16_t lba, uint16_t pba);
 } scai_flash_driver_t;
 
 // Enum to identify the different supported flash memory types

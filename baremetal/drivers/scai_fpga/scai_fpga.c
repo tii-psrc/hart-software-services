@@ -58,6 +58,15 @@ static const scai_flash_driver_t micron_mt29f_driver = {
     .add_entry_to_bb_lut = NULL  // Not applicable for this flash type
 };
 
+// =============================================================================
+// Channel Management
+// =============================================================================
+
+#define SCAI_MAX_CHIPS_MT29F      8
+#define SCAI_MAX_CHIPS_MT25Q      1
+#define SCAI_MAX_CHIPS_W25        1
+#define SCAI_MAX_CHIPS_W25_DIRECT 1
+
 static const uintptr_t MSS_APB_BASE_ADDRESS    = 0x40000000UL;
 static const uintptr_t QSPI_0_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0300L;
 static const uintptr_t QSPI_1_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0400L;
@@ -90,18 +99,21 @@ static const uintptr_t MT29F_BASE_ADDRS[] = {
 // Module State
 // Pointers to the currently active driver and its type.
 // Default to the direct MSS driver as per the requirement.
+
+static scai_fpga_channel_t  g_qspi_channels[SCAI_MEM_TYPES_QUANTITY] = { 0 };
+
+static scai_fpga_channel_t* g_active_channel      = &g_qspi_channels[SCAI_WINBOND_W25N01_DIRECT];
 static const scai_flash_driver_t* g_active_driver = &w25n01_direct_driver;
-static uintptr_t g_active_base_addr = 0;
-static scai_flash_type_t g_active_flash_type = SCAI_WINBOND_W25N01_DIRECT;
-static bool g_is_initialized[SCAI_MEM_TYPES_QUANTITY] = { false };
+static scai_flash_type_t g_active_flash_type      = SCAI_WINBOND_W25N01_DIRECT;
 
 // Inline helper function for driver validation
 static inline bool is_driver_ready(void) {
-    if (!g_active_driver) {
+    if (!g_active_driver || !g_active_channel) {
         // mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
         return false;
     }
-    if (!g_is_initialized[g_active_flash_type]) {
+
+    if (!g_active_channel->is_initialized) {
         // mHSS_DEBUG_PRINTF(LOG_ERROR, "Active SCAI flash driver is not initialized.\n");
         return false;
     }
@@ -132,19 +144,19 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
     if (g_active_flash_type != flash_type) {
         switch (flash_type) {
             case SCAI_WINBOND_W25N01_FPGA:
-                g_active_driver = &winbond_w25n01_fpga_driver;
-                g_active_base_addr = W25N01_FPGA_BASE_ADDR;
+                g_active_driver = &winbond_w25n01_fpga_driver; 
+                g_qspi_channels[SCAI_WINBOND_W25N01_FPGA].base_addr = W25N01_FPGA_BASE_ADDR;
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Winbond W25N01 FPGA flash driver.\n");
                 break;
             case SCAI_WINBOND_W25N01_DIRECT:
                 g_active_driver = &w25n01_direct_driver;
-                g_active_base_addr = W25N01_DIRECT_BASE_ADDR;
+                g_qspi_channels[SCAI_WINBOND_W25N01_DIRECT].base_addr = W25N01_DIRECT_BASE_ADDR;
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Winbond W25N01 Direct flash driver.\n");
                 break;
             case SCAI_MICRON_MT29F:
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F chip not specified, defaulting to Chip 0.\n");
                 g_active_driver = &micron_mt29f_driver;
-                g_active_base_addr = MT29F_BASE_ADDRS[0];
+                g_qspi_channels[SCAI_MICRON_MT29F].base_addr = MT29F_BASE_ADDRS[0];
                 break;
             case SCAI_MICRON_MT29F_CHIP_0:
             case SCAI_MICRON_MT29F_CHIP_1:
@@ -155,23 +167,27 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
             case SCAI_MICRON_MT29F_CHIP_6:
             case SCAI_MICRON_MT29F_CHIP_7:
                 g_active_driver = &micron_mt29f_driver;
-                g_active_base_addr = MT29F_BASE_ADDRS[flash_type - SCAI_MICRON_MT29F_CHIP_0];
+                g_qspi_channels[flash_type].base_addr = MT29F_BASE_ADDRS[flash_type - SCAI_MICRON_MT29F_CHIP_0];
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Micron MT29F FPGA flash driver, Chip %u.\n", flash_type - SCAI_MICRON_MT29F_CHIP_0);
-                break;
+            break;
             case SCAI_MICRON_MT25Q:
                 mHSS_DEBUG_PRINTF(LOG_ERROR, "Micron MT25Q driver not implemented yet.\n");
                 break;
             default: // Should not happen due to check above
                 g_active_driver = NULL;
-                return SCAI_FLASH_ERROR;
+            return SCAI_FLASH_ERROR;
         }
         g_active_flash_type = flash_type;
-    }
+        g_active_channel    = &g_qspi_channels[flash_type];
 
-    // Initialize the driver if it hasn't been initialized yet.
-    if (g_active_driver && g_active_driver->init && !g_is_initialized[flash_type]) {
-        g_active_driver->init(g_active_base_addr, io_format);
-        g_is_initialized[flash_type] = true;
+        // Initialize the driver if it hasn't been initialized yet.
+        if (g_active_driver 
+            && g_active_driver->init 
+            && !g_active_channel->is_initialized) 
+        {
+            g_active_driver->init(g_active_channel, io_format);
+            g_active_channel->is_initialized = true;
+        }
     }
 
     return SCAI_FLASH_SUCCESS;
@@ -186,13 +202,13 @@ scai_flash_type_t get_scai_flash_type(void) {
 }
 
 // =============================================================================
-// Wrapper Functions
+// Wrapper Functions (HSS API)
 // =============================================================================
 
 // This function, called by HSS, initializes the default driver.
 // Subsequent drivers are initialized on-demand by scai_set_flash_chip.
 void Flash_init(mss_qspi_io_format io_format) {
-    if (!g_active_driver) {
+    if (!g_active_driver || !g_active_channel) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash_init: No active SCAI flash driver selected.\n");
         return;
     }
@@ -201,10 +217,11 @@ void Flash_init(mss_qspi_io_format io_format) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid MSS QSPI I/O format: %u\n", io_format);
         return;
     }
-
-    if (g_active_driver->init && !g_is_initialized[g_active_flash_type]) {
-        g_active_driver->init(g_active_base_addr, io_format);
-        g_is_initialized[g_active_flash_type] = true;
+    
+    if (g_active_driver->init && !g_active_channel->is_initialized) {
+        g_active_channel->ctrl1_state.word = 0;
+        g_active_driver->init(g_active_channel, io_format);
+        g_active_channel->is_initialized = true;
     } 
 }
 
@@ -223,7 +240,7 @@ void Flash_readid(uint8_t* buf) {
         return;
     }
 
-    g_active_driver->read_id(g_active_base_addr, buf);
+    g_active_driver->read_id(g_active_channel, buf);
 }
 
 uint8_t Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
@@ -246,7 +263,7 @@ uint8_t Flash_read(uint8_t* buf, uint32_t addr, uint32_t len) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->read(g_active_base_addr, buf, addr, len);
+    return g_active_driver->read(g_active_channel, buf, addr, len);
 }
 
 uint8_t Flash_erase(void) {
@@ -259,7 +276,7 @@ uint8_t Flash_erase(void) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->erase(g_active_base_addr);
+    return g_active_driver->erase(g_active_channel);
 }
 
 uint8_t Flash_erase_block(uint16_t block_nb) {
@@ -272,7 +289,7 @@ uint8_t Flash_erase_block(uint16_t block_nb) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->erase_block(g_active_base_addr, block_nb);
+    return g_active_driver->erase_block(g_active_channel, block_nb);
 }
 
 uint8_t Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len) {
@@ -295,7 +312,7 @@ uint8_t Flash_program(const uint8_t* buf, uint32_t addr, uint32_t len) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->program(g_active_base_addr, buf, addr, len);
+    return g_active_driver->program(g_active_channel, buf, addr, len);
 }
 
 void Flash_read_status_regs(uint8_t * buf) {
@@ -313,7 +330,7 @@ void Flash_read_status_regs(uint8_t * buf) {
         return;
     }
 
-    g_active_driver->read_status_regs(g_active_base_addr, buf);
+    g_active_driver->read_status_regs(g_active_channel, buf);
 }
 
 uint32_t Flash_scan_for_bad_blocks(uint16_t* buf) {
@@ -331,7 +348,7 @@ uint32_t Flash_scan_for_bad_blocks(uint16_t* buf) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->scan_for_bad_blocks(g_active_base_addr, buf);
+    return g_active_driver->scan_for_bad_blocks(g_active_channel, buf);
 }
 
 uint8_t Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr) {
@@ -349,7 +366,7 @@ uint8_t Flash_read_bb_lut(w25_bb_lut_entry_t* lut_ptr) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->read_bb_lut(g_active_base_addr, lut_ptr);
+    return g_active_driver->read_bb_lut(g_active_channel, lut_ptr);
 }
 
 uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba) {
@@ -362,7 +379,7 @@ uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba) {
         return SCAI_FLASH_ERROR;
     }
 
-    return g_active_driver->add_entry_to_bb_lut(g_active_base_addr, lba, pba);
+    return g_active_driver->add_entry_to_bb_lut(g_active_channel, lba, pba);
 }
 
 // Example test function

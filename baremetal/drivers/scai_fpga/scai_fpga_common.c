@@ -20,7 +20,6 @@ typedef enum {
 //  Common SCAI FPGA interface state
 static mss_qspi_io_format g_io_format = MSS_QSPI_NORMAL;
 
-static const uint16_t SCAI_FPGA_IF_TIMEOUT   = 10000; // Empirical timeout value
 static const uint32_t SCAI_FPGA_FIFO_TIMEOUT = 100000;
 static const uint16_t SCAI_FPGA_FIFO_LENGTH  = 64;
 
@@ -86,7 +85,7 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
                 data_to_write = buf32[elements_written];
             } else {
                 data_to_write = (((uint32_t)buf8[elements_written]) << SCAI_FPGA_FIFO_BYTE_SHIFT) & SCAI_FPGA_FIFO_TX_BYTE_MASK;
-                data_to_write |= ~SCAI_FPGA_FIFO_BYTE_MASK; // Fill lsb bits 
+                data_to_write |= ~SCAI_FPGA_FIFO_TX_BYTE_MASK; // Fill lsb bits 
             }
             mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", data_to_write);
             *data_reg = data_to_write;
@@ -142,8 +141,6 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
         }
 
         uint32_t words_available = status2.bits.rx_fifo_rdcnt;
-        uint32_t elements_remaining = rx_len - elements_read;
-
         uint32_t chunk_size = rx_len - elements_read;
         if (chunk_size > words_available) {
             chunk_size = words_available;
@@ -188,43 +185,40 @@ static bool qspi_fpga_wait_idle(uintptr_t base_addr) {
  * @param transaction_state The desired state transition (START or FINALIZE).
  * @param params            A pointer to a struct with the transaction parameters.
  */
-static void qspi_fpga_update_ctrl1(uintptr_t base_addr,
-                                 QSPI_Ctrl1_Reg_t* ctrl_state,
+static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
                                  QSPI_TransactionState transaction_state,
-                                 const QSPI_TransactionParams* params)
+                                 const scai_fpga_transaction_t* params)
 {
-    volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
+    volatile uint32_t* ctrl1_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
 
     switch (transaction_state) {
         case QSPI_STATE_START:
         {
-            ctrl_state->word              = 0; // Start with a clean state
-            ctrl_state->bits.enable       = 1;
-            ctrl_state->bits.chip_enable  = 1;
-            ctrl_state->bits.data_mode    = 0; // Byte mode
-            ctrl_state->bits.lane_width   = (params->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;
-            ctrl_state->bits.tx_count     = params->tx_len;
-            ctrl_state->bits.rx_count     = params->rx_len;
-            ctrl_state->bits.start        = 1;
+            channel->ctrl1_state.bits.chip_enable  = 1;
+            channel->ctrl1_state.bits.data_mode    = 0; // Byte mode
+            channel->ctrl1_state.bits.lane_width   = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;
+            channel->ctrl1_state.bits.tx_count     = params->tx_len;
+            channel->ctrl1_state.bits.rx_count     = params->rx_len;
+            channel->ctrl1_state.bits.start        = 1;
             break;
         }
         case QSPI_STATE_FINALIZE:
         {
             // Modify only the necessary bits from the current software state
-            ctrl_state->bits.start = 0;
-            ctrl_state->bits.tx_count = 0;
-            ctrl_state->bits.rx_count = 0;
+            channel->ctrl1_state.bits.start = 0;
+            channel->ctrl1_state.bits.tx_count = 0;
+            channel->ctrl1_state.bits.rx_count = 0;
 
             if (!params->keep_ce_active) {
-                ctrl_state->bits.chip_enable = 0;
+                channel->ctrl1_state.bits.chip_enable = 0;
             }
             break;
         }
     }
     
     // Write the final computed state to the hardware register
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", mt29f_ctrl1.word);
-    *ctrl1_reg = ctrl_state->word;
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
+    *ctrl1_reg = channel->ctrl1_state.word;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 }
 
@@ -233,19 +227,19 @@ static void qspi_fpga_update_ctrl1(uintptr_t base_addr,
 // =============================================================================
 
 // Initialize global pointers for optimized access based on the defined base address
-void QSPI_FPGA_IF_init(uintptr_t base_addr, mss_qspi_io_format io_format) {
+void QSPI_FPGA_IF_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format) {
     g_io_format = io_format;
 
-    volatile uint32_t* ctrl1_reg = (uint32_t*)(base_addr + QSPI_CTRL1_REG_OFFSET);
-    volatile uint32_t* ctrl2_reg = (uint32_t*)(base_addr + QSPI_CTRL2_REG_OFFSET);
-    volatile uint32_t* ctrl3_reg = (uint32_t*)(base_addr + QSPI_CTRL3_REG_OFFSET);
+    volatile uint32_t* ctrl1_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
+    volatile uint32_t* ctrl2_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL2_REG_OFFSET);
+    volatile uint32_t* ctrl3_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL3_REG_OFFSET);
 
     // 1. Set default control register values
-    QSPI_Ctrl1_Reg_t mt29f_ctrl1;
-    mt29f_ctrl1.bits.reset       = 1;                                         // Clear RESET
-    mt29f_ctrl1.bits.data_mode   = 1;                                         // Byte mode
-    mt29f_ctrl1.bits.lane_width  = (io_format == MSS_QSPI_QUAD_FULL) ? 1 : 0; // Interface width
-    *ctrl1_reg = mt29f_ctrl1.word;
+    channel->ctrl1_state.word             = 0;
+    channel->ctrl1_state.bits.reset       = 1;                                         // Clear RESET
+    channel->ctrl1_state.bits.data_mode   = 1;                                         // Byte mode
+    channel->ctrl1_state.bits.lane_width  = (io_format == MSS_QSPI_QUAD_FULL) ? 1 : 0; // Interface width
+    *ctrl1_reg = channel->ctrl1_state.word;
 
     // 2. Configure I/O format
     QSPI_Ctrl2_Reg_t mt29f_ctrl2 = {0};                                       // No auto operation
@@ -260,40 +254,40 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {
     return g_io_format;
 }
 
-void scai_fpga_transaction(uintptr_t base_addr, QSPI_Ctrl1_Reg_t ctrl1_state, const scai_fpga_transaction_t* params) {
+void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params) {
     if (!params || (params->tx_len > 0 && !params->tx_buffer) || (params->rx_len > 0 && !params->rx_buffer)) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "scai_fpga_transaction: Invalid arguments provided.\n");
         return;
     }
 
     // 1. Configure and Start Transaction
-    qspi_fpga_update_ctrl1(base_addr, &ctrl1_state, QSPI_STATE_START, &params);
+    qspi_fpga_update_ctrl1(channel, QSPI_STATE_START, params);
 
     // 2. Handle Data Phase (FIFO Operations)
     if (params->tx_len > 0) {
-        uint32_t sent = qspi_fpga_fifo_write(base_addr, params->tx_buffer, params->tx_len, params->data_size_is_word);
+        uint32_t sent = qspi_fpga_fifo_write(channel->base_addr, params->tx_buffer, params->tx_len, params->data_size_is_word);
         if (sent < params->tx_len) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to send all data. Sent %u of %u.\n", sent, params->tx_len);
         }
     }
 
     if (params->rx_len > 0) {
-        uint32_t received = qspi_fpga_fifo_read(base_addr, params->rx_buffer, params->rx_len, params->data_size_is_word);
+        uint32_t received = qspi_fpga_fifo_read(channel->base_addr, params->rx_buffer, params->rx_len, params->data_size_is_word);
         if (received < params->rx_len) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to receive all data. Received %u of %u.\n", received, params->rx_len);
         }
     }
 
     // 3. Wait while QSPI controller become idle
-    if (!qspi_fpga_wait_idle(base_addr)) {
+    if (!qspi_fpga_wait_idle(channel->base_addr)) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: controller did not become idle.\n");
     }
 
-    if (!qspi_fpga_wait_idle(base_addr)) {
+    if (!qspi_fpga_wait_idle(channel->base_addr)) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "ERROR in waiting for idle\n");
     }
 
     // 4. Clean Up and Finalize State
-    qspi_fpga_update_ctrl1(base_addr, &ctrl1_state, QSPI_STATE_FINALIZE, params);
+    qspi_fpga_update_ctrl1(channel, QSPI_STATE_FINALIZE, params);
 
 }

@@ -29,7 +29,7 @@
 #define MSS_WINBOND_W25N01GV_DIRECT_H_
 
 #include <stdint.h>
-#include "drivers/mss/mss_qspi/mss_qspi.h"
+#include "scai_fpga_common.h" // For scai_fpga_channel_t
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,7 +82,7 @@ typedef struct w25_bb_lut_entry {
   @endcode
 
 */
-void Scai_W25_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format);
+void Scai_W25_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_readid() function returns first 3 bytes of data of the device JEDEC ID.
@@ -105,7 +105,7 @@ void Scai_W25_Flash_init(uintptr_t base_addr, mss_qspi_io_format io_format);
   @endcode
 
 */
-void Scai_W25_Flash_readid(uintptr_t base_addr, uint8_t* buf);
+void Scai_W25_Flash_readid(scai_fpga_channel_t* channel, uint8_t* buf);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_read() function reads data from the flash memory.
@@ -137,7 +137,7 @@ void Scai_W25_Flash_readid(uintptr_t base_addr, uint8_t* buf);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, uint32_t len);
+uint8_t Scai_W25_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_t addr, uint32_t len);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_erase() function erases the complete device.
@@ -157,7 +157,7 @@ uint8_t Scai_W25_Flash_read(uintptr_t base_addr, uint8_t* buf, uint32_t addr, ui
   @endcode
 
 */
-uint8_t Scai_W25_Flash_erase(uintptr_t base_addr);
+uint8_t Scai_W25_Flash_erase(scai_fpga_channel_t* channel);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_erase_block() function erases the complete device.
@@ -177,7 +177,7 @@ uint8_t Scai_W25_Flash_erase(uintptr_t base_addr);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb);
+uint8_t Scai_W25_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block_nb);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_program() function writes data into the flash memory.
@@ -209,7 +209,7 @@ uint8_t Scai_W25_Flash_erase_block(uintptr_t base_addr, uint16_t block_nb);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t addr, uint32_t len);
+uint8_t Scai_W25_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_scan_for_bad_blocks() function scans for bad blocks within the flash
@@ -247,7 +247,7 @@ uint8_t Scai_W25_Flash_program(uintptr_t base_addr, const uint8_t* buf, uint32_t
   @endcode
 
 */
-uint32_t Scai_W25_Flash_scan_for_bad_blocks(uintptr_t base_addr, uint16_t* buf);
+uint32_t Scai_W25_Flash_scan_for_bad_blocks(scai_fpga_channel_t* channel, uint16_t* buf);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_read_status_regs() function reads all three status registers
@@ -271,7 +271,7 @@ uint32_t Scai_W25_Flash_scan_for_bad_blocks(uintptr_t base_addr, uint16_t* buf);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_read_status_regs(uintptr_t base_addr, void * regs_out);
+uint8_t Scai_W25_Flash_read_status_regs(scai_fpga_channel_t* channel, void * regs_out);
 
 /*-------------------------------------------------------------------------*//**
   The Flash_read_bb_lut() function reads the look up table (LUT) in the flash
@@ -296,7 +296,7 @@ uint8_t Scai_W25_Flash_read_status_regs(uintptr_t base_addr, void * regs_out);
   @endcode
 
 */
-uint8_t Scai_W25_Flash_read_bb_lut(uintptr_t base_addr, w25_bb_lut_entry_t* lut_ptr);
+uint8_t Scai_W25_Flash_read_bb_lut(scai_fpga_channel_t* channel, w25_bb_lut_entry_t* lut_ptr);
 
 
 
@@ -332,7 +332,7 @@ uint8_t Scai_W25_Flash_read_bb_lut(uintptr_t base_addr, w25_bb_lut_entry_t* lut_
   @endcode
 
 */
-uint8_t Scai_W25_Flash_add_entry_to_bb_lut(uintptr_t base_addr, uint16_t lba, uint16_t pba);
+uint8_t Scai_W25_Flash_add_entry_to_bb_lut(scai_fpga_channel_t* channel, uint16_t lba, uint16_t pba);
 
 /*
 */

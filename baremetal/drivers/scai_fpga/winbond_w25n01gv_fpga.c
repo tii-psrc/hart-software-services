@@ -100,7 +100,7 @@ static void write_enable(scai_fpga_channel_t* channel) {
 // =============================================================================
 
 void Scai_W25_Fpga_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format) {
-    QSPI_FPGA_IF_init(channel, io_format);
+    scai_fpga_init(channel);
     // const uint8_t cmd = W25N_CMD_DEVICE_RESET;
     // QSPI_FPGA_IF_transfer(channel, &cmd, 1, NULL, 0, MSS_QSPI_NORMAL, false);
     // wait_flash_ready(channel);
@@ -158,7 +158,7 @@ uint8_t Scai_W25_Fpga_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uin
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
-        cmd[0] = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? W25N_CMD_QUAD_READ_DATA : W25N_CMD_READ_DATA;
+        cmd[0] = (channel->format == MSS_QSPI_QUAD_FULL) ? W25N_CMD_QUAD_READ_DATA : W25N_CMD_READ_DATA;
         cmd[1] = (uint8_t)(col_addr >> 8);
         cmd[2] = (uint8_t)(col_addr);
         cmd[3] = 0; // Dummy byte
@@ -219,7 +219,7 @@ uint8_t Scai_W25_Fpga_Flash_program(scai_fpga_channel_t* channel, const uint8_t*
 
         uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
-        cmd[0] = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? W25N_CMD_QUAD_PROG_DATA_LOAD : W25N_CMD_PROGRAM_DATA_LOAD;
+        cmd[0] = (channel->format == MSS_QSPI_QUAD_FULL) ? W25N_CMD_QUAD_PROG_DATA_LOAD : W25N_CMD_PROGRAM_DATA_LOAD;
         cmd[1] = (uint8_t)(col_addr >> 8);
         cmd[2] = (uint8_t)(col_addr);
 

@@ -219,9 +219,7 @@ void Flash_init(mss_qspi_io_format io_format) {
     }
     
     if (g_active_driver->init && !g_active_channel->is_initialized) {
-        g_active_channel->ctrl1_state.word = 0;
         g_active_driver->init(g_active_channel, io_format);
-        g_active_channel->is_initialized = true;
     } 
 }
 

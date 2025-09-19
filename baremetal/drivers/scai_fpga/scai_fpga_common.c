@@ -17,9 +17,6 @@ typedef enum {
     QSPI_STATE_FINALIZE
 } QSPI_TransactionState;
 
-//  Common SCAI FPGA interface state
-static mss_qspi_io_format g_io_format = MSS_QSPI_NORMAL;
-
 static const uint32_t SCAI_FPGA_FIFO_TIMEOUT = 100000;
 static const uint16_t SCAI_FPGA_FIFO_LENGTH  = 64;
 
@@ -195,8 +192,6 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
         case QSPI_STATE_START:
         {
             channel->ctrl1_state.bits.chip_enable  = 1;
-            channel->ctrl1_state.bits.data_mode    = 0; // Byte mode
-            channel->ctrl1_state.bits.lane_width   = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;
             channel->ctrl1_state.bits.tx_count     = params->tx_len;
             channel->ctrl1_state.bits.rx_count     = params->rx_len;
             channel->ctrl1_state.bits.start        = 1;
@@ -227,31 +222,25 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
 // =============================================================================
 
 // Initialize global pointers for optimized access based on the defined base address
-void QSPI_FPGA_IF_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format) {
-    g_io_format = io_format;
-
+void scai_fpga_init(scai_fpga_channel_t* channel) {
     volatile uint32_t* ctrl1_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
     volatile uint32_t* ctrl2_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL2_REG_OFFSET);
     volatile uint32_t* ctrl3_reg = (uint32_t*)(channel->base_addr + QSPI_CTRL3_REG_OFFSET);
 
     // 1. Set default control register values
     channel->ctrl1_state.word             = 0;
-    channel->ctrl1_state.bits.reset       = 1;                                         // Clear RESET
-    channel->ctrl1_state.bits.data_mode   = 1;                                         // Byte mode
-    channel->ctrl1_state.bits.lane_width  = (io_format == MSS_QSPI_QUAD_FULL) ? 1 : 0; // Interface width
+    channel->ctrl1_state.bits.reset       = 1;                                          // Clear RESET
+    channel->ctrl1_state.bits.data_mode   = 0;                                          // Byte mode
+    channel->ctrl1_state.bits.lane_width  = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;  // Interface width
     *ctrl1_reg = channel->ctrl1_state.word;
 
     // 2. Configure I/O format
-    QSPI_Ctrl2_Reg_t mt29f_ctrl2 = {0};                                       // No auto operation
-    *ctrl2_reg = mt29f_ctrl2.word;
+    channel->ctrl2_state.word             = 0;                                          // No auto operations
+    *ctrl2_reg = channel->ctrl2_state.word;
 
-    QSPI_Ctrl3_Reg_t mt29f_ctrl3 = {0};
-    mt29f_ctrl3.bits.nhold = 1;                                               // No Toggling, not hold
-    *ctrl3_reg = mt29f_ctrl3.word;
-}
-
-mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void) {
-    return g_io_format;
+    channel->ctrl3_state.word             = 0;
+    channel->ctrl3_state.bits.nhold       = 1;                                          // No Toggling, not hold
+    *ctrl3_reg = channel->ctrl3_state.word;
 }
 
 void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params) {
@@ -281,10 +270,6 @@ void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transac
     // 3. Wait while QSPI controller become idle
     if (!qspi_fpga_wait_idle(channel->base_addr)) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: controller did not become idle.\n");
-    }
-
-    if (!qspi_fpga_wait_idle(channel->base_addr)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "ERROR in waiting for idle\n");
     }
 
     // 4. Clean Up and Finalize State

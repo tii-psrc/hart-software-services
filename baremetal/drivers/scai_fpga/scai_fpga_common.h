@@ -136,6 +136,8 @@ typedef enum {
 typedef struct {
     uintptr_t          base_addr;      // Hardware base address of the QSPI controller
     QSPI_Ctrl1_Reg_t   ctrl1_state;    // Software copy of the CTRL1 register
+    QSPI_Ctrl2_Reg_t   ctrl2_state;    // Software copy of the CTRL2 register
+    QSPI_Ctrl3_Reg_t   ctrl3_state;    // Software copy of the CTRL3 register
     bool               is_initialized; // True if the controller has been initialized
     mss_qspi_io_format format;         // I/O format (e.g., MSS_QSPI_QUAD_FULL)
 } scai_fpga_channel_t;
@@ -156,15 +158,8 @@ typedef struct {
 
 /**
  * @brief Initializes the common QSPI interface module.
- * @param io_format The desired I/O format (e.g., MSS_QSPI_NORMAL or MSS_QSPI_QUAD_FULL).
  */
-void QSPI_FPGA_IF_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format);
-
-/**
- * @brief Gets the current I/O format.
- * @return The configured mss_qspi_io_format.
- */
-mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void);
+void scai_fpga_init(scai_fpga_channel_t* channel);
 
 /**
  * @brief The primary function for executing a QSPI transaction.
@@ -173,5 +168,31 @@ mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void);
  * @param params    A pointer to a struct containing all transaction parameters.
  */
 void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
+
+void inline scai_fpga_set_word_mode(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.data_mode = 1;
+}
+
+void inline scai_fpga_set_byte_mode(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.data_mode = 0;
+}
+
+void inline scai_fpga_set_qspi_mode(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.lane_width = 1;
+}
+
+void inline scai_fpga_set_spi_mode(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.lane_width = 0;
+}
+
+bool inline scai_fpga_is_word_mode(scai_fpga_channel_t* channel) {
+    return channel->ctrl1_state.bits.data_mode == 1;
+}
+
+bool inline scai_fpga_is_quad_mode(scai_fpga_channel_t* channel) {
+    return channel->ctrl1_state.bits.lane_width == 1;
+}
+
+//==============================================================================)
 
 #endif // SCAI_FPGA_COMMON_H

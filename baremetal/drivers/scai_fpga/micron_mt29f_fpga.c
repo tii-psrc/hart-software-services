@@ -15,8 +15,6 @@
 #include "hss_types.h"
 #include "hss_debug.h"
 
-static bool g_is_mt29f_initialized = false;
-
 // --- MT29F Flash Command Opcodes ---
 typedef enum {
     MT29F_CMD_WRITE_ENABLE               = 0x06,
@@ -86,10 +84,6 @@ static const uint8_t MT29F_STATUS_OIP_B  = 0x01;
 
 // --- Static Helper Functions ---
 
-static inline bool is_initialized(void) {
-    return g_is_mt29f_initialized;
-}
-
 /**
  * @brief Converts a logical byte address to the physical format for MT29F.
  * @param logical_addr The linear address from the user's perspective.
@@ -138,7 +132,21 @@ static void set_feature(scai_fpga_channel_t* channel, mt29f_register_t feature_a
         .tx_buffer = cmd,
         .tx_len    = sizeof(cmd)
     };
+
+    // Save current state
+    bool isWordMode = scai_fpga_is_word_mode(channel);
+
+    // That operation should be in BYTE mode
+    if (isWordMode) {
+        scai_fpga_set_byte_mode(channel);
+    }
+
     scai_fpga_transaction(channel, &params);
+    
+    // Restore state
+    if (isWordMode) {
+        scai_fpga_set_word_mode(channel);
+    }
 }
 
 static void unlock_all_blocks(scai_fpga_channel_t* channel) {
@@ -158,16 +166,12 @@ static void unlock_all_blocks(scai_fpga_channel_t* channel) {
  * for optimal performance.
  */
 void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format) {
-    if (is_initialized()) {
-        // Already initialized, no action needed
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F already initialized.\n");
-        return;
-    }
-
-    QSPI_FPGA_IF_init(channel, io_format);
+    channel->format = io_format;    
+    scai_fpga_init(channel);
     
     // Enable continuous read mode for better performance
-    mt29f_config_reg_t config_reg = { .byte = get_feature(channel, MT29F_REG_CONFIG) };
+    mt29f_config_reg_t config_reg;
+    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG) };
     if (!config_reg.bits.conti_rd) {
         config_reg.bits.conti_rd = 1;
         set_feature(channel, MT29F_REG_CONFIG, config_reg.byte);
@@ -175,13 +179,11 @@ void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_fo
     
     unlock_all_blocks(channel);
 
-    g_is_mt29f_initialized = true;
+    channel->is_initialized = true;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Micron MT29F @ 0x%08lX configured.\n\n", channel->base_addr);
 }
 
 void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
-    if (!id_buf || !is_initialized()) return;
-
     const uint8_t cmd[] = { MT29F_CMD_READ_ID, DUMMY_BYTE };
     scai_fpga_transaction_t params = {
         .tx_buffer = cmd,
@@ -189,12 +191,29 @@ void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
         .rx_buffer = id_buf,
         .rx_len    = MT29F_JEDEC_SIZE
     };
+
+    bool isWordMode = scai_fpga_is_word_mode(channel);
+    bool isQuadMode = scai_fpga_is_quad_mode(channel);
+
+    if (isWordMode) {
+        scai_fpga_set_byte_mode(channel);
+    }
+    if (isQuadMode) {
+        scai_fpga_set_spi_mode(channel);
+    }
+    
     scai_fpga_transaction(channel, &params);
+
+    if (isWordMode) {
+        scai_fpga_set_word_mode(channel);
+    }
+    if (isQuadMode) {
+        scai_fpga_set_quad_mode(channel);
+    }
+
 }
 
 uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (!buf || len == 0 || !is_initialized()) return 1;
-
     uint32_t current_addr = addr;
     uint32_t remaining_len = len;
     uint8_t* current_buf = buf;
@@ -221,7 +240,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
         mt29f_read_cmd_t read_cmd = {
-            .opcode     = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
+            .opcode     = (channel->format == MSS_QSPI_QUAD_FULL) ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
             .col_addr_1 = (uint8_t)(col_addr >> 8),
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
@@ -231,7 +250,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .tx_len    = sizeof(read_cmd),
             .rx_buffer = current_buf,
             .rx_len    = read_len,
-            .format    = QSPI_FPGA_IF_get_io_format()
+            .format    = channel->format
         };
         scai_fpga_transaction(channel, &read_params);
 
@@ -243,7 +262,6 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
 }
 
 uint8_t SCAI_MT29_Flash_erase(scai_fpga_channel_t* channel) {
-    if (!is_initialized()) return 1;
     for (uint16_t i = 0; i < TOTAL_BLOCKS; ++i) {
         if (SCAI_MT29_Flash_erase_block(channel, i) != 0) return 1;
     }
@@ -251,8 +269,6 @@ uint8_t SCAI_MT29_Flash_erase(scai_fpga_channel_t* channel) {
 }
 
 uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block_nb) {
-    if (!is_initialized() || block_nb >= TOTAL_BLOCKS) return 1;
-
     uint32_t logical_addr  = (uint32_t)block_nb * BLOCK_SIZE_BYTES;
     uint32_t physical_addr = logical_to_physical(logical_addr);
     uint32_t row_addr      = physical_addr >> MT29F_ROWSHIFT;
@@ -275,7 +291,6 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 }
 
 uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (!buf || (len == 0) || !is_initialized()) return 1;
     if (len > TOTAL_BLOCKS * BLOCK_SIZE_BYTES) return 1;
 
     uint32_t current_addr = addr;
@@ -292,7 +307,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
         mt29f_read_cmd_t prog_load_cmd = {
-            .opcode     = (QSPI_FPGA_IF_get_io_format() == MSS_QSPI_QUAD_FULL) ? MT29F_CMD_PROGRAM_LOAD_X4 : MT29F_CMD_PROGRAM_LOAD_X1,
+            .opcode     = (channel->format == MSS_QSPI_QUAD_FULL) ? MT29F_CMD_PROGRAM_LOAD_X4 : MT29F_CMD_PROGRAM_LOAD_X1,
             .col_addr_1 = (uint8_t)(col_addr >> 8),
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
@@ -302,7 +317,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
             .tx_len    = sizeof(prog_load_cmd),
             .rx_buffer = (uint8_t*)current_buf, // This looks wrong, program load should TX data
             .rx_len    = write_len,             // This is likely a TX op
-            .format    = QSPI_FPGA_IF_get_io_format()
+            .format    = channel->format
         };
         scai_fpga_transaction(channel, &load_params);
         
@@ -334,8 +349,6 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
 }
 
 uint8_t SCAI_MT29_Flash_read_status_regs(scai_fpga_channel_t* channel, void* regs_out) {
-    if (!regs_out || !is_initialized()) return 1;
-
     mt29f_status_regs_t* regs = (mt29f_status_regs_t*)regs_out;
 
     regs->lock       = get_feature(channel, MT29F_REG_LOCK);

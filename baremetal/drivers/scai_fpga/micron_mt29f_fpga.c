@@ -105,7 +105,14 @@ static inline uint32_t logical_to_physical(uint32_t logical_addr) {
 }
 static void write_enable(uintptr_t base_addr) {
     const uint8_t cmd = MT29F_CMD_WRITE_ENABLE;
-    QSPI_FPGA_IF_transfer_byte(base_addr, &cmd, sizeof(cmd), NULL, 0, MSS_QSPI_NORMAL, false);
+
+    // scai_fpga_transaction
+    scai_fpga_transaction_t params = {
+        .tx_buffer = (uint8_t*)&cmd,
+        .tx_len    = sizeof(cmd),
+        .keep_ce_active = true
+    };
+    scai_fpga_transaction(base_addr, 0, &params);
 }
 
 static uint8_t get_feature(uintptr_t base_addr, mt29f_register_t feature_addr) {

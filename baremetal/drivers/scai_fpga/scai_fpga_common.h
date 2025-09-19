@@ -126,14 +126,23 @@ typedef enum {
     QSPI_CTRL3_REG_OFFSET                   = 0x0C
 } qspi_reg_offset_t;
 
-// Bitmask for the Status Register
-static const uint32_t QSPI_STATUS_IDLE_FLAG = (1u << 0);
-static const uint32_t Q_CTRL1_SET_nRESET    = (1u << 2);
-static const uint32_t Q_CTRL3_SET_nHOLD     = (1u << 16);
+//------------------------------------------------------------------------------
+// Public API
+//------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-// Public Function Prototypes
-//------------------------------------------------------------------------------
+/**
+ * @brief A structure to define all parameters for a single QSPI transaction.
+ * This simplifies the API and makes it more extensible.
+ */
+typedef struct {
+    const void* tx_buffer;        // Pointer to the transmit buffer
+    uint32_t    tx_len;           // Number of elements (bytes/words) to transmit
+    void*       rx_buffer;        // Pointer to the receive buffer
+    uint32_t    rx_len;           // Number of elements (bytes/words) to receive
+    mss_qspi_io_format format;    // I/O format (e.g., MSS_QSPI_QUAD_FULL)
+    bool        keep_ce_active;   // True to keep Chip Enable asserted after transfer
+    bool        data_size_is_word;// True if buffers are 32-bit words, false for 8-bit bytes
+} scai_fpga_transaction_t;
 
 /**
  * @brief Initializes the common QSPI interface module.
@@ -148,21 +157,11 @@ void QSPI_FPGA_IF_init(uintptr_t base_addr, mss_qspi_io_format io_format);
 mss_qspi_io_format QSPI_FPGA_IF_get_io_format(void);
 
 /**
- * @brief Waits for the QSPI controller's state machine to become idle.
- * @return true if idle is reached within the timeout, false otherwise.
+ * @brief The primary function for executing a QSPI transaction.
+ * This is a versatile low-level helper for most QSPI operations.
+ * @param base_addr The base address of the QSPI controller instance.
+ * @param params    A pointer to a struct containing all transaction parameters.
  */
-bool QSPI_FPGA_IF_wait_controller_idle(uintptr_t base_addr);
-
-/**
- * @brief A versatile low-level helper for most QSPI transactions.
- * @param tx_buffer Pointer to the transmit buffer.
- * @param tx_len Number of bytes to transmit.
- * @param rx_buffer Pointer to the receive buffer.
- * @param rx_len Number of bytes to receive.
- * @param format The I/O format for this specific transfer.
- * @param keep_ce_active Set to true to keep Chip Enable asserted after the transfer.
- */
-void QSPI_FPGA_IF_transfer(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
-void QSPI_FPGA_IF_transfer_byte(uintptr_t base_addr, const uint8_t* tx_buffer, uint32_t tx_len, uint8_t* rx_buffer, uint32_t rx_len, mss_qspi_io_format format, bool keep_ce_active);
+void scai_fpga_transaction(uintptr_t base_addr, const scai_fpga_transaction_t* params);
 
 #endif // SCAI_FPGA_COMMON_H

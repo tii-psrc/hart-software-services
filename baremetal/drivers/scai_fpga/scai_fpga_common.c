@@ -229,6 +229,10 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.tx_count = 0;
             channel->ctrl1_state.bits.rx_count = 0;
 
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
+            *ctrl1_reg = channel->ctrl1_state.word;
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
+            
             if (!params->keep_ce_active) {
                 channel->ctrl1_state.bits.chip_enable = 0;
             }

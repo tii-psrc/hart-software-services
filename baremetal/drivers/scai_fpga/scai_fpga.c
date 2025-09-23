@@ -388,7 +388,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
         return SCAI_FLASH_ERROR;
     }
     
-    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != 0) {
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_NORMAL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }

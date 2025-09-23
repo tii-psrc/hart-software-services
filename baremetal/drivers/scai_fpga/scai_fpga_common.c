@@ -148,9 +148,11 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
 
             if (data_size_is_word) {
                 buf32[elements_read] = value;
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "W DATA_R = 0x%08X\n", buf8[elements_read]);
             } else {
                 // As per softcore example, extract the LSB for byte-wise reads.
                 buf8[elements_read] = (uint8_t)(value & SCAI_FPGA_FIFO_RX_BYTE_MASK);
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "B DATA_R = 0x%08X\n", buf8[elements_read]);
             }
             elements_read++;
         }

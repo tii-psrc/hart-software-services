@@ -454,7 +454,7 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
 
 uint8_t scai_fpga_diagnostics(void)
 {    
-    if (scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_QUAD_FULL) != 0) {
+    if (scai_set_flash_chip(SCAI_MICRON_MT29F, MSS_QSPI_NORMAL) != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }

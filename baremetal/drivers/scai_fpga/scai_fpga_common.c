@@ -193,10 +193,15 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
     switch (transaction_state) {
         case QSPI_STATE_START:
         {
-            channel->ctrl1_state.bits.chip_enable  = 1;
             channel->ctrl1_state.bits.tx_count     = params->tx_len;
             channel->ctrl1_state.bits.rx_count     = params->rx_len;
             channel->ctrl1_state.bits.start        = 1;
+
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
+            *ctrl1_reg = channel->ctrl1_state.word;
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
+
+            channel->ctrl1_state.bits.chip_enable  = 1;
             break;
         }
         case QSPI_STATE_FINALIZE:

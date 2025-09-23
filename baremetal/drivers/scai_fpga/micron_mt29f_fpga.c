@@ -178,6 +178,7 @@ void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_fo
     if (!config_reg.bits.conti_rd) {
         config_reg.bits.conti_rd = 1;
         set_feature(channel, MT29F_REG_CONFIG, config_reg.byte);
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "set_feature %02X = %02X\n", MT29F_REG_CONFIG, config_reg.byte);
     }
 
     config_reg.byte = get_feature(channel, MT29F_REG_CONFIG);

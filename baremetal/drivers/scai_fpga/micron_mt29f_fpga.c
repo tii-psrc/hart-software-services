@@ -171,7 +171,7 @@ void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_fo
     
     // Enable continuous read mode for better performance
     mt29f_config_reg_t config_reg;
-    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG) };
+    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG);
     if (!config_reg.bits.conti_rd) {
         config_reg.bits.conti_rd = 1;
         set_feature(channel, MT29F_REG_CONFIG, config_reg.byte);
@@ -208,7 +208,7 @@ void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
         scai_fpga_set_word_mode(channel);
     }
     if (isQuadMode) {
-        scai_fpga_set_quad_mode(channel);
+        scai_fpga_set_qspi_mode(channel);
     }
 
 }

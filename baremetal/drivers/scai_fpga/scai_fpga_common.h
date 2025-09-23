@@ -169,27 +169,27 @@ void scai_fpga_init(scai_fpga_channel_t* channel);
  */
 void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
 
-void inline scai_fpga_set_word_mode(scai_fpga_channel_t* channel) {
+inline void scai_fpga_set_word_mode(scai_fpga_channel_t* channel) {
     channel->ctrl1_state.bits.data_mode = 1;
 }
 
-void inline scai_fpga_set_byte_mode(scai_fpga_channel_t* channel) {
+inline void scai_fpga_set_byte_mode(scai_fpga_channel_t* channel) {
     channel->ctrl1_state.bits.data_mode = 0;
 }
 
-void inline scai_fpga_set_qspi_mode(scai_fpga_channel_t* channel) {
+inline void scai_fpga_set_qspi_mode(scai_fpga_channel_t* channel) {
     channel->ctrl1_state.bits.lane_width = 1;
 }
 
-void inline scai_fpga_set_spi_mode(scai_fpga_channel_t* channel) {
+inline void scai_fpga_set_spi_mode(scai_fpga_channel_t* channel) {
     channel->ctrl1_state.bits.lane_width = 0;
 }
 
-bool inline scai_fpga_is_word_mode(scai_fpga_channel_t* channel) {
+inline bool scai_fpga_is_word_mode(scai_fpga_channel_t* channel) {
     return channel->ctrl1_state.bits.data_mode == 1;
 }
 
-bool inline scai_fpga_is_quad_mode(scai_fpga_channel_t* channel) {
+inline bool scai_fpga_is_quad_mode(scai_fpga_channel_t* channel) {
     return channel->ctrl1_state.bits.lane_width == 1;
 }
 

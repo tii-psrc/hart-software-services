@@ -209,7 +209,9 @@ void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
         scai_fpga_set_spi_mode(channel);
     }
     
+    scai_fpga_set_word_mode(channel);
     scai_fpga_transaction(channel, &params);
+    scai_fpga_set_byte_mode(channel);
 
     if (isWordMode) {
         scai_fpga_set_word_mode(channel);

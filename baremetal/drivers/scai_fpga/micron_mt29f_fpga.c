@@ -88,13 +88,13 @@ static const uint8_t  MT29F_UNLOCK_ALL   = 0x00;                                
 
 // STatus register bits
 static const uint8_t MT29F_STATUS_OIP_B  = 0x01;
-static const uint8_t MT29F_STATUS_WEL    = 0x02;
-static const uint8_t MT29F_STATUS_E_FAIL = 0x04;
-static const uint8_t MT29F_STATUS_P_FAIL = 0x08;
-static const uint8_t MT29F_STATUS_ECC_S0 = 0x10;
-static const uint8_t MT29F_STATUS_ECC_S1 = 0x20;
-static const uint8_t MT29F_STATUS_ECC_S2 = 0x40;
-static const uint8_t MT29F_STATUS_CRBSY  = 0x80;
+// static const uint8_t MT29F_STATUS_WEL    = 0x02;
+// static const uint8_t MT29F_STATUS_E_FAIL = 0x04;
+// static const uint8_t MT29F_STATUS_P_FAIL = 0x08;
+// static const uint8_t MT29F_STATUS_ECC_S0 = 0x10;
+// static const uint8_t MT29F_STATUS_ECC_S1 = 0x20;
+// static const uint8_t MT29F_STATUS_ECC_S2 = 0x40;
+// static const uint8_t MT29F_STATUS_CRBSY  = 0x80;
 
 // --- Static Helper Functions ---
 
@@ -385,7 +385,7 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 
     uint8_t stat_reg = get_feature(channel, MT29F_REG_STATUS);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: stat_reg = %u\n", stat_reg);
-    
+
     return 0;
 }
 

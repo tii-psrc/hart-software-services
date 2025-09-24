@@ -302,7 +302,7 @@ static const struct tinycli_cmd qspiCmds[] = {
     { CMD_SCAI_DEBUG, "DEBUG", "Run SCAI FPGA diagnostics", tinyCLI_SCAI_debug_ },
     { CMD_SCAI_WRITE_REG, "WRITEREG", "Write to SCAI FPGA register", tinyCLI_SCAI_write_reg_ },
     { CMD_SCAI_READ_REG, "READREG", "Read from SCAI FPGA register", tinyCLI_SCAI_read_reg_ },
-    { CMD_SCAI_PAGE_ERASE, "ERASE", "Erase SCAI FPGA page", tinyCLI_SCAI_page_erase_ },
+    { CMD_SCAI_PAGE_ERASE, "PER", "Erase SCAI FPGA page", tinyCLI_SCAI_page_erase_ },
     { CMD_SCAI_PAGE_READ, "READ", "Read SCAI FPGA page", tinyCLI_SCAI_page_read_ },
     { CMD_SCAI_PAGE_WRITE, "WRITE", "Write to SCAI FPGA page", tinyCLI_SCAI_page_write_ },
 #endif

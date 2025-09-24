@@ -191,7 +191,7 @@ void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_fo
 }
 
 void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
-    const uint8_t cmd[] = { MT29F_CMD_READ_ID, DUMMY_BYTE, DUMMY_BYTE, DUMMY_BYTE };
+    const uint8_t cmd[] = { MT29F_CMD_READ_ID, DUMMY_BYTE };
     scai_fpga_transaction_t params = {
         .tx_buffer = cmd,
         .tx_len    = sizeof(cmd),

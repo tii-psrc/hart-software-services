@@ -272,7 +272,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         uint32_t physical_addr = logical_to_physical(current_addr);
         uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
         uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
-        uint8_t target_die     = (physical_addr >> 30) & 0x01; 
+        uint8_t  target_die    = (physical_addr >> 30) & 0x01; 
                 
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u, col_addr = %u\n", row_addr, col_addr);
@@ -392,15 +392,22 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len) {
     if (len > TOTAL_BLOCKS * BLOCK_SIZE_BYTES) return 1;
 
-    uint32_t current_addr = addr;
-    uint32_t remaining_len = len;
+    uint32_t current_addr      = addr;
+    uint32_t remaining_len     = len;
     const uint8_t* current_buf = buf;
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: len = %u, addr = %u\n", len, addr);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
         uint32_t page_addr     = physical_addr >> MT29F_ROW_SHIFT;
         uint16_t col_addr      = physical_addr & MT29F_COLMASK;
+        uint8_t  target_die    = (physical_addr >> 30) & 0x01; 
 
+        set_die(channel, target_die);
+
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: WE\n");
         write_enable(channel);
 
         uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
@@ -418,12 +425,16 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
             .rx_len    = write_len,             // This is likely a TX op
             .format    = channel->format
         };
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: Loading data\n");
         scai_fpga_transaction(channel, &load_params);
         
 
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: wait\n");
+        if (wait_flash_ready(channel) != 0) {
+            return 1;
+        }
 
-        if (wait_flash_ready(channel) != 0) return 1;
-
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: WE\n");
         write_enable(channel);
 
         mt29f_page_read_cmd_t prog_exec_cmd = {
@@ -436,9 +447,13 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
             .tx_buffer = &prog_exec_cmd,
             .tx_len    = sizeof(prog_exec_cmd)
         };
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: Executing\n");
         scai_fpga_transaction(channel, &exec_params);
         
-        if (wait_flash_ready(channel) != 0) return 1;
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: wait\n");
+        if (wait_flash_ready(channel) != 0) {
+            return 1;
+        }
 
         current_addr  += write_len;
         current_buf   += write_len;

@@ -383,7 +383,7 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
         return 1;
     }
 
-    uint8_t stat_reg = get_feature(channel, MT29F_REG_STATUS);
+    stat_reg = get_feature(channel, MT29F_REG_STATUS);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: stat_reg = %u\n", stat_reg);
 
     return 0;

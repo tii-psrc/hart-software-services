@@ -73,8 +73,9 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type);
 uint8_t scai_fpga_diagnostics(void);
 void scai_fpga_write_reg(uintptr_t address, uint32_t value);
 uint32_t scai_fpga_read_reg(uintptr_t address);
-
-
+uint8_t scai_fpga_page_erase(uint16_t page);
+uint8_t scai_fpga_page_read(uint16_t page);
+uint8_t scai_fpga_page_write(uint16_t page);
 
 #ifdef __cplusplus
 }

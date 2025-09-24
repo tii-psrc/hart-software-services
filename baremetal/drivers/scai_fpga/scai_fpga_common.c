@@ -66,6 +66,7 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
 
         if (timeout_counter == 0) {
             // Timeout triggered
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "Tx FIFO timeout\n");
             return elements_written;
         }
 
@@ -133,6 +134,7 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
 
         if (timeout_counter == 0) {
             // Timeout triggered
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "Rx FIFO timeout\n");
             return elements_read;
         }
 

@@ -309,6 +309,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         };
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Reading data\n");
         scai_fpga_transaction(channel, &read_params);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: after read\n");
 
         current_addr  += read_len;
         current_buf   += read_len;

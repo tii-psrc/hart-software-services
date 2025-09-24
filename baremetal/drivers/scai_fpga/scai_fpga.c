@@ -490,7 +490,7 @@ uint8_t scai_fpga_page_read(uint16_t page) {
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n");
         return SCAI_FLASH_SUCCESS;
     } else {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");"
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
         return SCAI_FLASH_ERROR;
     }
 }

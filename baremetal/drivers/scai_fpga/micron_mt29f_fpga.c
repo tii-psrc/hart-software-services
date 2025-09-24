@@ -256,12 +256,16 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint32_t remaining_len = len;
     uint8_t* current_buf   = buf;
 
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = %u\n", len, addr);
+
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
         uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
         uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
         uint8_t target_die     = (physical_addr >> 30) & 0x01; 
-        
+                
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", len);
+
         set_die(channel, target_die);
 
         mt29f_page_read_cmd_t page_read_cmd = {

@@ -257,6 +257,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint8_t* current_buf   = buf;
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = %u\n", len, addr);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
@@ -311,10 +312,16 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         scai_fpga_transaction(channel, &read_params);
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: after read\n");
 
+        for (uint32_t i = 0; i < read_len; i++) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = %u\n", i, current_buf[i]);
+        }
+
         current_addr  += read_len;
         current_buf   += read_len;
         remaining_len -= read_len;
     }
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: exiting...\n");
     return 0;
 }
 

@@ -279,6 +279,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .tx_len    = sizeof(page_read_cmd)
         };
         
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Sending command\n");
         scai_fpga_set_byte_mode(channel);
         scai_fpga_set_spi_mode(channel);
         scai_fpga_transaction(channel, &page_read_params);
@@ -306,6 +307,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .rx_len    = read_len,
             .format    = channel->format
         };
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Reading data\n");
         scai_fpga_transaction(channel, &read_params);
 
         current_addr  += read_len;

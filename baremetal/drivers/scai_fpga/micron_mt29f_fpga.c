@@ -259,7 +259,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint8_t* current_buf   = buf;
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = %u\n", len, addr);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", len);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
@@ -267,7 +267,8 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
         uint8_t target_die     = (physical_addr >> 30) & 0x01; 
                 
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", len);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u, col_addr = %u\n", row_addr, col_addr);
 
         set_die(channel, target_die);
 
@@ -338,10 +339,11 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
     uint32_t logical_addr  = (uint32_t)block_nb * BLOCK_SIZE_BYTES;
     uint32_t physical_addr = logical_to_physical(logical_addr);
     uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
-    uint8_t target_die     = (physical_addr >> 30) & 0x01; 
+    uint8_t  target_die    = (physical_addr >> 30) & 0x01; 
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: block_nb = %u, row_addr = %u\n", block_nb, row_addr);
 
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u, col_addr = %u\n", row_addr, col_addr);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: setting die = %u\n", target_die);
     set_die(channel, target_die);
 

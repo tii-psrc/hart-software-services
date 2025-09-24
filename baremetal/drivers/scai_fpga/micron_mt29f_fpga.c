@@ -343,7 +343,7 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: block_nb = %u, row_addr = %u\n", block_nb, row_addr);
 
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u, col_addr = %u\n", row_addr, col_addr);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u\n", row_addr);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: setting die = %u\n", target_die);
     set_die(channel, target_die);
 

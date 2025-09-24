@@ -39,6 +39,12 @@ typedef enum {
     MT29F_REG_DIE_SELECT                 = 0xD0
 } mt29f_register_t;
 
+typedef enum {
+    MT29F_DIE_0                          = 0x00,
+    MT29F_DIE_1                          = 0x40,
+    MT29F_DIE_QUANTITY
+} mt29f_die_t;
+
 typedef struct {
     uint8_t opcode;
     uint8_t row_addr_2; // MSB
@@ -73,7 +79,8 @@ static const uint32_t PAGES_PER_BLOCK    = 64;
 static const uint16_t TOTAL_BLOCKS       = 4096;                                // 2048 blocks/die * 2 die
 static const uint32_t BLOCK_SIZE_BYTES   = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
 static const uint8_t  DUMMY_BYTE         = 0xFF;
-static const uint8_t  MT29F_ROWSHIFT     = 13;
+static const uint32_t MT29F_ROW_MASK     = 0x1FFFF;
+static const uint8_t  MT29F_ROW_SHIFT    = 13;
 static const uint16_t MT29F_COLMASK      = 0x1FFF;
 static const uint8_t  MT29F_JEDEC_SIZE   = 2;                                   // JEDEC ID is 2 bytes for MT29F
 static const uint16_t MT29F_TIMEOUT_ITER = 10000;                               // Timeout iterations for operations
@@ -149,6 +156,30 @@ static void set_feature(scai_fpga_channel_t* channel, mt29f_register_t feature_a
     }
 }
 
+static uint8_t get_die(scai_fpga_channel_t* channel) {
+    uint8_t die = get_feature(channel, MT29F_REG_DIE_SELECT);
+
+    switch (die) {
+        case MT29F_DIE_0:
+            return 0;
+        case MT29F_DIE_1:
+            return 1;
+        default:
+            return 255; // Invalid value
+    }
+}
+
+static void set_die(scai_fpga_channel_t* channel, uint8_t die) {
+    if (die >= MT29F_DIE_QUANTITY) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid die number: %u\n", die);
+        return;
+    }
+    
+    if (die != get_die(channel)) {
+        set_feature(channel, MT29F_REG_DIE_SELECT, die);
+    }
+}
+
 static void unlock_all_blocks(scai_fpga_channel_t* channel) {
     set_feature(channel, MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
 }
@@ -209,9 +240,7 @@ void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
         scai_fpga_set_spi_mode(channel);
     }
     
-    // scai_fpga_set_word_mode(channel);
     scai_fpga_transaction(channel, &params);
-    // scai_fpga_set_byte_mode(channel);
 
     if (isWordMode) {
         scai_fpga_set_word_mode(channel);
@@ -223,14 +252,17 @@ void SCAI_MT29_Flash_readid(scai_fpga_channel_t* channel, uint8_t* id_buf) {
 }
 
 uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_t addr, uint32_t len) {
-    uint32_t current_addr = addr;
+    uint32_t current_addr  = addr;
     uint32_t remaining_len = len;
-    uint8_t* current_buf = buf;
+    uint8_t* current_buf   = buf;
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
-        uint32_t row_addr = physical_addr >> MT29F_ROWSHIFT;
-        uint16_t col_addr = physical_addr & MT29F_COLMASK;
+        uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
+        uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
+        uint8_t target_die     = (physical_addr >> 30) & 0x01; 
+        
+        set_die(channel, target_die);
 
         mt29f_page_read_cmd_t page_read_cmd = {
             .opcode     = MT29F_CMD_PAGE_READ_TO_CACHE,
@@ -242,14 +274,23 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .tx_buffer = &page_read_cmd,
             .tx_len    = sizeof(page_read_cmd)
         };
+        
+        scai_fpga_set_byte_mode(channel);
+        scai_fpga_set_spi_mode(channel);
         scai_fpga_transaction(channel, &page_read_params);
         
-        if (wait_flash_ready(channel) != 0) return 1;
+        if (wait_flash_ready(channel) != 0) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_read: WiP timeout\n");
+            return 1;
+        }
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
+        scai_fpga_set_word_mode(channel);
+        scai_fpga_set_qspi_mode(channel);
+
         mt29f_read_cmd_t read_cmd = {
-            .opcode     = (channel->format == MSS_QSPI_QUAD_FULL) ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
+            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
             .col_addr_1 = (uint8_t)(col_addr >> 8),
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
@@ -280,7 +321,7 @@ uint8_t SCAI_MT29_Flash_erase(scai_fpga_channel_t* channel) {
 uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block_nb) {
     uint32_t logical_addr  = (uint32_t)block_nb * BLOCK_SIZE_BYTES;
     uint32_t physical_addr = logical_to_physical(logical_addr);
-    uint32_t row_addr      = physical_addr >> MT29F_ROWSHIFT;
+    uint32_t row_addr      = physical_addr >> MT29F_ROW_SHIFT;
 
     write_enable(channel);
 
@@ -308,7 +349,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
-        uint32_t page_addr     = physical_addr >> MT29F_ROWSHIFT;
+        uint32_t page_addr     = physical_addr >> MT29F_ROW_SHIFT;
         uint16_t col_addr      = physical_addr & MT29F_COLMASK;
 
         write_enable(channel);

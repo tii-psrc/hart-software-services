@@ -84,7 +84,6 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
                 data_to_write = (((uint32_t)buf8[elements_written]) << SCAI_FPGA_FIFO_BYTE_SHIFT) & SCAI_FPGA_FIFO_TX_BYTE_MASK;
                 data_to_write |= ~SCAI_FPGA_FIFO_TX_BYTE_MASK; // Fill lsb bits 
             }
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "DATA_T = 0x%08X\n", data_to_write);
             *data_reg = data_to_write;
             elements_written++;
         }
@@ -148,11 +147,9 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
 
             if (data_size_is_word) {
                 buf32[elements_read] = value;
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "W DATA_R = 0x%08X\n", buf32[elements_read]);
             } else {
                 // As per softcore example, extract the LSB for byte-wise reads.
                 buf8[elements_read] = (uint8_t)(value & SCAI_FPGA_FIFO_RX_BYTE_MASK);
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "B DATA_R = 0x%08X\n", buf8[elements_read]);
             }
             elements_read++;
         }
@@ -214,11 +211,9 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.tx_count     = params->tx_len;
             channel->ctrl1_state.bits.rx_count     = params->rx_len;
             channel->ctrl1_state.bits.start        = 1;
-
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
             *ctrl1_reg = channel->ctrl1_state.word;
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 
+            // Designed by Sergio that CE bit should be changed in other command
             channel->ctrl1_state.bits.chip_enable  = 1;
             break;
         }
@@ -229,21 +224,18 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.tx_count = 0;
             channel->ctrl1_state.bits.rx_count = 0;
 
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
             *ctrl1_reg = channel->ctrl1_state.word;
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
-            
+
             if (!params->keep_ce_active) {
+                // Designed by Sergio that CE bit should be changed in other command
                 channel->ctrl1_state.bits.chip_enable = 0;
             }
             break;
         }
     }
     
-    // Write the final computed state to the hardware register
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "CTRL_1 = 0x%08X\n", channel->ctrl1_state.word);
+    // Write again in case CE changed
     *ctrl1_reg = channel->ctrl1_state.word;
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "STAT_1 = 0x%08X\n", *ctrl1_reg);
 }
 
 // =============================================================================

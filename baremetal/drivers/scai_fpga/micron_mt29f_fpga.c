@@ -130,6 +130,8 @@ static uint8_t wait_flash_ready(scai_fpga_channel_t* channel) {
             return 0; // Success
         }
     }
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "wait_flash_ready timeout!\n");
     return 1; // Timeout
 }
 
@@ -335,9 +337,20 @@ uint8_t SCAI_MT29_Flash_erase(scai_fpga_channel_t* channel) {
 uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block_nb) {
     uint32_t logical_addr  = (uint32_t)block_nb * BLOCK_SIZE_BYTES;
     uint32_t physical_addr = logical_to_physical(logical_addr);
-    uint32_t row_addr      = physical_addr >> MT29F_ROW_SHIFT;
+    uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
+    uint8_t target_die     = (physical_addr >> 30) & 0x01; 
 
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: block_nb = %u, row_addr = %u\n", block_nb, row_addr);
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: setting die = %u\n", target_die);
+    set_die(channel, target_die);
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: WE\n");
+    scai_fpga_set_byte_mode(channel);
+    scai_fpga_set_spi_mode(channel);    
     write_enable(channel);
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: ERASE\n");
 
     mt29f_page_read_cmd_t erase_cmd = {
         .opcode     = MT29F_CMD_BLOCK_ERASE,
@@ -351,7 +364,14 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
     };
     scai_fpga_transaction(channel, &params);
 
-    return wait_flash_ready(channel);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: wait\n");
+    uint8_t status = wait_flash_ready(channel);
+    if (status != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: wait timeout\n");
+        return 1;
+    }
+
+    return 0;
 }
 
 uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len) {

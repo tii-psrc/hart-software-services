@@ -483,7 +483,7 @@ uint8_t scai_fpga_page_read(uint16_t page) {
     uint8_t read_data[256];
     memset(read_data, 0, sizeof(read_data));
 
-    if (Flash_read(read_data, page * 64 * 4096, 32) != 0) {
+    if (Flash_read(read_data, page * 64 * 4096, 32) == 0) {
         for (uint32_t j = 0; j < 16; j++) {
             mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", read_data[j]);
         }

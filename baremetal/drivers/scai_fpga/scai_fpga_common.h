@@ -195,17 +195,8 @@ inline bool scai_fpga_is_quad_mode(scai_fpga_channel_t* channel) {
     return channel->ctrl1_state.bits.lane_width == 1;
 }
 
-inline void scai_fpga_disable_write_protect(scai_fpga_channel_t* channel) {
-    volatile uint32_t* ctrl1_reg  = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
-    channel->ctrl1_state.bits.nwp = 1;
-    *ctrl1_reg                    = channel->ctrl1_state.word;
-}
-
-inline void scai_fpga_enable_write_protect(scai_fpga_channel_t* channel) {
-    volatile uint32_t* ctrl1_reg  = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
-    channel->ctrl1_state.bits.nwp = 0;
-    *ctrl1_reg                    = channel->ctrl1_state.word;
-}
+void scai_fpga_disable_write_protect(scai_fpga_channel_t* channel);
+void scai_fpga_enable_write_protect(scai_fpga_channel_t* channel);
 
 //==============================================================================)
 

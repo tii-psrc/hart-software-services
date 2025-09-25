@@ -407,3 +407,15 @@ void scai_fpga_load(scai_fpga_channel_t* channel, const scai_fpga_transaction_t*
     qspi_fpga_update_ctrl1(channel, QSPI_STATE_DATA_LOAD_FINALIZE, params);
 
 }
+
+void scai_fpga_disable_write_protect(scai_fpga_channel_t* channel) {
+    volatile uint32_t* ctrl1_reg  = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
+    channel->ctrl1_state.bits.nwp = 1;
+    *ctrl1_reg                    = channel->ctrl1_state.word;
+}
+
+void scai_fpga_enable_write_protect(scai_fpga_channel_t* channel) {
+    volatile uint32_t* ctrl1_reg  = (uint32_t*)(channel->base_addr + QSPI_CTRL1_REG_OFFSET);
+    channel->ctrl1_state.bits.nwp = 0;
+    *ctrl1_reg                    = channel->ctrl1_state.word;
+}

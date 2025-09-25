@@ -483,7 +483,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         }
 
         // TODO: Check program error state
-        uint8_t status = (get_feature(channel, MT29F_REG_STATUS);
+        uint8_t status = get_feature(channel, MT29F_REG_STATUS);
         mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: status = %u\n", status);
 
         // 6. set_WP(instance, MEM_WRITE_PROTECTED);

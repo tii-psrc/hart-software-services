@@ -76,6 +76,9 @@ uint32_t scai_fpga_read_reg(uintptr_t address);
 uint8_t scai_fpga_page_erase(uint16_t page);
 uint8_t scai_fpga_page_read(uint16_t page);
 uint8_t scai_fpga_page_write(uint16_t page);
+uint8_t scai_fpga_stat(uint8_t chip);
+uint8_t scai_fpga_reset(uint8_t chip);
+uint8_t scai_fpga_manual_init(uint8_t chip);
 
 #ifdef __cplusplus
 }

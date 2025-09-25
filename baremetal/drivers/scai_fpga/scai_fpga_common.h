@@ -119,7 +119,7 @@ typedef union {
 typedef enum {
     QSPI_DATA_REG_OFFSET                    = 0x00,
     QSPI_CTRL1_REG_OFFSET                   = 0x04,
-    QSPI_STATUS1_REG_OFFSET                  = 0x04,
+    QSPI_STATUS1_REG_OFFSET                 = 0x04,
     QSPI_STATUS2_REG_OFFSET                 = 0x08,
     QSPI_CTRL2_REG_OFFSET                   = 0x08,
     QSPI_CTRL3_REG_OFFSET                   = 0x0C

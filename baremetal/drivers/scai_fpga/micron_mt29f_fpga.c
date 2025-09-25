@@ -75,16 +75,32 @@ typedef struct {
 // Configuration Register Bitfield
 typedef union {
     struct {
-        uint8_t conti_rd : 1;    // Bit 0: Continuous Read Mode
-        uint8_t          : 1;    // Bit 1: Reserved
-        uint8_t lot_en   : 1;    // Bit 2: Lock OTP Area
-        uint8_t          : 1;    // Bit 3: Reserved
-        uint8_t ecc_en   : 1;    // Bit 4: Internal ECC Enable
+        uint8_t conti_rd : 1;    // Bit 0:   Continuous Read Mode
+        uint8_t          : 1;    // Bit 1:   Reserved
+        uint8_t lot_en   : 1;    // Bit 2:   Lock OTP Area
+        uint8_t          : 1;    // Bit 3:   Reserved
+        uint8_t ecc_en   : 1;    // Bit 4:   Internal ECC Enable
         uint8_t cfg      : 2;    // Bit 6:5: User-defined
-        uint8_t          : 1;    // Bit 7: Reserved
+        uint8_t          : 1;    // Bit 7:   Reserved
     } bits;
     uint8_t byte;
 } mt29f_config_reg_t;
+
+// STatus register bits
+typedef union {
+    struct {
+        uint8_t oip      : 1;    // Bit 0: Operation In progress
+        uint8_t wel      : 1;    // Bit 1: write enable latch
+        uint8_t e_fail   : 1;    // Bit 2: ERASE fail
+        uint8_t p_fail   : 1;    // Bit 3: PROGRAM fail
+        uint8_t eccs0    : 1;    // Bit 4: ECC status register
+        uint8_t eccs1    : 1;    // Bit 5: ECC status register
+        uint8_t eccs2    : 1;    // Bit 6: ECC status register
+        uint8_t crbsy    : 1;    // Bit 7: Cache read busy 
+
+    } bits;
+    uint8_t byte;
+} mt29f_status_reg_t;
 
 // --- Constants from device datasheet ---
 static const uint32_t PAGE_SIZE_BYTES    = 4096;
@@ -101,16 +117,6 @@ static const uint8_t  MT29F_JEDEC_SIZE   = 2;                                   
 static const uint16_t MT29F_TIMEOUT_ITER = 10000;                               // Timeout iterations for operations
 static const uint8_t  MT29F_UNLOCK_ALL   = 0x00;                                // Value to unlock all blocks
 
-// STatus register bits
-static const uint8_t MT29F_STATUS_OIP_B  = 0x01;
-// static const uint8_t MT29F_STATUS_WEL    = 0x02;
-// static const uint8_t MT29F_STATUS_E_FAIL = 0x04;
-// static const uint8_t MT29F_STATUS_P_FAIL = 0x08;
-// static const uint8_t MT29F_STATUS_ECC_S0 = 0x10;
-// static const uint8_t MT29F_STATUS_ECC_S1 = 0x20;
-// static const uint8_t MT29F_STATUS_ECC_S2 = 0x40;
-// static const uint8_t MT29F_STATUS_CRBSY  = 0x80;
-
 // --- Static Helper Functions ---
 
 /**
@@ -121,6 +127,19 @@ static const uint8_t MT29F_STATUS_OIP_B  = 0x01;
 static inline uint32_t logical_to_physical(uint32_t logical_addr) {
     // This calculation is based on the original soft-core driver's macro.
     return ((logical_addr & 0xFFFFF000UL) << 1) | (logical_addr & 0x00000FFFUL);
+}
+
+static void status_print(uint8_t status) {
+    mt29f_status_reg_t status_parsed;
+    status_parsed.byte = status;
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F status: 0x%02X\n", status);
+    if (status_parsed.bits.oip) mHSS_DEBUG_PRINTF(LOG_NORMAL, "\t OIP\n");
+    if (status_parsed.bits.wel) mHSS_DEBUG_PRINTF(LOG_NORMAL, "\t WEL\n");
+    if (status_parsed.bits.e_fail) mHSS_DEBUG_PRINTF(LOG_NORMAL, "\t ERASE FAIL\n");
+    if (status_parsed.bits.p_fail) mHSS_DEBUG_PRINTF(LOG_NORMAL, "\t PROGRAM FAIL\n");
+    if (status_parsed.bits.crbsy) mHSS_DEBUG_PRINTF(LOG_NORMAL, "\t Cache read busy\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "end of status.\n");
 }
 
 static void write_enable(scai_fpga_channel_t* channel) {
@@ -146,8 +165,12 @@ static uint8_t get_feature(scai_fpga_channel_t* channel, mt29f_register_t featur
 }
 
 static uint8_t wait_flash_ready(scai_fpga_channel_t* channel) {
+    mt29f_status_reg_t status = { 0 };
+
     for (int i = 0; i < MT29F_TIMEOUT_ITER; i++) {
-        if (!(get_feature(channel, MT29F_REG_STATUS) & MT29F_STATUS_OIP_B)) {
+        status.byte = get_feature(channel, MT29F_REG_STATUS);
+        status_print(status.byte);
+        if (!status.bits.oip) {
             return 0; // Success
         }
     }
@@ -207,6 +230,17 @@ static void unlock_all_blocks(scai_fpga_channel_t* channel) {
     set_feature(channel, MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
 }
 
+static void flash_reset(scai_fpga_channel_t* channel) {
+    const uint8_t cmd = MT29F_CMD_RESET_DEVICE;
+    scai_fpga_transaction_t params = {
+        .tx_buffer      = &cmd,
+        .tx_len         = sizeof(cmd)
+    };
+    scai_fpga_transaction(channel, &params);
+
+    wait_flash_ready(channel);
+}
+
 // =============================================================================
 // Public API Implementation
 // =============================================================================
@@ -239,6 +273,9 @@ void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_fo
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "get_feature %02X = %02X\n", MT29F_REG_CONFIG, config_reg.byte);
     
     unlock_all_blocks(channel);
+    
+    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "get_feature %02X = %02X\n", MT29F_REG_CONFIG, config_reg.byte);
 
     channel->is_initialized = true;
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Micron MT29F @ 0x%08lX configured.\n\n", channel->base_addr);
@@ -279,8 +316,8 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint32_t remaining_len = len;
     uint8_t* current_buf   = buf;
 
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = %u\n", len, addr);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = 0x%X\n", len, addr);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = 0x%X, remaining_len = %u\n", current_addr, remaining_len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
@@ -288,8 +325,8 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
         uint8_t  target_die    = (physical_addr >> MT29F_DIE_SHIFT) & MT29F_DIE_MASK; 
                 
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = %u, col_addr = %u\n", row_addr, col_addr);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: physical_addr = 0x%X\n", physical_addr);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: row_addr = 0x%X, col_addr = 0x%X\n", row_addr, col_addr);
 
         set_die(channel, target_die);
 
@@ -315,16 +352,25 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         }
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_read: read_len = %d\n", read_len);
 
-        scai_fpga_set_word_mode(channel);
-        scai_fpga_set_qspi_mode(channel);
+//        scai_fpga_set_word_mode(channel);
+//        scai_fpga_set_qspi_mode(channel);
+//
+//        mt29f_read_cmd_t read_cmd = {
+//            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
+//            .col_addr_1 = (uint8_t)(col_addr >> 8),
+//            .col_addr_0 = (uint8_t)(col_addr),
+//            .dummy      = DUMMY_BYTE
+//        };
 
         mt29f_read_cmd_t read_cmd = {
-            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
+            .opcode     = MT29F_CMD_READ_FROM_CACHE_X1,
             .col_addr_1 = (uint8_t)(col_addr >> 8),
             .col_addr_0 = (uint8_t)(col_addr),
             .dummy      = DUMMY_BYTE
         };
+
         scai_fpga_transaction_t read_params = {
             .tx_buffer = &read_cmd,
             .tx_len    = sizeof(read_cmd),
@@ -332,12 +378,12 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .rx_len    = read_len,
             .format    = channel->format
         };
+
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Reading data\n");
         scai_fpga_transaction(channel, &read_params);
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: after read\n");
 
         for (uint32_t i = 0; i < read_len; i++) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = %u\n", i, current_buf[i]);
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%02X\n", i, current_buf[i]);
         }
 
         current_addr  += read_len;
@@ -372,6 +418,8 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
     scai_fpga_set_byte_mode(channel);
     scai_fpga_set_spi_mode(channel);    
     write_enable(channel);
+    
+    status_print(get_feature(channel, MT29F_REG_STATUS));
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: ERASE\n");
 
@@ -388,17 +436,16 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
     scai_fpga_transaction(channel, &params);
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: wait\n");
-    uint8_t stat_reg = get_feature(channel, MT29F_REG_STATUS);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: stat_reg = %u\n", stat_reg);
+        
+    status_print(get_feature(channel, MT29F_REG_STATUS));
 
     uint8_t status = wait_flash_ready(channel);
     if (status != 0) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: wait timeout\n");
         return 1;
     }
-
-    stat_reg = get_feature(channel, MT29F_REG_STATUS);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: stat_reg = %u\n", stat_reg);
+    
+    status_print(get_feature(channel, MT29F_REG_STATUS));
 
     return 0;
 }
@@ -409,9 +456,13 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
     uint32_t current_addr      = addr;
     uint32_t remaining_len     = len;
     const uint8_t* current_buf = buf;
+    
+    mt29f_config_reg_t config_reg;
+    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "get_feature %02X = %02X\n", MT29F_REG_CONFIG, config_reg.byte);
 
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: len = %u, addr = %u\n", len, addr);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: current_addr = %u, remaining_len = %u\n", current_addr, remaining_len);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: len = %u, addr = %X\n", len, addr);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: current_addr = %X, remaining_len = %u\n", current_addr, remaining_len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
@@ -435,7 +486,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         scai_fpga_set_spi_mode(channel);
         scai_fpga_set_byte_mode(channel);
         mt29f_program_load_x4_cmd_t prog_load_cmd = {
-            .opcode         = MT29F_CMD_PROGRAM_LOAD_X4,
+            .opcode         = MT29F_CMD_PROGRAM_LOAD_X1,
             .row_addr_1     = (uint8_t)(page_addr >> 8),
             .row_addr_0     = (uint8_t)(page_addr)
         };
@@ -445,14 +496,14 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
             .keep_ce_active = true
         };
         mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: Loading data\n");
-        // 3.1. PROGRAM_LOAD_X4
+        // 3.1. PROGRAM_LOAD
         // Trying initially do as is in Sergio code
         // scai_fpga_program(channel, &load_params);
         scai_fpga_program(channel, &load_params);
 
         // 3.2. Tx data
-        scai_fpga_set_qspi_mode(channel);
-        scai_fpga_set_word_mode(channel);
+//        scai_fpga_set_qspi_mode(channel);
+//        scai_fpga_set_word_mode(channel);
         scai_fpga_transaction_t load_data_params = {
             .tx_buffer      = current_buf,
             .tx_len         = write_len
@@ -461,8 +512,8 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         // _3.
         
         // 4. mem_program_execute(instance, mta.st_cr.r_address);
-        scai_fpga_set_spi_mode(channel);
-        scai_fpga_set_byte_mode(channel);
+//        scai_fpga_set_spi_mode(channel);
+//        scai_fpga_set_byte_mode(channel);
         mt29f_program_execute_cmd_t prog_exec_cmd = {
             .opcode     = MT29F_CMD_PROGRAM_EXECUTE,
             .row_addr_2 = (uint8_t)(page_addr >> 16),
@@ -482,9 +533,8 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
             return 1;
         }
 
-        // TODO: Check program error state
-        uint8_t status = get_feature(channel, MT29F_REG_STATUS);
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: status = %u\n", status);
+        // TODO: Check program error state        
+        status_print(get_feature(channel, MT29F_REG_STATUS));
 
         // 6. set_WP(instance, MEM_WRITE_PROTECTED);
         scai_fpga_enable_write_protect(channel);
@@ -505,4 +555,24 @@ uint8_t SCAI_MT29_Flash_read_status_regs(scai_fpga_channel_t* channel, void* reg
     regs->die_select = get_feature(channel, MT29F_REG_DIE_SELECT);
     
     return 0; // Success
+}
+
+uint8_t SCAI_MT29_Flash_get_status(scai_fpga_channel_t* channel) {
+    mt29f_status_regs_t regs;
+
+    regs.lock       = get_feature(channel, MT29F_REG_LOCK);
+    regs.config     = get_feature(channel, MT29F_REG_CONFIG);
+    regs.status     = get_feature(channel, MT29F_REG_STATUS);
+    regs.die_select = get_feature(channel, MT29F_REG_DIE_SELECT);
+    
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "lock   = 0x%02X\n", regs.lock);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "config = 0x%02X\n", regs.config);    
+    status_print(regs.status);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "die    = 0x%02X\n", regs.die_select);
+    
+    return 0; // Success
+}
+
+void SCAI_MT29_Flash_reset(scai_fpga_channel_t* channel) {
+    flash_reset(channel);
 }

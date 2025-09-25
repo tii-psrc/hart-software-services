@@ -445,6 +445,11 @@ uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
     if (flash_type >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
         return 0;
+    }  
+
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_NORMAL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return SCAI_FLASH_ERROR;
     }
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading JEDEC ID...\n");
@@ -483,11 +488,7 @@ uint8_t scai_fpga_page_read(uint16_t page) {
     uint8_t read_data[256];
     memset(read_data, 0, sizeof(read_data));
 
-    if (Flash_read(read_data, page * 64 * 4096, 32) == 0) {
-        for (uint32_t j = 0; j < 16; j++) {
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%02X ", read_data[j]);
-        }
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n");
+    if (Flash_read(read_data, page, 32) == 0) {
         return SCAI_FLASH_SUCCESS;
     } else {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
@@ -496,16 +497,53 @@ uint8_t scai_fpga_page_read(uint16_t page) {
 }
 
 uint8_t scai_fpga_page_write(uint16_t page) {
-    uint8_t test_data[256];
+    uint8_t test_data[128];
     for (uint32_t i = 0; i < sizeof(test_data); i++) {
         test_data[i] = (uint8_t)i;
     }
 
-    if (Flash_erase_block(page) != 0) {
+//    if (Flash_erase_block(page) != 0) {
+//        return SCAI_FLASH_ERROR;
+//    }
+
+    if (Flash_program(test_data, page, sizeof(test_data)) != 0) {
         return SCAI_FLASH_ERROR;
     }
+    return SCAI_FLASH_SUCCESS;
+}
 
-    if (Flash_program(test_data, page * 64 * 4096, sizeof(test_data)) != 0) {
+uint8_t scai_fpga_stat(uint8_t chip) {
+    if (chip >= SCAI_MEM_TYPES_QUANTITY) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
+        return 0;
+    }
+    if (scai_set_flash_chip(chip, MSS_QSPI_NORMAL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return SCAI_FLASH_ERROR;
+    }
+    return SCAI_MT29_Flash_get_status(g_active_channel);
+}
+
+uint8_t scai_fpga_reset(uint8_t chip) {
+    if (chip >= SCAI_MEM_TYPES_QUANTITY) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
+        return 0;
+    }
+    if (scai_set_flash_chip(chip, MSS_QSPI_NORMAL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return SCAI_FLASH_ERROR;
+    }
+    SCAI_MT29_Flash_reset(g_active_channel);
+    return SCAI_FLASH_SUCCESS;
+}
+
+uint8_t scai_fpga_manual_init(uint8_t chip) {
+    if (chip >= SCAI_MEM_TYPES_QUANTITY) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
+        return 0;
+    }
+    if (scai_set_flash_chip(chip, MSS_QSPI_NORMAL) != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
     return SCAI_FLASH_SUCCESS;

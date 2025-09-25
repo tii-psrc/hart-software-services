@@ -168,6 +168,8 @@ void scai_fpga_init(scai_fpga_channel_t* channel);
  * @param params    A pointer to a struct containing all transaction parameters.
  */
 void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
+void scai_fpga_program(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
+void scai_fpga_load(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params);
 
 inline void scai_fpga_set_word_mode(scai_fpga_channel_t* channel) {
     channel->ctrl1_state.bits.data_mode = 1;

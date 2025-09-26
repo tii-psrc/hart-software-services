@@ -14,6 +14,8 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "winbond_w25n01gv_direct.h"
 
+#include "ctest/MT29F.h"
+
 #include <string.h>
 
 // Driver Definitions
@@ -546,5 +548,6 @@ uint8_t scai_fpga_manual_init(uint8_t chip) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
+
     return SCAI_FLASH_SUCCESS;
 }

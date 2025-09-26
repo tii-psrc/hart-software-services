@@ -7,10 +7,10 @@
 
 #include "ctest/sapi_qspi.h"
 #include "ctest/sapi_hw_platform.h"
+#include "ctest/reg_mitm.h"
 
 #include <string.h>
 #include <stdio.h>
-#include <hw_reg_access.h>
 
 QSPI_type QSPIs[MAX_QSPIS];
 
@@ -24,12 +24,12 @@ static void init_qspi(int instance, uint32_t address)
     qtr->ctrl[1] = 0;   //No auto operation
     qtr->ctrl[2] = Q_CTRL3_SET_nHOLD;   //No Toggling or G_PIO operation. And not hold
 
-    HW_set_32bit_reg(qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
-    HW_set_32bit_reg(qtr->address + Q_WR_CTRL2, qtr->ctrl[1]);
-    HW_set_32bit_reg(qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
+    scai_set_reg(qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+    scai_set_reg(qtr->address + Q_WR_CTRL2, qtr->ctrl[1]);
+    scai_set_reg(qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
 }
 
-void init_qspis(void)
+void sapi_init_qspis(void)
 {
     init_qspi(MEM_M0, M0_BASE_ADDRESS);
     init_qspi(MEM_M1, M1_BASE_ADDRESS);
@@ -54,7 +54,7 @@ int wait_until_qspi_idle(QSPI_type *qtr)
 
     for(i=0;i<100;i++)
     {
-        if(1 & HW_get_32bit_reg(qtr->address + Q_RD_ST1))
+        if(1 & scai_get_reg(qtr->address + Q_RD_ST1))
             break;
     }
     return (i<100);
@@ -68,7 +68,7 @@ int rx_words(int instance, uint32_t *d, int quantity)
 
     qtr = &QSPIs[instance];
 
-    status = HW_get_32bit_reg(qtr->address + Q_RD_ST2);
+    status = scai_get_reg(qtr->address + Q_RD_ST2);
     qty = ((status & Q_FR_RDCNT)>>Q_FR_S_RDCNT);
 
     while(1)
@@ -77,13 +77,13 @@ int rx_words(int instance, uint32_t *d, int quantity)
         while(j<qty)
         {
             j++;
-            d[i++] = HW_get_32bit_reg(qtr->address + Q_RD_DATA);
+            d[i++] = scai_get_reg(qtr->address + Q_RD_DATA);
             if((i)>=quantity)
                 break;
         }
         if(i>=quantity)
             break;
-        status = HW_get_32bit_reg(qtr->address + Q_RD_ST2);
+        status = scai_get_reg(qtr->address + Q_RD_ST2);
         qty = ((status & Q_FR_RDCNT)>>Q_FR_S_RDCNT);
     }
     return i;
@@ -101,13 +101,13 @@ int tx_words(int instance, uint32_t *d, int quantity)
     ptr = d;
     while(i<quantity)
     {
-        status = HW_get_32bit_reg(qtr->address + Q_RD_ST2);
+        status = scai_get_reg(qtr->address + Q_RD_ST2);
         if(!(status & Q_FT_FULL))
         {
             qty = 64-((status & Q_FT_WRCNT)>>Q_FT_S_WRCNT);
             while(qty && (i<quantity))
             {
-                HW_set_32bit_reg(qtr->address + Q_WR_DATA, *ptr++);
+                scai_set_reg(qtr->address + Q_WR_DATA, *ptr++);
                 i++;
                 qty--;
             }
@@ -128,7 +128,7 @@ int tx_bytes(int instance, uint8_t *d, int quantity)
     ptr = d;
     while(i<quantity)
     {
-        status = HW_get_32bit_reg(qtr->address + Q_RD_ST2);
+        status = scai_get_reg(qtr->address + Q_RD_ST2);
         if(!(status & Q_FT_FULL))
         {
             qty = 64-((status & Q_FT_WRCNT)>>Q_FT_S_WRCNT);
@@ -136,7 +136,7 @@ int tx_bytes(int instance, uint8_t *d, int quantity)
             {
                 data = (((uint32_t)ptr[0])<<24) | 0x00FFFFFF;
                 ptr++;
-                HW_set_32bit_reg(qtr->address + Q_WR_DATA, data);
+                scai_set_reg(qtr->address + Q_WR_DATA, data);
                 i++;
                 qty--;
             }

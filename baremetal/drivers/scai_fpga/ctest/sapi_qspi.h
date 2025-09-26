@@ -147,7 +147,7 @@ typedef enum
 /*
  * Init the hardware IpCore and the software structures, including TX and RX FIFOs
  * */
-void init_qspis(void);
+void sapi_init_qspis(void);
 
 /*
  * This routine transfer to interface "instance", "quantity" 32 bits words. It is not blocking.

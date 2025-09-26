@@ -14,7 +14,9 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "winbond_w25n01gv_direct.h"
 
-#include "ctest/MT29F.h"
+#include "ctest/sapi_MT29F.h"
+#include "ctest/sapi_qspi_memories.h"
+#include "ctest/sapi_qspi.h"
 
 #include <string.h>
 
@@ -483,34 +485,105 @@ uint32_t scai_fpga_read_reg(uintptr_t address)
 }
 
 uint8_t scai_fpga_page_erase(uint16_t page) {
-    return Flash_erase_block(page);
+//  return Flash_erase_block(page);
+
+    MQSPI_T *mqtr;
+    int instance;
+    uint32_t address;
+
+    instance = MEM_M0;
+    mqtr     = &MQSPIs[instance];
+    address  = page;
+
+    if (address >= 0x3FFFFFFF) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: Invalid address 0x%08X\n", address);
+        return SCAI_FLASH_ERROR;
+    }
+    
+    if (mqtr->mem_type != MICRON_MT29F) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: Invalid memory type %d\n", mqtr->mem_type);
+        return SCAI_FLASH_ERROR;
+    }
+
+    int result = block_erase_mt29f(instance, address);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: result = %d\n", result);
+    
+    return SCAI_FLASH_SUCCESS;
 }
 
 uint8_t scai_fpga_page_read(uint16_t page) {
-    uint8_t read_data[256];
-    memset(read_data, 0, sizeof(read_data));
-
-    if (Flash_read(read_data, page, 32) == 0) {
-        return SCAI_FLASH_SUCCESS;
-    } else {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
-        return SCAI_FLASH_ERROR;
-    }
-}
-
-uint8_t scai_fpga_page_write(uint16_t page) {
-    uint8_t test_data[128];
-    for (uint32_t i = 0; i < sizeof(test_data); i++) {
-        test_data[i] = (uint8_t)i;
-    }
-
-//    if (Flash_erase_block(page) != 0) {
+//    uint8_t read_data[256];
+//    memset(read_data, 0, sizeof(read_data));
+//
+//    if (Flash_read(read_data, page, 32) == 0) {
+//        return SCAI_FLASH_SUCCESS;
+//    } else {
+//        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
 //        return SCAI_FLASH_ERROR;
 //    }
 
-    if (Flash_program(test_data, page, sizeof(test_data)) != 0) {
+    MQSPI_T *mqtr;
+    int instance;
+    uint32_t address;
+    uint32_t buffer[0x400];
+    uint32_t quantity = 16;
+
+    instance = MEM_M0;
+    mqtr     = &MQSPIs[instance];
+    address  = page;
+    
+    if (mqtr->mem_type != MICRON_MT29F) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: Invalid memory type %d\n", mqtr->mem_type);
         return SCAI_FLASH_ERROR;
     }
+
+    int result = mem_read_mt29f_x4(instance, address, buffer, quantity);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: result = %d\n", result);
+
+    for (uint32_t i = 0; i < quantity; i++) {
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%08X\n", buffer[i]);
+    }
+    
+    return SCAI_FLASH_SUCCESS;
+}
+
+uint8_t scai_fpga_page_write(uint16_t page) {
+//    uint8_t test_data[128];
+//    for (uint32_t i = 0; i < sizeof(test_data); i++) {
+//        test_data[i] = (uint8_t)i;
+//    }
+//
+//    if (Flash_erase_block(page) != 0) {
+//        return SCAI_FLASH_ERROR;
+//    }
+//
+//    if (Flash_program(test_data, page, sizeof(test_data)) != 0) {
+//        return SCAI_FLASH_ERROR;
+//    }
+//    return SCAI_FLASH_SUCCESS;
+
+    MQSPI_T *mqtr;
+    int instance;
+    uint32_t address;
+    uint32_t buffer[0x400];
+    uint32_t len = 16;
+
+    instance = MEM_M0;
+    mqtr     = &MQSPIs[instance];
+    address  = page;
+    
+    if (mqtr->mem_type != MICRON_MT29F) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: Invalid memory type %d\n", mqtr->mem_type);
+        return SCAI_FLASH_ERROR;
+    }
+
+    for (uint32_t i = 0; i < len; i++) {
+        buffer[i] = i;
+    }
+
+    int result = mem_write_mt29f_x4(instance, address, buffer, len);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: result = %d\n", result);
+    
     return SCAI_FLASH_SUCCESS;
 }
 
@@ -540,14 +613,18 @@ uint8_t scai_fpga_reset(uint8_t chip) {
 }
 
 uint8_t scai_fpga_manual_init(uint8_t chip) {
-    if (chip >= SCAI_MEM_TYPES_QUANTITY) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
-        return 0;
-    }
-    if (scai_set_flash_chip(chip, MSS_QSPI_NORMAL) != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
-        return SCAI_FLASH_ERROR;
-    }
-
+    //if (chip >= SCAI_MEM_TYPES_QUANTITY) {
+    //    mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
+    //    return 0;
+    //}
+    //if (scai_set_flash_chip(chip, MSS_QSPI_NORMAL) != 0) {
+    //    mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+    //    return SCAI_FLASH_ERROR;
+    //}
+    //return SCAI_FLASH_SUCCESS;
+    
+    sapi_init_qspis();
+    init_mqspis();
+    sapi_init_mt29fs();
     return SCAI_FLASH_SUCCESS;
 }

@@ -11,8 +11,6 @@
 #include "ctest/sapi_qspi.h"
 #include "ctest/sapi_hw_platform.h"
 
-#include <hw_reg_access.h>
-
     typedef enum
     {
         MICRON_MT29F            = 0,

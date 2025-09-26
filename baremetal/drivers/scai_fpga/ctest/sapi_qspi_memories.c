@@ -7,7 +7,7 @@
 
 #include "ctest/sapi_hw_platform.h"
 #include "ctest/sapi_qspi_memories.h"
-
+#include "ctest/reg_mitm.h"
 
 MQSPI_T MQSPIs[MAX_QSPIS];
 
@@ -54,7 +54,7 @@ void activate_ce(QSPI_type *qtr,  int value)
         qtr->ctrl[0] |= Q_CTRL1_ACTIVATE_CE;
     else
         qtr->ctrl[0] &= ~Q_CTRL1_ACTIVATE_CE;
-    HW_set_32bit_reg(qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+    scai_set_reg(qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
 }
 
 /*
@@ -77,7 +77,7 @@ int generic_tx_rx_32bits(int instance, int X4nX1, uint32_t *tx_d, int tx_q, uint
      {
          qtr->ctrl[2] &=  ~(Q_CTRL3_SET_DUMMY_CNT);
          qtr->ctrl[2] |=  (((uint32_t)dummy_cycles)<<Q_CTRL3_S_SET_DUMMY_CNT);
-         HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
+         scai_set_reg(mqtr->qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
 
      }
      //2-Program the control register
@@ -90,7 +90,7 @@ int generic_tx_rx_32bits(int instance, int X4nX1, uint32_t *tx_d, int tx_q, uint
      qtr->ctrl[0] |=  (Q_CTRL1_SET_WnB | Q_CTRL1_START_OP);
      qtr->ctrl[0] |=  (((uint32_t)tx_q)<<Q_CTRL1_S_QT);
      qtr->ctrl[0] |=  (((uint32_t)rx_q)<<Q_CTRL1_S_QR);
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
 
      if(tx_q)
          tx_words(instance, tx_d, tx_q);
@@ -101,10 +101,10 @@ int generic_tx_rx_32bits(int instance, int X4nX1, uint32_t *tx_d, int tx_q, uint
      if(dummy_cycles)
      {
          qtr->ctrl[2] &=  ~(Q_CTRL3_SET_DUMMY_CNT);
-         HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
+         scai_set_reg(mqtr->qtr->address + Q_WR_CTRL3, qtr->ctrl[2]);
      }
      qtr->ctrl[0] &= ~(Q_CTRL1_QT | Q_CTRL1_QR);
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
      return ret;
 }
 
@@ -129,7 +129,7 @@ int generic_tx_rx_8bits(int instance, int X4nX1, uint8_t *tx_d, int tx_q, uint8_
          qtr->ctrl[0] &=  ~(Q_CTRL1_SET_X4nX1);
      qtr->ctrl[0] &=  ~(Q_CTRL1_SET_WnB | Q_CTRL1_QT | Q_CTRL1_QR);
      qtr->ctrl[0] |=  (Q_CTRL1_START_OP | (((uint32_t)tx_q)<<Q_CTRL1_S_QT) | (((uint32_t)rx_q)<<Q_CTRL1_S_QR));
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
 
      if(act_ce==QSPI_ACTIVATE_CE)
          activate_ce(qtr,  QSPI_ACTIVATE_CE);
@@ -141,7 +141,7 @@ int generic_tx_rx_8bits(int instance, int X4nX1, uint8_t *tx_d, int tx_q, uint8_
      wait_until_qspi_idle(qtr);
      //Close the operations
      qtr->ctrl[0] &= ~(Q_CTRL1_QT | Q_CTRL1_QR | Q_CTRL1_START_OP) ;
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
      if(act_ce==QSPI_ACTIVATE_CE)  //If I asked to activate the CE, now is moment to deactivate it
          activate_ce(qtr,  QSPI_DEACTIVATE_CE);
      return 1;
@@ -160,7 +160,7 @@ int generic_tx_8bits_x1(int instance, uint8_t *tx_d, int tx_q, int act_ce)
      qtr->ctrl[0] &=  ~(Q_CTRL1_SET_WnB);
      qtr->ctrl[0] |=  (Q_CTRL1_START_OP);
      qtr->ctrl[0] |=  (((uint32_t)tx_q)<<Q_CTRL1_S_QT);
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
 
      if(act_ce==QSPI_ACTIVATE_CE)
          activate_ce(qtr,  QSPI_ACTIVATE_CE);
@@ -171,7 +171,7 @@ int generic_tx_8bits_x1(int instance, uint8_t *tx_d, int tx_q, int act_ce)
          qtr->ctrl[0] &= ~(Q_CTRL1_QT | Q_CTRL1_QR | Q_CTRL1_START_OP | Q_CTRL1_ACTIVATE_CE) ;
      else
          qtr->ctrl[0] &= ~(Q_CTRL1_QT | Q_CTRL1_QR | Q_CTRL1_START_OP) ;
-     HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+     scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
      return 1;
 }
 
@@ -228,7 +228,7 @@ int set_WP(int instance, int protected)
         qtr->ctrl[0] &=  ~(Q_CTRL1SET_nWP);
     else
         qtr->ctrl[0] |=  (Q_CTRL1SET_nWP);
-    HW_set_32bit_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
+    scai_set_reg(mqtr->qtr->address + Q_WR_CTRL1, qtr->ctrl[0]);
     return 1;
 }
 

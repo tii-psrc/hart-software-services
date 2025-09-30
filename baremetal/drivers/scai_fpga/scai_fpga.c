@@ -445,20 +445,34 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
 }
 
 uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type) {
+//    uint8_t id_buf[4];
+//    if (flash_type >= SCAI_MEM_TYPES_QUANTITY) {
+//        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
+//        return 0;
+//    }  
+//
+//    if (scai_set_flash_chip(flash_type, MSS_QSPI_NORMAL) != 0) {
+//        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+//        return SCAI_FLASH_ERROR;
+//    }
+//
+//    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading JEDEC ID...\n");
+//    Flash_readid(id_buf);
+//    return (id_buf[0] << 24) | (id_buf[1] << 16) | (id_buf[2] << 8) | id_buf[3];
+
+    uint8_t tx_d[8];
     uint8_t id_buf[4];
-    if (flash_type >= SCAI_MEM_TYPES_QUANTITY) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", flash_type);
-        return 0;
-    }  
+    uint16_t id = 0;
 
-    if (scai_set_flash_chip(flash_type, MSS_QSPI_NORMAL) != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
-        return SCAI_FLASH_ERROR;
-    }
+    tx_d[0] = 0x9F;
+    tx_d[1] = 0xFF;
 
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Reading JEDEC ID...\n");
-    Flash_readid(id_buf);
-    return (id_buf[0] << 24) | (id_buf[1] << 16) | (id_buf[2] << 8) | id_buf[3];
+    int result = generic_tx_rx_8bits(flash_type, 0, tx_d, 2, id_buf, 2, QSPI_ACTIVATE_CE);
+    id = (id_buf[0] << 8) | (id_buf[1] << 0);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "ID: jedec  = 0x%04X\n", id);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "ID: result = %d\n", result);
+    
+    return (uint32_t)id;
 }
 
 uint8_t scai_fpga_diagnostics(void)
@@ -484,14 +498,14 @@ uint32_t scai_fpga_read_reg(uintptr_t address)
     return value;
 }
 
-uint8_t scai_fpga_page_erase(uint16_t page) {
+uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page) {
 //  return Flash_erase_block(page);
 
     MQSPI_T *mqtr;
     int instance;
     uint32_t address;
 
-    instance = MEM_M0;
+    instance = chip;
     mqtr     = &MQSPIs[instance];
     address  = page;
 
@@ -511,7 +525,7 @@ uint8_t scai_fpga_page_erase(uint16_t page) {
     return SCAI_FLASH_SUCCESS;
 }
 
-uint8_t scai_fpga_page_read(uint16_t page) {
+uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page) {
 //    uint8_t read_data[256];
 //    memset(read_data, 0, sizeof(read_data));
 //
@@ -528,7 +542,7 @@ uint8_t scai_fpga_page_read(uint16_t page) {
     uint32_t buffer[0x400];
     uint32_t quantity = 16;
 
-    instance = MEM_M0;
+    instance = chip;
     mqtr     = &MQSPIs[instance];
     address  = page;
     
@@ -541,13 +555,13 @@ uint8_t scai_fpga_page_read(uint16_t page) {
     mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: result = %d\n", result);
 
     for (uint32_t i = 0; i < quantity; i++) {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "0x%08X\n", buffer[i]);
+        mHSS_DEBUG_PRINTF(LOG_NORMAL, "[d] 0x%08X\n", buffer[i]);
     }
     
     return SCAI_FLASH_SUCCESS;
 }
 
-uint8_t scai_fpga_page_write(uint16_t page) {
+uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page) {
 //    uint8_t test_data[128];
 //    for (uint32_t i = 0; i < sizeof(test_data); i++) {
 //        test_data[i] = (uint8_t)i;
@@ -568,7 +582,7 @@ uint8_t scai_fpga_page_write(uint16_t page) {
     uint32_t buffer[0x400];
     uint32_t len = 16;
 
-    instance = MEM_M0;
+    instance = chip;
     mqtr     = &MQSPIs[instance];
     address  = page;
     
@@ -577,8 +591,10 @@ uint8_t scai_fpga_page_write(uint16_t page) {
         return SCAI_FLASH_ERROR;
     }
 
-    for (uint32_t i = 0; i < len; i++) {
-        buffer[i] = i;
+    uint8_t* p_tmp_buf = (uint8_t *)&buffer[0];
+
+    for (uint32_t i = 0; i < len * 4; i++) {
+        p_tmp_buf[i] = i;
     }
 
     int result = mem_write_mt29f_x4(instance, address, buffer, len);

@@ -80,6 +80,12 @@ uint8_t scai_fpga_stat(uint8_t chip);
 uint8_t scai_fpga_reset(uint8_t chip);
 uint8_t scai_fpga_manual_init(uint8_t chip);
 
+uint32_t sergio_jedec_id(scai_flash_type_t flash_type);
+uint8_t sergio_manual_init(uint8_t chip);
+uint8_t sergio_page_erase(uint8_t chip, uint16_t page);
+uint8_t sergio_page_read(uint8_t chip, uint16_t page);
+uint8_t sergio_fpga_page_write(uint8_t chip, uint16_t page);
+
 #ifdef __cplusplus
 }
 #endif

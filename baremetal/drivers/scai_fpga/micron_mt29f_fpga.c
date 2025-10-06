@@ -11,6 +11,7 @@
 
 #include "micron_mt29f_fpga.h"
 #include "scai_fpga_common.h" // Common low-level interface
+#include "scai_fpga_gpio.h"
 
 #include "hss_types.h"
 #include "hss_debug.h"
@@ -254,6 +255,8 @@ static void flash_reset(scai_fpga_channel_t* channel) {
  * for optimal performance.
  */
 void SCAI_MT29_Flash_init(scai_fpga_channel_t* channel, mss_qspi_io_format io_format) {
+    scai_fpga_gpio_enable_mt29f();
+
     channel->format = io_format;    
     scai_fpga_init(channel);
     

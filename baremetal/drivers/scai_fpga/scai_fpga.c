@@ -10,6 +10,8 @@
 #include "hss_types.h"
 
 #include "scai_fpga.h"
+#include "scai_fpga_platform.h"
+#include "scai_fpga_gpio.h"
 #include "micron_mt29f_fpga.h"
 #include "winbond_w25n01gv_fpga.h"
 #include "winbond_w25n01gv_direct.h"
@@ -62,53 +64,15 @@ static const scai_flash_driver_t micron_mt29f_driver = {
     .add_entry_to_bb_lut = NULL  // Not applicable for this flash type
 };
 
-// =============================================================================
-// Channel Management
-// =============================================================================
-
-#define SCAI_MAX_CHIPS_MT29F      8
-#define SCAI_MAX_CHIPS_MT25Q      1
-#define SCAI_MAX_CHIPS_W25        1
-#define SCAI_MAX_CHIPS_W25_DIRECT 1
-
-static const uintptr_t MSS_APB_BASE_ADDRESS    = 0x40000000UL;
-static const uintptr_t QSPI_0_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0300L;
-static const uintptr_t QSPI_1_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0400L;
-static const uintptr_t QSPI_2_BASE_ADDRESS     = MSS_APB_BASE_ADDRESS + 0x0500L;
-
-static const uintptr_t W25N01_FPGA_BASE_ADDR   = QSPI_0_BASE_ADDRESS;
-static const uintptr_t W25N01_DIRECT_BASE_ADDR = 0; // It's not used in direct mode
-
-// static const uintptr_t MT29F_BASE_ADDR         = QSPI_1_BASE_ADDRESS;
-static const uintptr_t MT29F_CHIP_0_BASE_ADDR  = QSPI_1_BASE_ADDRESS +  0; // Die 0
-static const uintptr_t MT29F_CHIP_1_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 16; // Die 1
-static const uintptr_t MT29F_CHIP_2_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 32; // Die 2
-static const uintptr_t MT29F_CHIP_3_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 48; // Die 3
-static const uintptr_t MT29F_CHIP_4_BASE_ADDR  = QSPI_2_BASE_ADDRESS +  0; // Die 4
-static const uintptr_t MT29F_CHIP_5_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 16; // Die 5
-static const uintptr_t MT29F_CHIP_6_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 32; // Die 6
-static const uintptr_t MT29F_CHIP_7_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 48; // Die 7
-
-static const uintptr_t MT29F_BASE_ADDRS[] = {
-    MT29F_CHIP_0_BASE_ADDR,
-    MT29F_CHIP_1_BASE_ADDR,
-    MT29F_CHIP_2_BASE_ADDR,
-    MT29F_CHIP_3_BASE_ADDR,
-    MT29F_CHIP_4_BASE_ADDR,
-    MT29F_CHIP_5_BASE_ADDR,
-    MT29F_CHIP_6_BASE_ADDR,
-    MT29F_CHIP_7_BASE_ADDR
-};
-
 // Module State
 // Pointers to the currently active driver and its type.
 // Default to the direct MSS driver as per the requirement.
 
-static scai_fpga_channel_t  g_qspi_channels[SCAI_MEM_TYPES_QUANTITY] = { 0 };
-
-static scai_fpga_channel_t* g_active_channel      = &g_qspi_channels[SCAI_WINBOND_W25N01_DIRECT];
-static const scai_flash_driver_t* g_active_driver = &w25n01_direct_driver;
-static scai_flash_type_t g_active_flash_type      = SCAI_WINBOND_W25N01_DIRECT;
+static scai_fpga_channel_t       g_qspi_channels[SCAI_MEM_TYPES_QUANTITY] = { 0 };
+static scai_fpga_channel_t       *g_active_channel                        = &g_qspi_channels[SCAI_WINBOND_W25N01_DIRECT];
+static const scai_flash_driver_t *g_active_driver                         = &w25n01_direct_driver;
+static scai_flash_type_t         g_active_flash_type                      = SCAI_WINBOND_W25N01_DIRECT;
+static bool                      g_is_mt29f_enabled                       = false;
 
 // Inline helper function for driver validation
 static inline bool is_driver_ready(void) {
@@ -124,15 +88,15 @@ static inline bool is_driver_ready(void) {
     return true;
 }
 
-static inline bool find_Mt29_chip_index(uintptr_t base_addr, uint8_t* chip_index_out) {
-    for (uint8_t i = 0; i < sizeof(MT29F_BASE_ADDRS)/sizeof(MT29F_BASE_ADDRS[0]); i++) {
-        if (MT29F_BASE_ADDRS[i] == base_addr) {
-            *chip_index_out = i;
-            return true;
-        }
-    }
-    return false; // Address not found
-}
+// static inline bool find_Mt29_chip_index(uintptr_t base_addr, uint8_t* chip_index_out) {
+//     for (uint8_t i = 0; i < sizeof(MT29F_BASE_ADDRS)/sizeof(MT29F_BASE_ADDRS[0]); i++) {
+//         if (MT29F_BASE_ADDRS[i] == base_addr) {
+//             *chip_index_out = i;
+//             return true;
+//         }
+//     }
+//     return false; // Address not found
+// }
 
 // =============================================================================
 // SCAI Management Functions
@@ -158,6 +122,10 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Winbond W25N01 Direct flash driver.\n");
                 break;
             case SCAI_MICRON_MT29F:
+                if (!g_is_mt29f_enabled) {
+                    scai_fpga_gpio_enable_mt29f();
+                    g_is_mt29f_enabled = true;
+                }
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "MT29F chip not specified, defaulting to Chip 0.\n");
                 g_active_driver = &micron_mt29f_driver;
                 g_qspi_channels[SCAI_MICRON_MT29F].base_addr = MT29F_BASE_ADDRS[0];
@@ -170,6 +138,10 @@ uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_
             case SCAI_MICRON_MT29F_CHIP_5:
             case SCAI_MICRON_MT29F_CHIP_6:
             case SCAI_MICRON_MT29F_CHIP_7:
+                if (!g_is_mt29f_enabled) {
+                    scai_fpga_gpio_enable_mt29f();
+                    g_is_mt29f_enabled = true;
+                }
                 g_active_driver = &micron_mt29f_driver;
                 g_qspi_channels[flash_type].base_addr = MT29F_BASE_ADDRS[flash_type - SCAI_MICRON_MT29F_CHIP_0];
                 mHSS_DEBUG_PRINTF(LOG_NORMAL, "Switched to Micron MT29F FPGA flash driver, Chip %u.\n", flash_type - SCAI_MICRON_MT29F_CHIP_0);

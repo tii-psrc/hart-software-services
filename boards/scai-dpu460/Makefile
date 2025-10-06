@@ -100,6 +100,8 @@ INCLUDES += \
 
 EXTRA_SRCS-$(CONFIG_SERVICE_SCAI_FPGA) += \
 	baremetal/drivers/scai_fpga/scai_fpga.c \
+	baremetal/drivers/scai_fpga/scai_fpga_gpio.c \
+	baremetal/drivers/scai_fpga/scai_fpga_platform.c \
 	baremetal/drivers/scai_fpga/scai_fpga_common.c \
 	baremetal/drivers/scai_fpga/winbond_w25n01gv_fpga.c \
 	baremetal/drivers/scai_fpga/micron_mt29f_fpga.c \
@@ -110,6 +112,8 @@ EXTRA_SRCS-$(CONFIG_SERVICE_SCAI_FPGA) += \
 	baremetal/drivers/scai_fpga/ctest/reg_mitm.c
 
 $(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga_gpio.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga_platform.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga_common.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/micron_mt29f_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)

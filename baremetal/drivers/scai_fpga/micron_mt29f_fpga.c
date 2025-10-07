@@ -351,29 +351,31 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
         mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_read: read_len = %d\n", read_len);
 
-        bool wordMode = scai_fpga_is_word_mode(channel);
-        bool qspiMode = scai_fpga_is_quad_mode(channel);
-
-        if (!wordMode) {
-            scai_fpga_set_word_mode(channel);
-        }
-        if (!qspiMode) {
-            scai_fpga_set_qspi_mode(channel);
-        }
-
-        mt29f_read_cmd_t read_cmd = {
-            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
-            .col_addr_1 = (uint8_t)(col_addr >> 8),
-            .col_addr_0 = (uint8_t)(col_addr),
-            .dummy      = DUMMY_BYTE
-        };
-
+//        bool wordMode = scai_fpga_is_word_mode(channel);
+//        bool qspiMode = scai_fpga_is_quad_mode(channel);
+//
+//        if (!wordMode) {
+//            scai_fpga_set_word_mode(channel);
+//        }
+//        if (!qspiMode) {
+//            scai_fpga_set_qspi_mode(channel);
+//        }
+//
 //        mt29f_read_cmd_t read_cmd = {
-//            .opcode     = MT29F_CMD_READ_FROM_CACHE_X1,
+//            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
 //            .col_addr_1 = (uint8_t)(col_addr >> 8),
 //            .col_addr_0 = (uint8_t)(col_addr),
 //            .dummy      = DUMMY_BYTE
 //        };
+
+        scai_fpga_set_byte_mode(channel);
+        scai_fpga_set_spi_mode(channel);
+        mt29f_read_cmd_t read_cmd = {
+            .opcode     = MT29F_CMD_READ_FROM_CACHE_X1,
+            .col_addr_1 = (uint8_t)(col_addr >> 8),
+            .col_addr_0 = (uint8_t)(col_addr),
+            .dummy      = DUMMY_BYTE
+        };
 
         scai_fpga_transaction_t read_params = {
             .tx_buffer = &read_cmd,
@@ -386,12 +388,12 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Reading data\n");
         scai_fpga_transaction(channel, &read_params);
         
-        if (!wordMode) {
-            scai_fpga_set_byte_mode(channel);
-        }
-        if (!qspiMode) {
-            scai_fpga_set_spi_mode(channel);
-        }
+//        if (!wordMode) {
+//            scai_fpga_set_byte_mode(channel);
+//        }
+//        if (!qspiMode) {
+//            scai_fpga_set_spi_mode(channel);
+//        }
 
         for (uint32_t i = 0; i < read_len; i++) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%02X\n", i, current_buf[i]);

@@ -19,6 +19,8 @@
 #include "ctest/sapi_MT29F.h"
 #include "ctest/sapi_qspi_memories.h"
 #include "ctest/sapi_qspi.h"
+#include "ctest/sapi_adcs.h"
+#include "ctest/sapi_gpios.h"
 
 #include <string.h>
 
@@ -203,7 +205,7 @@ void Flash_init(mss_qspi_io_format io_format) {
             g_is_mt29f_enabled = true;
         }
     }
-    
+
     if (g_active_driver->init && !g_active_channel->is_initialized) {
         g_active_driver->init(g_active_channel, io_format);
     } 
@@ -602,7 +604,9 @@ uint32_t sergio_jedec_id(scai_flash_type_t flash_type) {
     return (uint32_t)id;
 }
 
-uint8_t sergio_manual_init(uint8_t chip) {    
+uint8_t sergio_manual_init(uint8_t chip) {
+    init_gpios();
+    init_adcs();
     sapi_init_qspis();
     init_mqspis();
     sapi_init_mt29fs();

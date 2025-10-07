@@ -109,7 +109,9 @@ EXTRA_SRCS-$(CONFIG_SERVICE_SCAI_FPGA) += \
 	baremetal/drivers/scai_fpga/ctest/sapi_qspi_memories.c \
 	baremetal/drivers/scai_fpga/ctest/sapi_qspi.c \
 	baremetal/drivers/scai_fpga/ctest/sapi_MT29F.c \
-	baremetal/drivers/scai_fpga/ctest/reg_mitm.c
+	baremetal/drivers/scai_fpga/ctest/sapi_adcs.c \
+	baremetal/drivers/scai_fpga/ctest/sapi_gpios.c \
+	baremetal/drivers/scai_fpga/ctest/reg_mitm.c \
 
 $(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/scai_fpga_gpio.o: CFLAGS=$(CFLAGS_GCCEXT)
@@ -121,6 +123,8 @@ $(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_direct.o: CFLAGS=$(CFLAGS
 $(BINDIR)/baremetal/drivers/scai_fpga/ctest/sapi_qspi_memories.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/ctest/sapi_qspi.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/ctest/sapi_MT29F.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/ctest/sapi_adcs.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpga/ctest/sapi_gpios.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/drivers/scai_fpga/ctest/reg_mitm.o: CFLAGS=$(CFLAGS_GCCEXT)
 
 endif

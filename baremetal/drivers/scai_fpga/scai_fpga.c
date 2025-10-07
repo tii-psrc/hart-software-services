@@ -606,7 +606,7 @@ uint32_t sergio_jedec_id(scai_flash_type_t flash_type) {
 
 uint8_t sergio_manual_init(uint8_t chip) {
     init_gpios();
-    init_adcs();
+//    init_adcs();
     sapi_init_qspis();
     init_mqspis();
     sapi_init_mt29fs();

@@ -15,6 +15,7 @@
 #include "hss_types.h"
 #include "hss_debug.h"
 
+#define NAVC_BOARD 1
 /******************************************************************************
  * GPIO instance data.
  *****************************************************************************/
@@ -198,7 +199,7 @@ static void init_gpio(int instance, uint32_t address, uint32_t out_data)
     GPIOS[instance].address  = address;
     GPIOS[instance].out_data = out_data;
     // HW_set_32bit_reg(address+WDATA, out_data);
-    scai_set_reg(address+WDATA, out_data);
+    scai_gpio_set_reg(address+WDATA, out_data);
 }
 
 
@@ -223,10 +224,10 @@ static uint32_t get_init_outs_gpio1(uint32_t* init)
 }
 
 #if defined(NAVC_BOARD)
-uint32_t get_init_outs_gpio2(uint32_t *init)
+static uint32_t get_init_outs_gpio2(uint32_t *init)
 {
 
-    init[0]     = A23_ENA_SS2_MASK  | F20_ENA_RS2_MASK; //Only Storage and RS422 Nominal enabled
+    init[0]     = A23_ENA_SS2_MASK; //  | F20_ENA_RS2_MASK; //Only Storage and RS422 Nominal enabled
     return 0;
 }
 #endif
@@ -255,13 +256,13 @@ void set_gpio(PIN bit, int value)
 
     address = GPIOS[bit.instance].address;
     mask    = ((uint32_t)1)<<bit.mask;
-    data    = scai_get_reg(address+RDATA);
+    data    = scai_gpio_get_reg(address+RDATA);
     if(!value)
         data &= ~mask;
     else
         data |= mask;
     // HW_set_32bit_reg(address+WDATA, data);
-    scai_set_reg(address+WDATA, data);
+    scai_gpio_set_reg(address+WDATA, data);
 }
 
 int toggle_gpio(PIN bit)
@@ -270,7 +271,7 @@ int toggle_gpio(PIN bit)
 
     address = GPIOS[bit.instance].address;
     mask = ((uint32_t)1)<<bit.mask;
-    data = scai_get_reg(address+RDATA);
+    data = scai_gpio_get_reg(address+RDATA);
 
     if(data & mask)
         data &= ~mask;
@@ -278,7 +279,7 @@ int toggle_gpio(PIN bit)
         data |= mask;
 
     // HW_set_32bit_reg(address+WDATA, data);
-    scai_set_reg(address+WDATA, data);
+    scai_gpio_set_reg(address+WDATA, data);
     return (data&mask)?1:0;
 }
 
@@ -288,14 +289,14 @@ int pulse_gpio(PIN bit)
 
     address = GPIOS[bit.instance].address;
     mask = ((uint32_t)1)<<bit.mask;
-    data = scai_get_reg(address+RDATA);
+    data = scai_gpio_get_reg(address+RDATA);
     data |= mask;
     // HW_set_32bit_reg(address+WDATA, data);
-    scai_set_reg(address+WDATA, data);
+    scai_gpio_set_reg(address+WDATA, data);
 
     data &= ~mask;
     // HW_set_32bit_reg(address+WDATA, data);
-    scai_set_reg(address+WDATA, data);
+    scai_gpio_set_reg(address+WDATA, data);
 
     return (data&mask)?1:0;
 }
@@ -304,7 +305,7 @@ int get_gpio(PIN bit)
 {
     uint32_t data, mask;
 
-    data = scai_get_reg(GPIOS[bit.instance].address+RDATA);
+    data = scai_gpio_get_reg(GPIOS[bit.instance].address+RDATA);
     mask = 1<<bit.mask;
 
     return (data&mask)?1:0;
@@ -314,7 +315,7 @@ int get_gpio_direction(PIN bit)
 {
     uint32_t data, mask;
 
-    data = scai_get_reg(GPIOS[bit.instance].address+RMASK);
+    data = scai_gpio_get_reg(GPIOS[bit.instance].address+RMASK);
     mask = 1<<bit.mask;
 
     return (data&mask)?1:0;
@@ -326,11 +327,11 @@ int get_full_data_gpio(PIN bit, int *d, int *pin, int *z)
 
 
     mask = 1<<bit.mask;
-    data[0] = scai_get_reg(GPIOS[bit.instance].address+RDATA);
+    data[0] = scai_gpio_get_reg(GPIOS[bit.instance].address+RDATA);
     d[0] = (data[0]&mask)?1:0;
-    data[1] = scai_get_reg(GPIOS[bit.instance].address+RPINES);
+    data[1] = scai_gpio_get_reg(GPIOS[bit.instance].address+RPINES);
     pin[0] = (data[1]&mask)?1:0;
-    data[2] = scai_get_reg(GPIOS[bit.instance].address+RMASK);
+    data[2] = scai_gpio_get_reg(GPIOS[bit.instance].address+RMASK);
     z[0] = (data[2]&mask)?1:0;
     return 1;
 }
@@ -342,11 +343,11 @@ void set_gpos(int instance, uint32_t mask_bit, uint32_t values)
 
     address = GPIOS[instance].address;
 
-    data = ~mask_bit & scai_get_reg(address+RDATA); //data has in 0 the data to be update
+    data = ~mask_bit & scai_gpio_get_reg(address+RDATA); //data has in 0 the data to be update
     data |= (mask_bit & values);   //1 when the bit is not masked and the value is 1
                                     //0 Otherwise
     // HW_set_32bit_reg(address+WDATA, data);
-    scai_set_reg(address+WDATA, data);
+    scai_gpio_set_reg(address+WDATA, data);
 }
 
 // static char printf_buffer[256];
@@ -376,9 +377,9 @@ void test_gpios(void)
     static int outs[3]={0xBEBECAFEU, 0x01234567U, 0x89ABCDEF};
 
 
-    set_gpos(0, scai_get_reg(GPIOs0_BASE_ADDRESS+RMASK), outs[0]);
-    set_gpos(1, scai_get_reg(GPIOs1_BASE_ADDRESS+RMASK), outs[1]);
-    set_gpos(2, scai_get_reg(GPIOs2_BASE_ADDRESS+RMASK), outs[2]);
+    set_gpos(0, scai_gpio_get_reg(GPIOs0_BASE_ADDRESS+RMASK), outs[0]);
+    set_gpos(1, scai_gpio_get_reg(GPIOs1_BASE_ADDRESS+RMASK), outs[1]);
+    set_gpos(2, scai_gpio_get_reg(GPIOs2_BASE_ADDRESS+RMASK), outs[2]);
     outs[0]+=(17*0x10000);
     outs[1]+=(19);
     outs[2]+=(23*0x100);
@@ -409,13 +410,13 @@ void set_gpio_direction(PIN bit, int value)
 
     address = GPIOS[bit.instance].address;
     mask    = ((uint32_t)1)<<bit.mask;
-    data    = scai_get_reg(address+RMASK);
+    data    = scai_gpio_get_reg(address+RMASK);
     if(!value)
         data &= ~mask;
     else
         data |= mask;
     // HW_set_32bit_reg(address+WMASK, data);
-    scai_set_reg(address+WMASK, data);
+    scai_gpio_set_reg(address+WMASK, data);
 }
 
 // static void RdWrGPIOS(void)
@@ -426,8 +427,8 @@ void set_gpio_direction(PIN bit, int value)
 //     for(i=0, dout = 0x12345678;i<0x1000000;i++, dout++)
 //     {
 //         // HW_set_32bit_reg(GPIOs0_BASE_ADDRESS+WDATA, dout);
-//         scai_set_reg(GPIOs0_BASE_ADDRESS+WDATA, dout);
-//         din =  scai_get_reg(GPIOs0_BASE_ADDRESS+RDATA);
+//         scai_gpio_set_reg(GPIOs0_BASE_ADDRESS+WDATA, dout);
+//         din =  scai_gpio_get_reg(GPIOs0_BASE_ADDRESS+RDATA);
 //         if(dout != din)
 //             j++;
 //         if(!(i&0xFFF))

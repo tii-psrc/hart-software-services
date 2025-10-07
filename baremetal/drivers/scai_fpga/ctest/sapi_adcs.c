@@ -14,6 +14,8 @@
 
 #include "hss_types.h"
 
+#define NAVC_BOARD 1
+
 ADCs_type ADCs[2];
 
 void init_adcs(void)
@@ -27,7 +29,7 @@ void init_adcs(void)
     atr->ctrl = ADC_ENABLE | ADC_START | (20)<<(ADC_S_DIVISOR);
     SaveCtrl(0);
     // HW_set_32bit_reg(atr->address, atr->ctrl);
-    scai_set_reg(atr->address, atr->ctrl);
+    scai_gpio_set_reg(atr->address, atr->ctrl);
 #if defined(DPU_BOARD)
 
     set_gpio(D18_CAMS_PWR_TEL_ENA, 1);
@@ -38,7 +40,7 @@ void init_adcs(void)
     atr->ctrl = ADC_ENABLE | ADC_START | (100)<<(ADC_S_DIVISOR);
     SaveCtrl(1);
     // HW_set_32bit_reg(atr->address, atr->ctrl);
-    scai_set_reg(atr->address, atr->ctrl);
+    scai_gpio_set_reg(atr->address, atr->ctrl);
 #endif
 }
 
@@ -47,22 +49,22 @@ static int get_hData(int instance)
     ADCs_type *atr;
     atr = &ADCs[instance];
 
-    atr->tel[ 0] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL0);
-    atr->tel[ 1] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL1);
-    atr->tel[ 2] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL2);
-    atr->tel[ 3] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL3);
-    atr->tel[ 4] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL4);
-    atr->tel[ 5] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL5);
-    atr->tel[ 6] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL6);
-    atr->tel[ 7] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL7);
-    atr->tel[ 8] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL10);
-    atr->tel[ 9] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL11);
-    atr->tel[10] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL12);
-    atr->tel[11] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL13);
-    atr->tel[12] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL14);
-    atr->tel[13] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL15);
-    atr->tel[14] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL16);
-    atr->tel[15] = 0xFFF & scai_get_reg(atr->address + ADC_GET_TEL17);
+    atr->tel[ 0] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL0);
+    atr->tel[ 1] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL1);
+    atr->tel[ 2] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL2);
+    atr->tel[ 3] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL3);
+    atr->tel[ 4] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL4);
+    atr->tel[ 5] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL5);
+    atr->tel[ 6] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL6);
+    atr->tel[ 7] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL7);
+    atr->tel[ 8] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL10);
+    atr->tel[ 9] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL11);
+    atr->tel[10] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL12);
+    atr->tel[11] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL13);
+    atr->tel[12] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL14);
+    atr->tel[13] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL15);
+    atr->tel[14] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL16);
+    atr->tel[15] = 0xFFF & scai_gpio_get_reg(atr->address + ADC_GET_TEL17);
 
     return 1;
 }
@@ -80,7 +82,7 @@ int one_shot_adc(ADCs_type *atr)
         ;
     atr->ctrl |= ADC_ONE_SHOT;
     // HW_set_32bit_reg(atr->address, atr->ctrl);
-    scai_set_reg(atr->address, atr->ctrl);
+    scai_gpio_set_reg(atr->address, atr->ctrl);
 
     return i;
 }
@@ -89,7 +91,7 @@ void start_adc(ADCs_type *atr)
 {
     atr->ctrl |= ADC_START;
     // HW_set_32bit_reg(atr->address, atr->ctrl);
-    scai_set_reg(atr->address, atr->ctrl);
+    scai_gpio_set_reg(atr->address, atr->ctrl);
 }
 
 int disable_adc(ADCs_type *atr)
@@ -103,7 +105,7 @@ int disable_adc(ADCs_type *atr)
             ;
         atr->ctrl &= ~ADC_ENABLE;
         // HW_set_32bit_reg(atr->address, atr->ctrl);
-        scai_set_reg(atr->address, atr->ctrl);
+        scai_gpio_set_reg(atr->address, atr->ctrl);
     }
     return i;
 }
@@ -114,7 +116,7 @@ void enable_adc(ADCs_type *atr)
     {
         atr->ctrl |= ADC_ENABLE;
         // HW_set_32bit_reg(atr->address, atr->ctrl);
-        scai_set_reg(atr->address, atr->ctrl);
+        scai_gpio_set_reg(atr->address, atr->ctrl);
     }
 }
 
@@ -129,7 +131,7 @@ int stop_adc(ADCs_type *atr)
             ;
         atr->ctrl &= ~ADC_START;
         // HW_set_32bit_reg(atr->address, atr->ctrl);
-        scai_set_reg(atr->address, atr->ctrl);
+        scai_gpio_set_reg(atr->address, atr->ctrl);
     }
     return i;
 }

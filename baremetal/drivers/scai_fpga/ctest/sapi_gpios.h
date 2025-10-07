@@ -12,6 +12,8 @@
 
 #include "hss_types.h"
 
+#define NAVC_BOARD 1
+
 struct pin_st
 {
     int instance;

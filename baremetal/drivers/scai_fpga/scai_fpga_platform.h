@@ -38,8 +38,120 @@ extern const uintptr_t GPIO_1_BASE_ADDRESS;
 extern const uintptr_t GPIO_2_BASE_ADDRESS;
 extern const uintptr_t GPIO_3_BASE_ADDRESS;
 
-// GPIO Pins
+//------------------------------------------------------------------------------
+// QSPI Controller Register Definitions
+//------------------------------------------------------------------------------
+/**
+ * @brief CTRL1 Register (Write-Only, Offset +4)
+ * Configures and initiates a QSPI transaction.
+ */
 
+typedef union {
+    struct {
+        uint32_t Scai_Qspi_Ctrl_1_Chip_Enable      : 1;  // Bit 0:      Chip Enable (1=active) when software driven
+        uint32_t Scai_Qspi_Ctrl_1_Nwp              : 1;  // Bit 1:      nWP line value
+        uint32_t Scai_Qspi_Ctrl_1_Reset            : 1;  // Bit 2:      nReset line value (1=normal operation)
+        uint32_t Scai_Qspi_Ctrl_1_Data_Mode        : 1;  // Bit 3:      Data interface (1=Byte, 0=Word)
+        uint32_t Scai_Qspi_Ctrl_1_Lane_Width       : 1;  // Bit 4:      Interface usage (1=x4, 0=x1)
+        uint32_t Scai_Qspi_Ctrl_1_Auto_Mask        : 1;  // Bit 5:      Mask operation for auto mode
+        uint32_t Scai_Qspi_Ctrl_1_Clk_Div          : 3;  // Bits 8:6:   Clock divider
+        uint32_t Scai_Qspi_Ctrl_1_Start            : 1;  // Bit 9:      Start transaction
+        uint32_t Scai_Qspi_Ctrl_1_Tx_Count         : 11; // Bits 20:10: Words/Bytes to Transmit
+        uint32_t Scai_Qspi_Ctrl_1_Rx_Count         : 11; // Bits 31:21: Words/Bytes to Receive
+    } bits;
+    uint32_t word;
+} Scai_Qspi_Ctrl_1_Reg_t;
+
+/**
+ * @brief CTRL2 Register (Write-Only, Offset +8)
+ * Configures automated operations.
+ */
+typedef union {
+    struct {
+        uint32_t Scai_Qspi_Ctrl_2_Auto_Cmd         : 8;  // Bits 7:0:   Command for auto operation
+        uint32_t Scai_Qspi_Ctrl_2_Auto_Mask        : 8;  // Bits 15:8:  Mask for auto operation
+        uint32_t Scai_Qspi_Ctrl_2_Auto_Repeats     : 15; // Bits 30:16: Max retries for auto operation
+        uint32_t Scai_Qspi_Ctrl_2_Auto_Enable      : 1;  // Bit 31:     Enable auto operation
+    } bits;
+    uint32_t word;
+} Scai_Qspi_Ctrl_2_Reg_t;
+
+/**
+ * @brief CTRL3 Register (Write-Only, Offset +12)
+ * Provides direct control over QSPI lines for GPIO/toggling.
+ */
+typedef union {
+    struct {
+        uint32_t Scai_Qspi_Ctrl_3_Gpio_Out         : 7;  // Bits 6:0: GPIO output values (Rst,CE,CLK,D[3:0])
+        uint32_t Scai_Qspi_Ctrl_3_Gpio_En          : 7;  // Bits 13:7: GPIO enable (1=output, 0=input)
+        uint32_t Scai_Qspi_Ctrl_3_Gpio_Use_Gpio    : 1;  // Bit 14: Use GPIO mode (1=GPIO, 0=QSPI)
+        uint32_t Scai_Qspi_Ctrl_3_Gpio_Use_Toggle  : 1;  // Bit 15: Use toggling mode
+        uint32_t Scai_Qspi_Ctrl_3_Nhold            : 1;  // Bit 16: nHold line value
+        uint32_t Scai_Qspi_Ctrl_3_Dummy_Cnt        : 5;  // Bits 21:17: Number of dummy cycles
+        uint32_t Scai_Qspi_Ctrl_3_R3_Reserved      : 10; // Reserved
+    } bits;
+    uint32_t word;
+} Scai_Qspi_Ctrl_3_Reg_t;
+
+/**
+ * @brief STATUS1 Register (Read-Only, Offset +4)
+ * Provides the primary status of the QSPI controller.
+ */
+typedef union {
+    struct {
+        uint32_t Scai_Qspi_Status_1_Idle           : 1;  // Bit 0: Controller is idle
+        uint32_t Scai_Qspi_Status_1_Rx_Fifo_Empty  : 1;  // Bit 1: RX FIFO is empty
+        uint32_t Scai_Qspi_Status_1_Rx_Fifo_Full   : 1;  // Bit 2: RX FIFO is full
+        uint32_t Scai_Qspi_Status_1_Tx_Fifo_Empty  : 1;  // Bit 3: TX FIFO is empty
+        uint32_t Scai_Qspi_Status_1_Tx_Fifo_Full   : 1;  // Bit 4: TX FIFO is full
+        uint32_t Scai_Qspi_Status_1_Err_Overrun    : 1;  // Bit 5: Overrun error
+        uint32_t Scai_Qspi_Status_1_Auto_Op_Ready  : 1;  // Bit 6: Auto operation is ready
+        uint32_t Scai_Qspi_Status_1_Auto_Op_Error  : 1;  // Bit 7: Auto operation error
+        uint32_t Scai_Qspi_Status_1_Lane_Data      : 4;  // Bits 11:8: Current state of QSPI data out lines
+        uint32_t Scai_Qspi_Status_1_Lane_Clk       : 1;  // Bit 12: Current state of QSPI CLK line
+        uint32_t Scai_Qspi_Status_1_Lane_Ce        : 1;  // Bit 13: Current state of QSPI CE line
+        uint32_t Scai_Qspi_Status_1_Lane_Rst       : 1;  // Bit 14: Current state of QSPI RST line
+        uint32_t Scai_Qspi_Status_1_Reserved_1     : 1;  // Bit 15: Reserved
+        uint32_t Scai_Qspi_Status_1_Lane_Gpio_Out  : 7;  // Bits 22:16: GPIO data out lines
+        uint32_t Scai_Qspi_Status_1_Reserved_2     : 1;  // Bit 23: Reserved
+        uint32_t Scai_Qspi_Status_1_Lane_Ext_Data  : 4;  // Bits 27:24: External data lines
+        uint32_t Scai_Qspi_Status_1_Lane_Ext_Clk   : 1;  // Bit 28: External CLK
+        uint32_t Scai_Qspi_Status_1_Lane_Ext_Rst   : 1;  // Bit 29: External RST
+        uint32_t Scai_Qspi_Status_1_Lane_Ext_Ce    : 1;  // Bit 30: External CE
+        uint32_t Scai_Qspi_Status_1_Reserved_3     : 1;  // Bit 31: Reserved
+    } bits;
+    uint32_t word;
+} Scai_Qspi_Status_1_Reg_t;
+
+/**
+ * @brief STATUS2 Register (Read-Only, Offset +8)
+ * Provides FIFO status and counters.
+ */
+typedef union {
+    struct {
+        uint32_t Scai_Qspi_Status_2_Rx_Fifo_Full   : 1;  // Bit 0: RX FIFO is full
+        uint32_t Scai_Qspi_Status_2_Rx_Fifo_Empty  : 1;  // Bit 1: RX FIFO is empty
+        uint32_t Scai_Qspi_Status_2_Rx_Fifo_RdCnt  : 7;  // Bits 8:2: RX FIFO read counter
+        uint32_t Scai_Qspi_Status_2_Rx_Fifo_WrCnt  : 7;  // Bits 15:9: RX FIFO write counter
+        uint32_t Scai_Qspi_Status_2_Tx_Fifo_Full   : 1;  // Bit 16: TX FIFO is full
+        uint32_t Scai_Qspi_Status_2_Tx_Fifo_Empty  : 1;  // Bit 17: TX FIFO is empty
+        uint32_t Scai_Qspi_Status_2_Tx_Fifo_RdCnt  : 7;  // Bits 24:18: TX FIFO read counter
+        uint32_t Scai_Qspi_Status_2_Tx_Fifo_WrCnt  : 7;  // Bits 31:25: TX FIFO write counter
+    } bits;
+    uint32_t word;
+} Scai_Qspi_Status_2_Reg_t;
+
+typedef enum {
+    Scai_Fpga_Qspi_Reg_Offset_Data                 = 0x00,
+    Scai_Fpga_Qspi_Reg_Offset_Ctrl1                = 0x04,
+    Scai_Fpga_Qspi_Reg_Offset_Ctrl2                = 0x08,
+    Scai_Fpga_Qspi_Reg_Offset_Ctrl3                = 0x0C,
+    Scai_Fpga_Qspi_Reg_Offset_Status1              = 0x04,
+    Scai_Fpga_Qspi_Reg_Offset_Status2              = 0x08
+} Scai_Fpga_Qspi_Reg_Offset_t;
+
+
+// GPIO Pins
 typedef union {
     struct {
         uint32_t A5_C4_I2C_SDA_Z : 1;

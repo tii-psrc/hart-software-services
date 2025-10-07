@@ -59,10 +59,10 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
                                      uint32_t tx_len,
                                      bool data_size_is_word)
 {
-    uintptr_t data_reg     = base_addr + QSPI_DATA_REG_OFFSET;
-    uintptr_t status_2_reg = base_addr + QSPI_STATUS2_REG_OFFSET;
-    
-    QSPI_Status2_Reg_t status2;
+    uintptr_t data_reg     = base_addr + Scai_Fpga_Qspi_Reg_Offset_Data;
+    uintptr_t status_2_reg = base_addr + Scai_Fpga_Qspi_Reg_Offset_Status2;
+
+    Scai_Qspi_Status_2_Reg_t status2;
     uint32_t elements_written = 0;
 
     // Cast the generic void pointer to specific types for convenient access.
@@ -73,7 +73,7 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
         uint32_t timeout_counter = SCAI_FPGA_FIFO_TIMEOUT;
         do {
             status2.word = getReg(status_2_reg);
-            if (!status2.bits.tx_fifo_full) {
+            if (!status2.bits.Scai_Qspi_Status_2_Tx_Fifo_Full) {
                 break; // Space is available, exit the wait loop.
             }
             timeout_counter--;
@@ -85,7 +85,7 @@ static uint32_t qspi_fpga_fifo_write(uintptr_t base_addr,
             return elements_written;
         }
 
-        uint32_t free_space_words = SCAI_FPGA_FIFO_LENGTH - status2.bits.tx_fifo_wrcnt;
+        uint32_t free_space_words = SCAI_FPGA_FIFO_LENGTH - status2.bits.Scai_Qspi_Status_2_Tx_Fifo_WrCnt;
         uint32_t chunk_size       = tx_len - elements_written;
         if (chunk_size > free_space_words) {
             chunk_size = free_space_words;
@@ -129,10 +129,10 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
                                     uint32_t rx_len,
                                     bool data_size_is_word)
 {
-    uintptr_t data_reg           = base_addr + QSPI_DATA_REG_OFFSET;
-    uintptr_t status_2_reg       = base_addr + QSPI_STATUS2_REG_OFFSET;
+    uintptr_t data_reg           = base_addr + Scai_Fpga_Qspi_Reg_Offset_Data;
+    uintptr_t status_2_reg       = base_addr + Scai_Fpga_Qspi_Reg_Offset_Status2;
 
-    QSPI_Status2_Reg_t status2;
+    Scai_Qspi_Status_2_Reg_t status2;
     uint32_t elements_read = 0;
 
     // Cast the generic void pointer to specific types for convenient access.
@@ -143,7 +143,7 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
         uint32_t timeout_counter = SCAI_FPGA_FIFO_TIMEOUT;
         do {
             status2.word = getReg(status_2_reg);
-            if (!status2.bits.rx_fifo_empty) {
+            if (!status2.bits.Scai_Qspi_Status_2_Rx_Fifo_Empty) {
                 break; // Data is available, exit the wait loop.
             }
             timeout_counter--;
@@ -155,7 +155,7 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
             return elements_read;
         }
 
-        uint32_t words_available = status2.bits.rx_fifo_rdcnt;
+        uint32_t words_available = status2.bits.Scai_Qspi_Status_2_Rx_Fifo_RdCnt;
         uint32_t chunk_size = rx_len - elements_read;
         if (chunk_size > words_available) {
             chunk_size = words_available;
@@ -177,9 +177,9 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
     // Clean up FIFO
     status2.word = getReg(status_2_reg);
 
-    if (!status2.bits.rx_fifo_empty) {
+    if (!status2.bits.Scai_Qspi_Status_2_Rx_Fifo_Empty) {
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "Rx FIFO cleanup...\n");
-        uint32_t words_available = status2.bits.rx_fifo_rdcnt;
+        uint32_t words_available = status2.bits.Scai_Qspi_Status_2_Rx_Fifo_RdCnt;
         for (uint32_t i = 0; i < words_available; ++i) {
             uint32_t value = getReg(data_reg);
             if (data_size_is_word) {
@@ -197,13 +197,14 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
 }
 
 static bool qspi_fpga_wait_idle(uintptr_t base_addr) {
-    uintptr_t status_1_reg = base_addr + QSPI_STATUS1_REG_OFFSET;
-    QSPI_Status1_Reg_t status1;
+    uintptr_t status_1_reg = base_addr + Scai_Fpga_Qspi_Reg_Offset_Status1;
+    Scai_Qspi_Status_1_Reg_t status1;
+
     uint32_t timeout_counter = SCAI_FPGA_FIFO_TIMEOUT;
 
     do {
         status1.word = getReg(status_1_reg);
-        if (status1.bits.idle) {
+        if (status1.bits.Scai_Qspi_Status_1_Idle) {
             return true; // Operation complete
         }
         timeout_counter--;
@@ -223,17 +224,17 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
                                  QSPI_TransactionState transaction_state,
                                  const scai_fpga_transaction_t* params)
 {
-    uintptr_t ctrl1_reg = channel->base_addr + QSPI_CTRL1_REG_OFFSET;
+    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
 
     switch (transaction_state) {
         case QSPI_STATE_START:
-            channel->ctrl1_state.bits.tx_count     = params->tx_len;
-            channel->ctrl1_state.bits.rx_count     = params->rx_len;
-            channel->ctrl1_state.bits.start        = 1;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = params->tx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = params->rx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start       = 1;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
 
             // Designed by Sergio that CE bit should be changed in other command
-            channel->ctrl1_state.bits.chip_enable  = 1;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 1;
 
             // Write again in case CE changed
             setReg(ctrl1_reg, channel->ctrl1_state.word);
@@ -241,15 +242,15 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             break;
         case QSPI_STATE_FINALIZE:
             // Modify only the necessary bits from the current software state
-            channel->ctrl1_state.bits.start        = 0;
-            channel->ctrl1_state.bits.tx_count     = 0;
-            channel->ctrl1_state.bits.rx_count     = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start       = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = 0;
 
             setReg(ctrl1_reg, channel->ctrl1_state.word);
 
             if (!params->keep_ce_active) {
                 // Designed by Sergio that CE bit should be changed in other command
-                channel->ctrl1_state.bits.chip_enable = 0;
+                channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 0;
             }
 
             // Write again in case CE changed
@@ -257,35 +258,35 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             break;
         case QSPI_STATE_PROGRAM_START:
             // As is in Sergio code
-            channel->ctrl1_state.bits.chip_enable  = 1;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable  = 1;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
-            
-            channel->ctrl1_state.bits.tx_count     = params->tx_len;
-            channel->ctrl1_state.bits.rx_count     = params->rx_len;
-            channel->ctrl1_state.bits.start        = 1;
+
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = params->tx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = params->rx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 1;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
 
             break;
         case QSPI_STATE_PROGRAM_START_FINALIZE:
-            channel->ctrl1_state.bits.tx_count     = 0;
-            channel->ctrl1_state.bits.rx_count     = 0;
-            channel->ctrl1_state.bits.start        = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 0;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
 
             break;
         case QSPI_STATE_DATA_LOAD_START:
-            channel->ctrl1_state.bits.tx_count     = params->tx_len;
-            channel->ctrl1_state.bits.rx_count     = params->rx_len;
-            channel->ctrl1_state.bits.start        = 1;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = params->tx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = params->rx_len;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 1;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
             break;
         case QSPI_STATE_DATA_LOAD_FINALIZE:
-            channel->ctrl1_state.bits.tx_count     = 0;
-            channel->ctrl1_state.bits.rx_count     = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = 0;
             // channel->ctrl1_state.bits.start        = 0; // ??? <===================================
             setReg(ctrl1_reg, channel->ctrl1_state.word);
 
-            channel->ctrl1_state.bits.chip_enable  = 0;
+            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable  = 0;
             setReg(ctrl1_reg, channel->ctrl1_state.word);
             break;   
         default:
@@ -300,23 +301,23 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
 
 // Initialize global pointers for optimized access based on the defined base address
 void scai_fpga_init(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + QSPI_CTRL1_REG_OFFSET;
-    uintptr_t ctrl2_reg = channel->base_addr + QSPI_CTRL2_REG_OFFSET;
-    uintptr_t ctrl3_reg = channel->base_addr + QSPI_CTRL3_REG_OFFSET;
+    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
+    uintptr_t ctrl2_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl2;
+    uintptr_t ctrl3_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl3;
 
     // 1. Set default control register values
-    channel->ctrl1_state.word             = 0;
-    channel->ctrl1_state.bits.reset       = 1;                                          // Clear RESET
-    channel->ctrl1_state.bits.data_mode   = 0;                                          // Byte mode
-    channel->ctrl1_state.bits.lane_width  = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;  // Interface width
+    channel->ctrl1_state.word                              = 0;
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Reset       = 1;                                                // Clear RESET
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Data_Mode   = 0;                                                // Byte mode
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Lane_Width  = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;  // Interface width
     setReg(ctrl1_reg, channel->ctrl1_state.word);
 
     // 2. Configure I/O format
-    channel->ctrl2_state.word             = 0;                                          // No auto operations
+    channel->ctrl2_state.word                              = 0;                                                // No auto operations
     setReg(ctrl2_reg, channel->ctrl2_state.word);
 
-    channel->ctrl3_state.word             = 0;
-    channel->ctrl3_state.bits.nhold       = 1;                                          // No Toggling, not hold
+    channel->ctrl3_state.word                              = 0;
+    channel->ctrl3_state.bits.Scai_Qspi_Ctrl_3_Nhold       = 1;                                                // No Toggling, not hold
     setReg(ctrl3_reg, channel->ctrl3_state.word);
 }
 
@@ -424,13 +425,13 @@ void scai_fpga_load(scai_fpga_channel_t* channel, const scai_fpga_transaction_t*
 }
 
 void scai_fpga_disable_write_protect(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + QSPI_CTRL1_REG_OFFSET;
-    channel->ctrl1_state.bits.nwp = 1;
+    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp = 1;
     setReg(ctrl1_reg, channel->ctrl1_state.word);
 }
 
 void scai_fpga_enable_write_protect(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + QSPI_CTRL1_REG_OFFSET;
-    channel->ctrl1_state.bits.nwp = 0;
+    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp = 0;
     setReg(ctrl1_reg, channel->ctrl1_state.word);
 }

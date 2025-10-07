@@ -193,6 +193,16 @@ void Flash_init(mss_qspi_io_format io_format) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid MSS QSPI I/O format: %u\n", io_format);
         return;
     }
+            
+    if (g_active_flash_type == SCAI_MICRON_MT29F || 
+        (g_active_flash_type >= SCAI_MICRON_MT29F_CHIP_0 && 
+            g_active_flash_type <= SCAI_MICRON_MT29F_CHIP_7)) 
+    {
+        if (!g_is_mt29f_enabled) {
+            scai_fpga_gpio_enable_mt29f();
+            g_is_mt29f_enabled = true;
+        }
+    }
     
     if (g_active_driver->init && !g_active_channel->is_initialized) {
         g_active_driver->init(g_active_channel, io_format);

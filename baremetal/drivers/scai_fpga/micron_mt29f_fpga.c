@@ -64,7 +64,7 @@ typedef struct {
     uint8_t opcode;
     uint8_t row_addr_1; // MSB
     uint8_t row_addr_0; // LSB
-} mt29f_program_load_x4_cmd_t;
+} mt29f_program_load_cmd_t;
 
 typedef struct {
     uint8_t opcode;
@@ -312,7 +312,9 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint32_t current_addr  = addr;
     uint32_t remaining_len = len;
     uint8_t* current_buf   = buf;
+    bool     use_quad_mode = (channel->format == MSS_QSPI_QUAD_FULL);
 
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "1\n");
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = 0x%X\n", len, addr);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = 0x%X, remaining_len = %u\n", current_addr, remaining_len);
 
@@ -350,50 +352,67 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
 
         uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
         mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_read: read_len = %d\n", read_len);
-
-//        bool wordMode = scai_fpga_is_word_mode(channel);
-//        bool qspiMode = scai_fpga_is_quad_mode(channel);
-//
-//        if (!wordMode) {
-//            scai_fpga_set_word_mode(channel);
-//        }
-//        if (!qspiMode) {
-//            scai_fpga_set_qspi_mode(channel);
-//        }
-//
-//        mt29f_read_cmd_t read_cmd = {
-//            .opcode     = MT29F_CMD_READ_FROM_CACHE_X4,
-//            .col_addr_1 = (uint8_t)(col_addr >> 8),
-//            .col_addr_0 = (uint8_t)(col_addr),
-//            .dummy      = DUMMY_BYTE
-//        };
-
-        scai_fpga_set_byte_mode(channel);
-        scai_fpga_set_spi_mode(channel);
-        mt29f_read_cmd_t read_cmd = {
-            .opcode     = MT29F_CMD_READ_FROM_CACHE_X1,
-            .col_addr_1 = (uint8_t)(col_addr >> 8),
-            .col_addr_0 = (uint8_t)(col_addr),
-            .dummy      = DUMMY_BYTE
-        };
-
-        scai_fpga_transaction_t read_params = {
-            .tx_buffer = &read_cmd,
-            .tx_len    = sizeof(read_cmd),
-            .rx_buffer = current_buf,
-            .rx_len    = read_len,
-            .format    = channel->format
-        };
-
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: Reading data\n");
-        scai_fpga_transaction(channel, &read_params);
         
-//        if (!wordMode) {
-//            scai_fpga_set_byte_mode(channel);
-//        }
-//        if (!qspiMode) {
-//            scai_fpga_set_spi_mode(channel);
-//        }
+        // =========================================================================
+        // TRANSACTION 1: Sending command READ_FROM_CACHE
+        // =========================================================================
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29F Read: Transaction 1 (Command TX)\n");
+        mt29f_read_cmd_t read_cmd = {
+            .opcode         = use_quad_mode ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
+            .col_addr_1     = (uint8_t)(col_addr >> 8),
+            .col_addr_0     = (uint8_t)(col_addr),
+            .dummy          = 0 // DUMMY_BYTE
+        };
+
+        scai_fpga_set_spi_mode(channel);  
+        scai_fpga_set_byte_mode(channel); 
+
+        scai_fpga_transaction_t cmd_tx_params = {
+            .tx_buffer      = &read_cmd,
+            .tx_len         = sizeof(read_cmd),
+            .rx_len         = 0, // Tx only
+            .keep_ce_active = true
+        };
+        scai_fpga_transaction(channel, &cmd_tx_params);
+
+        // =========================================================================
+        // TRANSACTION 2: Fake READ (As in Sergio code)
+        // =========================================================================
+        if (use_quad_mode) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29F Read: Transaction 2 (Dummy RX)\n");
+            uint32_t dummy_rx_len_words = (col_addr >> 2);
+
+            scai_fpga_set_qspi_mode(channel); 
+            scai_fpga_set_word_mode(channel); 
+
+            scai_fpga_transaction_t dummy_rx_params = {
+                .tx_len            = 0,
+                .rx_buffer         = current_buf, 
+                .rx_len            = dummy_rx_len_words,
+                .data_size_is_word = true,
+                .keep_ce_active    = true
+            };
+            scai_fpga_transaction(channel, &dummy_rx_params);
+        }
+
+        // =========================================================================
+        // TRANSACTION 3: Real READ
+        // =========================================================================
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29F Read: Transaction 3 (Data RX)\n");
+        uint32_t rx_elements = use_quad_mode ? ((read_len + 3) / 4) : read_len; // Round up to nearest word
+
+       if (use_quad_mode) {
+            scai_fpga_set_qspi_mode(channel);
+            scai_fpga_set_word_mode(channel);
+        }
+
+        scai_fpga_transaction_t data_rx_params = {
+            .tx_len            = 0,
+            .rx_buffer         = current_buf,
+            .rx_len            = rx_elements,
+            .data_size_is_word = true
+        };
+        scai_fpga_transaction(channel, &data_rx_params);
 
         for (uint32_t i = 0; i < read_len; i++) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%02X\n", i, current_buf[i]);
@@ -464,97 +483,111 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 }
 
 uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (len > TOTAL_BLOCKS * BLOCK_SIZE_BYTES) return 1;
+    if (len > TOTAL_BLOCKS * BLOCK_SIZE_BYTES || !buf) { 
+        return 1; 
+    }
 
-    uint32_t current_addr      = addr;
-    uint32_t remaining_len     = len;
-    const uint8_t* current_buf = buf;
-    
-    mt29f_config_reg_t config_reg;
-    config_reg.byte = get_feature(channel, MT29F_REG_CONFIG);
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "get_feature %02X = %02X\n", MT29F_REG_CONFIG, config_reg.byte);
+    uint32_t       current_addr  = addr;
+    uint32_t       remaining_len = len;
+    const uint8_t* current_buf   = buf;
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: len = %u, addr = %X\n", len, addr);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: current_addr = %X, remaining_len = %u\n", current_addr, remaining_len);
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
-        uint32_t page_addr     = physical_addr >> MT29F_ROW_SHIFT;
+        uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
         uint16_t col_addr      = physical_addr & MT29F_COLMASK;
-        uint8_t  target_die    = (physical_addr >> MT29F_DIE_SHIFT) & MT29F_DIE_MASK; 
+        uint8_t  target_die    = (physical_addr >> MT29F_DIE_SHIFT) & MT29F_DIE_MASK;
 
         set_die(channel, target_die);
-
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: WE\n");
-
-        // 1. set_WP(instance, MEM_NOT_WRITE_PROTECTED);
         scai_fpga_disable_write_protect(channel);
 
-        // 2. mem_w_ena(instance);
+        uint32_t write_len_bytes = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
+
+        // =========================================================================
+        // Step 1: PROGRAM LOAD (Command + Data)
+        // =========================================================================
+
+        // --- Step 1.1: Send WRITE ENABLE command ---
         write_enable(channel);
 
-        uint32_t write_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
-
-        // 3. program_load_mt29f_x4(instance, mta.st.c_address, l_data, chunk>>2);
+        // --- Step 1.2: Send PROGRAM LOAD command (only command) ---
+        bool use_quad_mode = (channel->format == MSS_QSPI_QUAD_FULL);
+        
+        mt29f_program_load_cmd_t prog_load_cmd = {
+            .opcode         = use_quad_mode ? MT29F_CMD_PROGRAM_LOAD_X4 : MT29F_CMD_PROGRAM_LOAD_X1,
+            .row_addr_1     = (uint8_t)(col_addr >> 8),
+            .row_addr_0     = (uint8_t)(col_addr)
+        };
+        
+        // Command always in x1/Byte mode
         scai_fpga_set_spi_mode(channel);
         scai_fpga_set_byte_mode(channel);
-        mt29f_program_load_x4_cmd_t prog_load_cmd = {
-            .opcode         = MT29F_CMD_PROGRAM_LOAD_X1,
-            .row_addr_1     = (uint8_t)(page_addr >> 8),
-            .row_addr_0     = (uint8_t)(page_addr)
-        };
-        scai_fpga_transaction_t load_params = {
-            .tx_buffer      = &prog_load_cmd,
-            .tx_len         = sizeof(prog_load_cmd),
-            .keep_ce_active = true
-        };
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: Loading data\n");
-        // 3.1. PROGRAM_LOAD
-        // Trying initially do as is in Sergio code
-        // scai_fpga_program(channel, &load_params);
-        scai_fpga_program(channel, &load_params);
 
-        // 3.2. Tx data
-//        scai_fpga_set_qspi_mode(channel);
-//        scai_fpga_set_word_mode(channel);
-        scai_fpga_transaction_t load_data_params = {
-            .tx_buffer      = current_buf,
-            .tx_len         = write_len
+        scai_fpga_transaction_t cmd_params = {
+            .tx_buffer      = prog_load_cmd,
+            .tx_len         = sizeof(prog_load_cmd),
+            .rx_len         = 0,
+            .keep_ce_active = true // Hold CE# for data transmission
         };
-        scai_fpga_load(channel, &load_data_params);
-        // _3.
+        scai_fpga_transaction(channel, &cmd_params);
+
+        // --- Step 1.3: Send data for programming (immediately after command) ---
+        uint32_t write_len_words = (write_len_bytes + 3) / 4;
         
-        // 4. mem_program_execute(instance, mta.st_cr.r_address);
-//        scai_fpga_set_spi_mode(channel);
-//        scai_fpga_set_byte_mode(channel);
+        // Set QSPI/Word mode if using quad mode
+        if (use_quad_mode) {
+            scai_fpga_set_qspi_mode(channel);
+            scai_fpga_set_word_mode(channel);
+        }
+
+        scai_fpga_transaction_t data_params = {
+            .tx_buffer         = current_buf,
+            .tx_len            = write_len_words,
+            .rx_len            = 0,
+            .data_size_is_word = use_quad_mode,
+            .keep_ce_active    = false // Release CE# at the end
+        };
+        scai_fpga_transaction(channel, &data_params);
+
+        // Wait for data loading into cache to complete
+        if (wait_flash_ready(channel) != 0) { scai_fpga_enable_write_protect(channel); return 1; }
+
+        // =========================================================================
+        // PHASE 2: PROGRAM EXECUTE (Commit data from cache to memory)
+        // =========================================================================
+        write_enable(channel);
+
         mt29f_program_execute_cmd_t prog_exec_cmd = {
             .opcode     = MT29F_CMD_PROGRAM_EXECUTE,
-            .row_addr_2 = (uint8_t)(page_addr >> 16),
-            .row_addr_1 = (uint8_t)(page_addr >> 8),
-            .row_addr_0 = (uint8_t)(page_addr)
+            .row_addr_2 = (uint8_t)(row_addr >> 16),
+            .row_addr_1 = (uint8_t)(row_addr >> 8),
+            .row_addr_0 = (uint8_t)(row_addr)
         };
+
+        // Command always in x1/Byte mode
+        scai_fpga_set_spi_mode(channel);
+        scai_fpga_set_byte_mode(channel);
+
         scai_fpga_transaction_t exec_params = {
             .tx_buffer = &prog_exec_cmd,
             .tx_len    = sizeof(prog_exec_cmd)
         };
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: Executing\n");
         scai_fpga_transaction(channel, &exec_params);
-        
-        // 5. mem_wait_for_op_ready_mt29f(instance);
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_program: wait\n");
-        if (wait_flash_ready(channel) != 0) {
-            return 1;
+
+        // Wait for programming to complete
+        if (wait_flash_ready(channel) != 0) { 
+            scai_fpga_enable_write_protect(channel); 
+            return 1; 
         }
 
-        // TODO: Check program error state        
-        status_print(get_feature(channel, MT29F_REG_STATUS));
-
-        // 6. set_WP(instance, MEM_WRITE_PROTECTED);
         scai_fpga_enable_write_protect(channel);
 
-        current_addr  += write_len;
-        current_buf   += write_len;
-        remaining_len -= write_len;
+        // Update for next iteration
+        current_addr  += write_len_bytes;
+        current_buf   += write_len_bytes;
+        remaining_len -= write_len_bytes;
     }
     return 0;
 }

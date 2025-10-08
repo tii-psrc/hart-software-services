@@ -526,7 +526,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         scai_fpga_set_byte_mode(channel);
 
         scai_fpga_transaction_t cmd_params = {
-            .tx_buffer      = prog_load_cmd,
+            .tx_buffer      = &prog_load_cmd,
             .tx_len         = sizeof(prog_load_cmd),
             .rx_len         = 0,
             .keep_ce_active = true // Hold CE# for data transmission

@@ -78,6 +78,10 @@ static bool                      g_is_mt29f_enabled                       = fals
 
 // Inline helper function for driver validation
 static inline bool is_driver_ready(void) {
+    // Direct driver does not use the channel struct
+    if (g_active_flash_type == SCAI_WINBOND_W25N01_DIRECT) {
+        return (g_active_driver != NULL);
+    }
     if (!g_active_driver || !g_active_channel) {
         // mHSS_DEBUG_PRINTF(LOG_ERROR, "No active SCAI flash driver selected.\n");
         return false;
@@ -195,7 +199,14 @@ void Flash_init(mss_qspi_io_format io_format) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid MSS QSPI I/O format: %u\n", io_format);
         return;
     }
-            
+    if (g_active_flash_type == SCAI_WINBOND_W25N01_DIRECT) {
+        // Direct driver does not use the channel struct
+        if (g_active_driver->init) {
+            g_active_driver->init(NULL, io_format);
+        }
+        return;
+    }      
+      
     if (g_active_flash_type == SCAI_MICRON_MT29F || 
         (g_active_flash_type >= SCAI_MICRON_MT29F_CHIP_0 && 
             g_active_flash_type <= SCAI_MICRON_MT29F_CHIP_7)) 

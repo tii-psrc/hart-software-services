@@ -15,10 +15,6 @@
 typedef enum {
     QSPI_STATE_START,
     QSPI_STATE_FINALIZE,
-    QSPI_STATE_PROGRAM_START,
-    QSPI_STATE_PROGRAM_START_FINALIZE,
-    QSPI_STATE_DATA_LOAD_START,
-    QSPI_STATE_DATA_LOAD_FINALIZE
 } QSPI_TransactionState;
 
 static const uint32_t SCAI_FPGA_FIFO_TIMEOUT = 100000;
@@ -31,14 +27,29 @@ static const uint32_t SCAI_FPGA_FIFO_TX_BYTE_MASK  = 0xFF000000;
 static const uint32_t SCAI_FPGA_FIFO_RX_BYTE_MASK  = 0x000000FF;
 
 static void setReg(volatile uintptr_t reg, uint32_t value) {
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "REGW 0x%08x\t=\t0x%08x\n", reg, value);
+    // mHSS_DEBUG_PRINTF(LOG_ERROR, "REGW 0x%08x\t=\t0x%08x\n", reg, value);
     *(volatile uint32_t*)reg = value;
 }
 
 static uint32_t getReg(volatile uintptr_t reg) {
     uint32_t value = *(volatile uint32_t*)reg;
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "REGR 0x%08x\t=\t0x%08x\n", reg, value);
+    // mHSS_DEBUG_PRINTF(LOG_ERROR, "REGR 0x%08x\t=\t0x%08x\n", reg, value);
     return value;
+}
+
+static void set_ctrl_1(scai_fpga_channel_t* channel) {
+    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
+    setReg(ctrl1_reg, channel->ctrl1_state.word);
+}
+
+static void set_ctrl_2(scai_fpga_channel_t* channel) {
+    uintptr_t ctrl2_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl2;
+    setReg(ctrl2_reg, channel->ctrl2_state.word);
+}
+
+static void set_ctrl_3(scai_fpga_channel_t* channel) {
+    uintptr_t ctrl3_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl3;
+    setReg(ctrl3_reg, channel->ctrl3_state.word);
 }
 
 /**
@@ -224,20 +235,18 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
                                  QSPI_TransactionState transaction_state,
                                  const scai_fpga_transaction_t* params)
 {
-    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
-
     switch (transaction_state) {
         case QSPI_STATE_START:
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = params->tx_len;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = params->rx_len;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start       = 1;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
+            set_ctrl_1(channel);
 
             // Designed by Sergio that CE bit should be changed in other command
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 1;
 
             // Write again in case CE changed
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
+            set_ctrl_1(channel);
 
             break;
         case QSPI_STATE_FINALIZE:
@@ -246,49 +255,15 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = 0;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = 0;
 
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
+            set_ctrl_1(channel);
 
+            // Designed by Sergio that CE bit should be changed in other command
             if (!params->keep_ce_active) {
-                // Designed by Sergio that CE bit should be changed in other command
                 channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 0;
+                set_ctrl_1(channel);
             }
 
-            // Write again in case CE changed
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-            break;
-        case QSPI_STATE_PROGRAM_START:
-            // As is in Sergio code
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable  = 1;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = params->tx_len;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = params->rx_len;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 1;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-
-            break;
-        case QSPI_STATE_PROGRAM_START_FINALIZE:
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = 0;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = 0;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 0;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-
-            break;
-        case QSPI_STATE_DATA_LOAD_START:
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = params->tx_len;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = params->rx_len;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start        = 1;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-            break;
-        case QSPI_STATE_DATA_LOAD_FINALIZE:
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count     = 0;
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count     = 0;
-            // channel->ctrl1_state.bits.start        = 0; // ??? <===================================
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-
-            channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable  = 0;
-            setReg(ctrl1_reg, channel->ctrl1_state.word);
-            break;   
+            break; 
         default:
             mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid transaction state.\n");
             break;
@@ -301,24 +276,20 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
 
 // Initialize global pointers for optimized access based on the defined base address
 void scai_fpga_init(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
-    uintptr_t ctrl2_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl2;
-    uintptr_t ctrl3_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl3;
-
     // 1. Set default control register values
     channel->ctrl1_state.word                              = 0;
-    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Reset       = 1;                                                // Clear RESET
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Reset       = 1;                                                // Clear RESET    
     channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Data_Mode   = 0;                                                // Byte mode
     channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Lane_Width  = (channel->format == MSS_QSPI_QUAD_FULL) ? 1 : 0;  // Interface width
-    setReg(ctrl1_reg, channel->ctrl1_state.word);
+    set_ctrl_1(channel);
 
     // 2. Configure I/O format
     channel->ctrl2_state.word                              = 0;                                                // No auto operations
-    setReg(ctrl2_reg, channel->ctrl2_state.word);
+    set_ctrl_2(channel);
 
     channel->ctrl3_state.word                              = 0;
     channel->ctrl3_state.bits.Scai_Qspi_Ctrl_3_Nhold       = 1;                                                // No Toggling, not hold
-    setReg(ctrl3_reg, channel->ctrl3_state.word);
+    set_ctrl_3(channel);
 }
 
 void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params) {
@@ -355,83 +326,22 @@ void scai_fpga_transaction(scai_fpga_channel_t* channel, const scai_fpga_transac
 
 }
 
-void scai_fpga_program(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params) {
-    if (!params || (params->tx_len > 0 && !params->tx_buffer) || (params->rx_len > 0 && !params->rx_buffer)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "scai_fpga_transaction: Invalid arguments provided.\n");
-        return;
-    }
-
-    // 1. Configure and Start Transaction
-    qspi_fpga_update_ctrl1(channel, QSPI_STATE_PROGRAM_START, params);
-
-    // 2. Handle Data Phase (FIFO Operations)
-    if (params->tx_len > 0) {
-        uint32_t sent = qspi_fpga_fifo_write(channel->base_addr, params->tx_buffer, params->tx_len, params->data_size_is_word);
-        if (sent < params->tx_len) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to send all data. Sent %u of %u.\n", sent, params->tx_len);
-        }
-    }
-
-    if (params->rx_len > 0) {
-        uint32_t received = qspi_fpga_fifo_read(channel->base_addr, params->rx_buffer, params->rx_len, params->data_size_is_word);
-        if (received < params->rx_len) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to receive all data. Received %u of %u.\n", received, params->rx_len);
-        }
-    }
-
-    // 3. Wait while QSPI controller become idle
-    if (!qspi_fpga_wait_idle(channel->base_addr)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: controller did not become idle.\n");
-    }
-
-    // 4. Clean Up and Finalize State
-    qspi_fpga_update_ctrl1(channel, QSPI_STATE_PROGRAM_START_FINALIZE, params);
-
+void scai_fpga_enable_ce(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 1;
+    set_ctrl_1(channel);
 }
 
-
-void scai_fpga_load(scai_fpga_channel_t* channel, const scai_fpga_transaction_t* params) {
-    if (!params || (params->tx_len > 0 && !params->tx_buffer) || (params->rx_len > 0 && !params->rx_buffer)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "scai_fpga_transaction: Invalid arguments provided.\n");
-        return;
-    }
-
-    // 1. Configure and Start Transaction
-    qspi_fpga_update_ctrl1(channel, QSPI_STATE_DATA_LOAD_START, params);
-
-    // 2. Handle Data Phase (FIFO Operations)
-    if (params->tx_len > 0) {
-        uint32_t sent = qspi_fpga_fifo_write(channel->base_addr, params->tx_buffer, params->tx_len, params->data_size_is_word);
-        if (sent < params->tx_len) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to send all data. Sent %u of %u.\n", sent, params->tx_len);
-        }
-    }
-
-    if (params->rx_len > 0) {
-        uint32_t received = qspi_fpga_fifo_read(channel->base_addr, params->rx_buffer, params->rx_len, params->data_size_is_word);
-        if (received < params->rx_len) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: failed to receive all data. Received %u of %u.\n", received, params->rx_len);
-        }
-    }
-
-    // 3. Wait while QSPI controller become idle
-    if (!qspi_fpga_wait_idle(channel->base_addr)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Transaction error: controller did not become idle.\n");
-    }
-
-    // 4. Clean Up and Finalize State
-    qspi_fpga_update_ctrl1(channel, QSPI_STATE_DATA_LOAD_FINALIZE, params);
-
+void scai_fpga_disable_ce(scai_fpga_channel_t* channel) {
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 0;
+    set_ctrl_1(channel);
 }
 
 void scai_fpga_disable_write_protect(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
-    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp = 1;
-    setReg(ctrl1_reg, channel->ctrl1_state.word);
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp         = 1;
+    set_ctrl_1(channel);
 }
 
 void scai_fpga_enable_write_protect(scai_fpga_channel_t* channel) {
-    uintptr_t ctrl1_reg = channel->base_addr + Scai_Fpga_Qspi_Reg_Offset_Ctrl1;
-    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp = 0;
-    setReg(ctrl1_reg, channel->ctrl1_state.word);
+    channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Nwp         = 0;
+    set_ctrl_1(channel);
 }

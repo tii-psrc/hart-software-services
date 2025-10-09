@@ -135,12 +135,6 @@ static void tinyCLI_SCAI_page_write_(void);
 static void tinyCLI_SCAI_stat_(void);
 static void tinyCLI_SCAI_reset_(void);
 static void tinyCLI_SCAI_init_(void);
-
-static void tinyCLI_sergio_JEDEC_(void);
-static void tinyCLI_sergio_page_erase_(void);
-static void tinyCLI_sergio_page_read_(void);
-static void tinyCLI_sergio_page_write_(void);
-static void tinyCLI_sergio_init_(void);
 #endif
 #endif
 static void tinyCLI_QSPI_(void);
@@ -254,11 +248,6 @@ enum CmdId {
     CMD_SCAI_STAT,
     CMD_SCAI_RST,
     CMD_SCAI_INIT,
-    CMD_SERGIO_INIT,
-    CMD_SERGIO_PAGE_ERASE,
-    CMD_SERGIO_PAGE_READ,
-    CMD_SERGIO_PAGE_WRITE,
-    CMD_SERGIO_JEDEC,
 };
 
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -325,11 +314,6 @@ static const struct tinycli_cmd qspiCmds[] = {
     { CMD_SCAI_STAT,         "STAT",     "Read SCAI FPGA status",        tinyCLI_SCAI_stat_         },
     { CMD_SCAI_RST,          "RST",      "MT29F reset",                  tinyCLI_SCAI_reset_        },
     { CMD_SCAI_INIT,         "INIT",     "MT29F INIT",                   tinyCLI_SCAI_init_         },
-    { CMD_SERGIO_JEDEC,      "SERID",    "Read Sergio JEDEC ID",         tinyCLI_sergio_JEDEC_      },
-    { CMD_SERGIO_INIT,       "SINIT",    "Sergio INIT",                  tinyCLI_sergio_init_       },
-    { CMD_SERGIO_PAGE_ERASE, "SPER",     "Erase Sergio page",            tinyCLI_sergio_page_erase_ },
-    { CMD_SERGIO_PAGE_READ,  "SREAD",    "Read Sergio page",             tinyCLI_sergio_page_read_  },
-    { CMD_SERGIO_PAGE_WRITE, "SWRITE",   "Write to Sergio page",         tinyCLI_sergio_page_write_ },
 #endif
 };
 #endif
@@ -895,12 +879,6 @@ extern uint8_t scai_fpga_stat(uint8_t chip);
 extern uint8_t scai_fpga_reset(uint8_t chip);
 extern uint8_t scai_fpga_manual_init(uint8_t chip);
 
-extern uint32_t sergio_jedec_id(uint8_t chipNumber);
-extern uint8_t sergio_manual_init(uint8_t chip);
-extern uint8_t sergio_page_erase(uint8_t chip, uint16_t page);
-extern uint8_t sergio_page_read(uint8_t chip, uint16_t page);
-extern uint8_t sergio_fpga_page_write(uint8_t chip, uint16_t page);
-
 static void tinyCLI_SCAI_FLASH_TEST_(void)
 {
     if (argc_tokenCount > 2u) {
@@ -1062,90 +1040,6 @@ static void tinyCLI_SCAI_init_(void) {
         const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
 
         uint8_t result = scai_fpga_manual_init(chipNumber);
-        
-        if (result) {
-            mHSS_PRINTF("Init failed\n");
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi jedec <chip_number>\n"
-            "\n");
-    }
-}
-
-static void tinyCLI_sergio_JEDEC_(void)
-{   
-    if (argc_tokenCount > 2u) {
-        const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint32_t jedecID = sergio_jedec_id(chipNumber);
-        mHSS_PRINTF("QSPI FPGA chip %u JEDEC ID: 0x%06x\n", chipNumber, jedecID);
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi jedec <chip_number>\n"
-            "\n");
-    }
-}
-
-static void tinyCLI_sergio_page_erase_(void) {
-    if (argc_tokenCount > 3u) {
-        const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
-
-        uint8_t result = sergio_page_erase(chip, page);
-        if (result == 0u) {
-            mHSS_PRINTF("QSPI FPGA page %u erase passed\n", page);
-        } else {
-            mHSS_PRINTF("QSPI FPGA page %u erase failed with code %u\n", page, result);
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi page_read <page_number>\n"
-            "\n");            
-    }
-}
-
-static void tinyCLI_sergio_page_read_(void) {
-    if (argc_tokenCount > 3u) {
-        const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint8_t result = sergio_page_read(chip, page);
-        if (result == 0u) {
-            mHSS_PRINTF("QSPI FPGA page %u read passed\n", page);
-        } else {
-            mHSS_PRINTF("QSPI FPGA page %u read failed with code %u\n", page, result);
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi page_read <page_number>\n"
-            "\n");            
-    }
-}
-
-static void tinyCLI_sergio_page_write_(void) {
-    if (argc_tokenCount > 3u) {
-        const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint8_t result = sergio_fpga_page_write(chip, page);
-        if (result == 0u) {
-            mHSS_PRINTF("QSPI FPGA page %u write passed\n", page);
-        } else {
-            mHSS_PRINTF("QSPI FPGA page %u write failed with code %u\n", page, result);
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi page_write <page_number>\n"
-            "\n");
-    }
-}
-
-static void tinyCLI_sergio_init_(void) {   
-    if (argc_tokenCount > 2u) {
-        const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint8_t result = sergio_manual_init(chipNumber);
         
         if (result) {
             mHSS_PRINTF("Init failed\n");

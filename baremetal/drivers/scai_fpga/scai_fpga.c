@@ -16,12 +16,6 @@
 #include "winbond_w25n01gv_fpga.h"
 #include "winbond_w25n01gv_direct.h"
 
-#include "ctest/sapi_MT29F.h"
-#include "ctest/sapi_qspi_memories.h"
-#include "ctest/sapi_qspi.h"
-#include "ctest/sapi_adcs.h"
-#include "ctest/sapi_gpios.h"
-
 #include <string.h>
 
 // Driver Definitions
@@ -206,7 +200,7 @@ void Flash_init(mss_qspi_io_format io_format) {
         }
         return;
     }      
-      
+
     if (g_active_flash_type == SCAI_MICRON_MT29F || 
         (g_active_flash_type >= SCAI_MICRON_MT29F_CHIP_0 && 
             g_active_flash_type <= SCAI_MICRON_MT29F_CHIP_7)) 
@@ -595,83 +589,5 @@ uint8_t scai_fpga_manual_init(uint8_t chip) {
         return SCAI_FLASH_ERROR;
     }
 
-    return SCAI_FLASH_SUCCESS;
-}
-
-
-uint32_t sergio_jedec_id(scai_flash_type_t flash_type) {
-    uint8_t tx_d[8];
-    uint8_t id_buf[4];
-    uint16_t id = 0;
-
-    tx_d[0] = 0x9F;
-    tx_d[1] = 0xFF;
-
-    int result = generic_tx_rx_8bits(flash_type, 0, tx_d, 2, id_buf, 2, QSPI_ACTIVATE_CE);
-    id = (id_buf[0] << 8) | (id_buf[1] << 0);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "ID: jedec  = 0x%04X\n", id);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "ID: result = %d\n", result);
-    
-    return (uint32_t)id;
-}
-
-uint8_t sergio_manual_init(uint8_t chip) {
-    init_gpios();
-//    init_adcs();
-    sapi_init_qspis();
-    init_mqspis();
-    sapi_init_mt29fs();
-    return SCAI_FLASH_SUCCESS;
-}
-
-uint8_t sergio_page_erase(uint8_t chip, uint16_t page) {    
-    if (MQSPIs[chip].mem_type != MICRON_MT29F) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: Invalid memory type %d\n", MQSPIs[chip].mem_type);
-        return SCAI_FLASH_ERROR;
-    }
-
-    int result = block_erase_mt29f(chip, page);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: result = %d\n", result);
-    
-    return SCAI_FLASH_SUCCESS;
-}
-
-uint8_t sergio_page_read(uint8_t chip, uint16_t page) {
-    uint32_t buffer[0x400];
-    uint32_t quantity = 16;
-
-    if (MQSPIs[chip].mem_type != MICRON_MT29F) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: Invalid memory type %d\n", MQSPIs[chip].mem_type);
-        return SCAI_FLASH_ERROR;
-    }
-
-    int result = mem_read_mt29f_x4(chip, page, buffer, quantity);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: result = %d\n", result);
-
-    for (uint32_t i = 0; i < quantity; i++) {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "[d] 0x%08X\n", buffer[i]);
-    }
-    
-    return SCAI_FLASH_SUCCESS;
-}
-
-uint8_t sergio_fpga_page_write(uint8_t chip, uint16_t page) {
-    uint32_t buffer[0x400];
-    uint32_t len = 16;
-
-    if (MQSPIs[chip].mem_type != MICRON_MT29F) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase: Invalid memory type %d\n", MQSPIs[chip].mem_type);
-        return SCAI_FLASH_ERROR;
-    }
-
-    uint8_t* p_tmp_buf = (uint8_t *)&buffer[0];
-
-    for (uint32_t i = 0; i < len * 4; i++) {
-        p_tmp_buf[i] = i;
-    }
-
-    int result = mem_write_mt29f_x4(chip, page, buffer, len);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: result = %d\n", result);
-    
     return SCAI_FLASH_SUCCESS;
 }

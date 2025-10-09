@@ -14,14 +14,14 @@ const uintptr_t W25N01_FPGA_BASE_ADDR   = QSPI_0_BASE_ADDRESS;
 const uintptr_t W25N01_DIRECT_BASE_ADDR = 0; // It's not used in direct mode
 
 // static const uintptr_t MT29F_BASE_ADDR         = QSPI_1_BASE_ADDRESS;
-const uintptr_t MT29F_CHIP_0_BASE_ADDR  = QSPI_1_BASE_ADDRESS +  0; // Die 0
-const uintptr_t MT29F_CHIP_1_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 16; // Die 1
-const uintptr_t MT29F_CHIP_2_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 32; // Die 2
-const uintptr_t MT29F_CHIP_3_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 48; // Die 3
-const uintptr_t MT29F_CHIP_4_BASE_ADDR  = QSPI_2_BASE_ADDRESS +  0; // Die 4
-const uintptr_t MT29F_CHIP_5_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 16; // Die 5
-const uintptr_t MT29F_CHIP_6_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 32; // Die 6
-const uintptr_t MT29F_CHIP_7_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 48; // Die 7
+const uintptr_t MT29F_CHIP_0_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 0x00; // Die 0
+const uintptr_t MT29F_CHIP_1_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 0x10; // Die 1
+const uintptr_t MT29F_CHIP_2_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 0x20; // Die 2
+const uintptr_t MT29F_CHIP_3_BASE_ADDR  = QSPI_1_BASE_ADDRESS + 0x30; // Die 3
+const uintptr_t MT29F_CHIP_4_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 0x00; // Die 4
+const uintptr_t MT29F_CHIP_5_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 0x10; // Die 5
+const uintptr_t MT29F_CHIP_6_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 0x20; // Die 6
+const uintptr_t MT29F_CHIP_7_BASE_ADDR  = QSPI_2_BASE_ADDRESS + 0x30; // Die 7
 
 const uintptr_t MT29F_BASE_ADDRS[] = {
     MT29F_CHIP_0_BASE_ADDR,
@@ -35,7 +35,7 @@ const uintptr_t MT29F_BASE_ADDRS[] = {
 };
 
 // GPIO Pins
-const uintptr_t GPIO_0_BASE_ADDRESS = GPIO_BASE_ADDRESS +  0;
-const uintptr_t GPIO_1_BASE_ADDRESS = GPIO_BASE_ADDRESS + 16;
-const uintptr_t GPIO_2_BASE_ADDRESS = GPIO_BASE_ADDRESS + 32;
-const uintptr_t GPIO_3_BASE_ADDRESS = GPIO_BASE_ADDRESS + 48;
+const uintptr_t GPIO_0_BASE_ADDRESS = GPIO_BASE_ADDRESS + 0x00;
+const uintptr_t GPIO_1_BASE_ADDRESS = GPIO_BASE_ADDRESS + 0x10;
+const uintptr_t GPIO_2_BASE_ADDRESS = GPIO_BASE_ADDRESS + 0x20;
+const uintptr_t GPIO_3_BASE_ADDRESS = GPIO_BASE_ADDRESS + 0x30;

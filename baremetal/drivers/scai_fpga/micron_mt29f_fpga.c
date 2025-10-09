@@ -315,6 +315,11 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     bool     use_quad_mode = (channel->format == MSS_QSPI_QUAD_FULL);
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "1\n");
+    if (use_quad_mode) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "QUAD\n");
+    } else {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "NORMAL\n");
+    }
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: len = %u, addr = 0x%X\n", len, addr);
     mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_read: current_addr = 0x%X, remaining_len = %u\n", current_addr, remaining_len);
 
@@ -414,8 +419,14 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         };
         scai_fpga_transaction(channel, &data_rx_params);
 
-        for (uint32_t i = 0; i < read_len; i++) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%02X\n", i, current_buf[i]);
+        if (use_quad_mode) {
+            for (uint32_t i = 0; i < read_len; i+=4) {
+                mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%08X\n", i, *((uint32_t*)&current_buf[i]));
+            }
+        } else {
+            for (uint32_t i = 0; i < read_len; i++) {
+                mHSS_DEBUG_PRINTF(LOG_ERROR, "rx[%d] = 0x%02X\n", i, current_buf[i]);
+            }
         }
 
         current_addr  += read_len;

@@ -3,7 +3,7 @@
 #include "hss_debug.h"
 #include "hss_types.h"
 
-// #define REGDBG 1
+#define REGDBG 1
 #define GPIO_REGDBG 1
 
 void scai_set_reg(addr_t reg_addr, uint32_t value) {

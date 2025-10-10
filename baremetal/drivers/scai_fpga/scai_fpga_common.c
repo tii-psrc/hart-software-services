@@ -189,19 +189,10 @@ static uint32_t qspi_fpga_fifo_read(uintptr_t base_addr,
     status2.word = getReg(status_2_reg);
 
     if (!status2.bits.Scai_Qspi_Status_2_Rx_Fifo_Empty) {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "Rx FIFO cleanup...\n");
         uint32_t words_available = status2.bits.Scai_Qspi_Status_2_Rx_Fifo_RdCnt;
         for (uint32_t i = 0; i < words_available; ++i) {
-            uint32_t value = getReg(data_reg);
-            if (data_size_is_word) {
-                uint32_t dummy = value;
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "W DATA_R = 0x%08X\n", dummy);
-            } else {
-                uint8_t dummy = (uint8_t)(value & SCAI_FPGA_FIFO_RX_BYTE_MASK);
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "B DATA_R = 0x%08X\n", dummy);
-            }
+            getReg(data_reg);
         }
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "Rx FIFO cleanup... ended\n");
     }
 
     return elements_read;

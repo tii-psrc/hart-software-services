@@ -4,14 +4,11 @@
 #include "hss_debug.h"
 
 static void setGpioReg(volatile uintptr_t reg, uint32_t value) {
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "GPIO REGW 0x%08x\t=\t0x%08x\n", reg, value);
     *(volatile uint32_t*)(reg + Scai_Fpga_Gpio_Reg_Wdata) = value;
 }
 
 static uint32_t getGpioReg(volatile uintptr_t reg) {
-    uint32_t value = *(volatile uint32_t*)(reg + Scai_Fpga_Gpio_Reg_Rdata);
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "GPIO REGR 0x%08x\t=\t0x%08x\n", reg, value);
-    return value;
+    return *(volatile uint32_t*)(reg + Scai_Fpga_Gpio_Reg_Rdata);
 }
 
 // =============================================================================
@@ -38,11 +35,11 @@ void scai_fpga_gpio_enable_mt29f(void) {
     Scai_Fpga_Gpio_Reg_1_t gpio_1;
     Scai_Fpga_Gpio_Reg_2_t gpio_2;
 
-    gpio_1.word = getGpioReg(GPIO_1_BASE_ADDRESS);
+    // gpio_1.word = getGpioReg(GPIO_1_BASE_ADDRESS);
     gpio_1.bits.C21_ENA_SS1 = 1;
     setGpioReg(GPIO_1_BASE_ADDRESS, gpio_1.word);
 
-    gpio_2.word = getGpioReg(GPIO_2_BASE_ADDRESS);
+    // gpio_2.word = getGpioReg(GPIO_2_BASE_ADDRESS);
     gpio_2.bits.A23_ENA_SS2 = 1;
     setGpioReg(GPIO_2_BASE_ADDRESS, gpio_2.word);
 }

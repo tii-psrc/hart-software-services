@@ -378,7 +378,7 @@ uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba) {
 #define MT29F_TEST_BLOCK_SIZE_BYTES (64 * 4096)      // 256 KB
 
 uint8_t scai_flash_test(scai_flash_type_t flash_type) {
-    uint32_t MT29F_TEST_TOTAL_BLOCKS     = 2; // 4096;
+    uint32_t MT29F_TEST_TOTAL_BLOCKS     = 4096;
     size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_TOTAL_BLOCKS * MT29F_TEST_BLOCK_SIZE_BYTES ); // 1 GiB
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting 1 GiB Image Write/Verify Test for MT29F type %d ---\n", flash_type);
@@ -391,13 +391,14 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
 
     // --- Step 0: Acquire Buffer ---
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Acquiring 1 GiB buffer pointer from HSS DDR region...\n");
-    uint8_t* ddr_base_ptr     = (uint8_t*)HSS_DDR_GetStart();
+    uint8_t* ddr_base_ptr     = (uint8_t*)HSS_DDRHi_GetStart();
     uint8_t* read_back_buffer = ddr_base_ptr;
     uint8_t* image_buffer     = ddr_base_ptr + MT29F_TEST_BLOCK_SIZE_BYTES; // Leave 256 KB for read-back
 
     // Ensure that we have enough memory.
-    if (MT29F_CHIP_SIZE_BYTES > HSS_DDR_GetSize()) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "FATAL: 1 GiB buffer size exceeds available DDR memory!\n");
+    if (MT29F_CHIP_SIZE_BYTES > HSS_DDRHi_GetSize()) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "FATAL: 1 GiB buffer size exceeds available DDR memory! \n0x%llX bytes required, 0x%llX bytes available\n", 
+            (unsigned long long) MT29F_CHIP_SIZE_BYTES, (unsigned long long) HSS_DDR_GetSize());
         return SCAI_FLASH_ERROR;
     }
     
@@ -424,7 +425,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // =========================================================================
     // Phase 2: Write the entire image to the chip
     // =========================================================================
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n--- Phase 2: Writing Full 1 GiB Image to Flash (EXTREMELY SLOW)...\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n--- Phase 2: Writing Full 1 GiB Image to Flash...\n");
 
     for (uint32_t block_idx = 0; block_idx < MT29F_TEST_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)
@@ -450,7 +451,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // =========================================================================
     // Phase 3: Verify the entire image by reading back and comparing
     // =========================================================================
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Phase 3: Verifying Full 1 GiB Image (EXTREMELY SLOW)...\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Phase 3: Verifying Full 1 GiB Image...\n");
 
     for (uint32_t block_idx = 0; block_idx < MT29F_TEST_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)

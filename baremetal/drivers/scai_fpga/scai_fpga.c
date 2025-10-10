@@ -603,3 +603,85 @@ uint8_t scai_fpga_reset(uint8_t chip) {
     SCAI_MT29_Flash_reset(g_active_channel);
     return SCAI_FLASH_SUCCESS;
 }
+
+/**
+ * @brief Writes and verifies a binary image to a specified MT29F flash chip from a DDR memory location.
+ *
+ * @param image_ptr   Pointer to the start of the image in DDR memory.
+ * @param image_size  Size of the image in bytes.
+ * @param flash_type  Target MT29F chip for writing (must be within MT29F range).
+ * @return SCAI_FLASH_SUCCESS on success, otherwise SCAI_FLASH_ERROR.
+ */
+uint8_t scai_flash_write_image_from_ddr(const uint8_t* image_ptr, size_t image_size, scai_flash_type_t flash_type) {
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting Image Write/Verify for MT29F type %d ---\n", flash_type);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Image Source: @ %p, Size: %zu bytes\n", (void*)image_ptr, image_size);
+
+    // Validate image parameters
+    if (!image_ptr || image_size == 0 || image_size > MT29F_CHIP_SIZE_BYTES) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "FATAL: Invalid image pointer or size.\n");
+        return SCAI_FLASH_ERROR;
+    }
+
+    if (flash_type < SCAI_MICRON_MT29F_CHIP_0 || flash_type > SCAI_MICRON_MT29F_CHIP_7) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "This function is only for MT29F chips.\n");
+        return SCAI_FLASH_ERROR;
+    }
+
+    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return SCAI_FLASH_ERROR;
+    }
+
+    uint32_t num_blocks_to_process = (image_size + MT29F_BLOCK_SIZE_BYTES - 1) / MT29F_BLOCK_SIZE_BYTES;
+
+    // =========================================================================
+    // Erase necessary blocks 
+    // =========================================================================
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Erasing required blocks\n");
+    for (uint16_t block_idx = 0; block_idx < num_blocks_to_process; block_idx++) {
+        HSS_ShowProgress(num_blocks_to_process, num_blocks_to_process - (block_idx + 1));
+        if (Flash_erase_block(block_idx) != SCAI_FLASH_SUCCESS) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to erase block %u.\n", block_idx);
+            return SCAI_FLASH_ERROR;
+        }
+    }
+    HSS_ShowProgress(num_blocks_to_process, 0);
+
+    // =========================================================================
+    // Writing Full Image
+    // =========================================================================
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Writing Full Image\n");
+    if (Flash_program(image_ptr, 0, image_size) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "\tFAILED to program image.\n");
+        return SCAI_FLASH_ERROR;
+    }
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Image programming complete.\n");
+
+    // =========================================================================
+    // Validation by Read-Back
+    // =========================================================================
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Verifying Image on Flash\n");
+    static uint8_t read_back_buffer[MT29F_BLOCK_SIZE_BYTES];
+
+    for (uint16_t block_idx = 0; block_idx < num_blocks_to_process; block_idx++) {
+        HSS_ShowProgress(num_blocks_to_process, num_blocks_to_process - (block_idx + 1));
+
+        uint32_t block_base_addr          = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
+        const uint8_t* original_chunk_ptr = image_ptr + block_base_addr;
+        size_t chunk_size                 = (image_size - block_base_addr < MT29F_BLOCK_SIZE_BYTES) ? (image_size % MT29F_BLOCK_SIZE_BYTES) : MT29F_BLOCK_SIZE_BYTES;
+        
+        if (Flash_read(read_back_buffer, block_base_addr, chunk_size) != SCAI_FLASH_SUCCESS) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to read back block %u.\n", block_idx);
+            return SCAI_FLASH_ERROR;
+        }
+
+        if (memcmp(original_chunk_ptr, read_back_buffer, chunk_size) != 0) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED: Data mismatch found in block %u!\n", block_idx);
+            return SCAI_FLASH_ERROR;
+        }
+    }
+    HSS_ShowProgress(num_blocks_to_process, 0);
+
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Image Write and Verify PASSED ---\n");
+    return SCAI_FLASH_SUCCESS;
+}

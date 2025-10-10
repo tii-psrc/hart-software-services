@@ -132,9 +132,7 @@ static void tinyCLI_SCAI_read_reg_(void);
 static void tinyCLI_SCAI_page_erase_(void);
 static void tinyCLI_SCAI_page_read_(void);
 static void tinyCLI_SCAI_page_write_(void);
-static void tinyCLI_SCAI_stat_(void);
 static void tinyCLI_SCAI_reset_(void);
-static void tinyCLI_SCAI_init_(void);
 #endif
 #endif
 static void tinyCLI_QSPI_(void);
@@ -245,9 +243,7 @@ enum CmdId {
     CMD_SCAI_PAGE_ERASE,
     CMD_SCAI_PAGE_READ,
     CMD_SCAI_PAGE_WRITE,
-    CMD_SCAI_STAT,
     CMD_SCAI_RST,
-    CMD_SCAI_INIT,
 };
 
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
@@ -311,9 +307,7 @@ static const struct tinycli_cmd qspiCmds[] = {
     { CMD_SCAI_PAGE_ERASE,   "PER",      "Erase SCAI FPGA page",         tinyCLI_SCAI_page_erase_   },
     { CMD_SCAI_PAGE_READ,    "READ",     "Read SCAI FPGA page",          tinyCLI_SCAI_page_read_    },
     { CMD_SCAI_PAGE_WRITE,   "WRITE",    "Write to SCAI FPGA page",      tinyCLI_SCAI_page_write_   },
-    { CMD_SCAI_STAT,         "STAT",     "Read SCAI FPGA status",        tinyCLI_SCAI_stat_         },
     { CMD_SCAI_RST,          "RST",      "MT29F reset",                  tinyCLI_SCAI_reset_        },
-    { CMD_SCAI_INIT,         "INIT",     "MT29F INIT",                   tinyCLI_SCAI_init_         },
 #endif
 };
 #endif
@@ -875,9 +869,7 @@ extern uint32_t scai_fpga_read_reg(uintptr_t address);
 extern uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page);
 extern uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page);
 extern uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page);
-extern uint8_t scai_fpga_stat(uint8_t chip);
 extern uint8_t scai_fpga_reset(uint8_t chip);
-extern uint8_t scai_fpga_manual_init(uint8_t chip);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)
 {
@@ -1003,43 +995,11 @@ static void tinyCLI_SCAI_page_write_(void) {
     }
 }
 
-static void tinyCLI_SCAI_stat_(void) { 
-    if (argc_tokenCount > 2u) {
-        const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint8_t result = scai_fpga_stat(chipNumber);
-        
-        if (result) {
-            mHSS_PRINTF("Init failed\n");
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi jedec <chip_number>\n"
-            "\n");
-    }
-}
-
 static void tinyCLI_SCAI_reset_(void) {   
     if (argc_tokenCount > 2u) {
         const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
 
         uint8_t result = scai_fpga_reset(chipNumber);
-        
-        if (result) {
-            mHSS_PRINTF("Init failed\n");
-        }
-    } else {
-        mHSS_PUTS("Usage:\n"
-            "\tqspi jedec <chip_number>\n"
-            "\n");
-    }
-}
-
-static void tinyCLI_SCAI_init_(void) {   
-    if (argc_tokenCount > 2u) {
-        const uint8_t chipNumber = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-
-        uint8_t result = scai_fpga_manual_init(chipNumber);
         
         if (result) {
             mHSS_PRINTF("Init failed\n");

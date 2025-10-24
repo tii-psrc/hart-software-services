@@ -377,7 +377,19 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PRINTF("Decompressed data size : %d\n", receivedCount);
                 break;
-
+            case '9':
+                mHSS_PUTS("Program received data to MT29F\n");
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+                uint8_t write_result = scai_flash_write_image_from_ddr(SCAI_MICRON_MT29F, pBuffer, receivedCount);
+                if (write_result != SCAI_FLASH_SUCCESS) {
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                    mHSS_PUTS(" FAILED\n");
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                }
+#else
+                mHSS_PUTS(" SCAI FPGA Service is not enabled\n");
+#endif
+                break;
 
             default: // ignore
                 break;

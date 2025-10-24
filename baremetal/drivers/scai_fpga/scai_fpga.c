@@ -612,9 +612,12 @@ uint8_t scai_fpga_reset(uint8_t chip) {
  * @param flash_type  Target MT29F chip for writing (must be within MT29F range).
  * @return SCAI_FLASH_SUCCESS on success, otherwise SCAI_FLASH_ERROR.
  */
-uint8_t scai_flash_write_image_from_ddr(const uint8_t* image_ptr, size_t image_size, scai_flash_type_t flash_type) {
+uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint8_t* image_ptr, size_t image_size) {
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting Image Write/Verify for MT29F type %d ---\n", flash_type);
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Image Source: @ %p, Size: %zu bytes\n", (void*)image_ptr, image_size);
+    uint32_t MT29F_TEST_TOTAL_BLOCKS     = 4096;
+    uint32_t MT29F_BLOCK_SIZE_BYTES      = 64 * 4096; // 256 KB
+    size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_TOTAL_BLOCKS * MT29F_TEST_BLOCK_SIZE_BYTES ); // 1 GiB
 
     // Validate image parameters
     if (!image_ptr || image_size == 0 || image_size > MT29F_CHIP_SIZE_BYTES) {
@@ -661,7 +664,7 @@ uint8_t scai_flash_write_image_from_ddr(const uint8_t* image_ptr, size_t image_s
     // Validation by Read-Back
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Verifying Image on Flash\n");
-    static uint8_t read_back_buffer[MT29F_BLOCK_SIZE_BYTES];
+    uint8_t read_back_buffer[MT29F_BLOCK_SIZE_BYTES];
 
     for (uint16_t block_idx = 0; block_idx < num_blocks_to_process; block_idx++) {
         HSS_ShowProgress(num_blocks_to_process, num_blocks_to_process - (block_idx + 1));

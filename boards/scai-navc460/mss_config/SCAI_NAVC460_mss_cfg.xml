@@ -1,10 +1,10 @@
   <mss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpfs_hw_description.xsd">
     <design_information>
-      <libero_version>2024.2</libero_version>
+      <libero_version>2025.1</libero_version>
       <design_name>SCAI_NAVC460</design_name>
       <mpfs_part_no>MPFS460T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>10-22-2025_16:06:38</creation_date_time>
+      <creation_date_time>10-29-2025_11:51:34</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -1341,7 +1341,7 @@
           </register>
           <register address="0x0000024C" description="IO electrical configuration for MSSIO pad" name="MSSIO_BANK4_IO_CFG_12_13_CR">
             <field Type="RW" name="IO_CFG_12" offset="0" width="16">0x0829</field>
-            <field Type="RW" name="IO_CFG_13" offset="16" width="16">0x0829</field>
+            <field Type="RW" name="IO_CFG_13" offset="16" width="16">0x0429</field>
           </register>
           <register address="0x00000250" description="Configures the MSSIO block using SCB write" name="MSSIO_BANK2_CFG_CR">
             <field Type="RW" name="BANK_PCODE" offset="0" width="6">0x7</field>
@@ -1397,7 +1397,7 @@
           </register>
           <register address="0x00000280" description="IO electrical configuration for MSSIO pad" name="MSSIO_BANK2_IO_CFG_22_23_CR">
             <field Type="RW" name="IO_CFG_22" offset="0" width="16">0x0829</field>
-            <field Type="RW" name="IO_CFG_23" offset="16" width="16">0x0829</field>
+            <field Type="RW" name="IO_CFG_23" offset="16" width="16">0x0429</field>
           </register>
           <register address="0x00000278" description="default dpc values for MSSIO bank 2 " name="MSSIO_VB2_CFG">
             <field Type="RW" name="DPC_IO_CFG_IBUFMD_0" offset="0" width="1">0x0</field>
@@ -1587,7 +1587,7 @@
           </register>
           <register address="0x0000024C" description="IO electrical configuration for MSSIO pad" name="ALT_MSSIO_BANK4_IO_CFG_12_13_CR">
             <field Type="RW" name="IO_CFG_12" offset="0" width="16">0x0829</field>
-            <field Type="RW" name="IO_CFG_13" offset="16" width="16">0x0829</field>
+            <field Type="RW" name="IO_CFG_13" offset="16" width="16">0x0429</field>
           </register>
           <register address="0x00000250" description="Configures the MSSIO block using SCB write" name="ALT_MSSIO_BANK2_CFG_CR">
             <field Type="RW" name="BANK_PCODE" offset="0" width="6">0x7</field>
@@ -1643,7 +1643,7 @@
           </register>
           <register address="0x00000280" description="IO electrical configuration for MSSIO pad" name="ALT_MSSIO_BANK2_IO_CFG_22_23_CR">
             <field Type="RW" name="IO_CFG_22" offset="0" width="16">0x0829</field>
-            <field Type="RW" name="IO_CFG_23" offset="16" width="16">0x0829</field>
+            <field Type="RW" name="IO_CFG_23" offset="16" width="16">0x0429</field>
           </register>
           <register address="0x00000278" description="default dpc values for MSSIO bank 2 " name="ALT_MSSIO_VB2_CFG">
             <field Type="RW" name="DPC_IO_CFG_IBUFMD_0" offset="0" width="1">0x0</field>

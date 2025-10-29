@@ -50,11 +50,11 @@
 </tr>
 <tr>
  <td>Version</td>
- <td>2024.2</td>
+ <td>2025.1</td>
 </tr>
 <tr>
  <td>Date</td>
- <td>Wed Oct 22 16:06:38 2025
+ <td>Wed Oct 29 11:51:35 2025
 </td>
 </tr>
 </table>
@@ -814,15 +814,23 @@
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQ_ECC[35:32]</td>
+ <td>DQ_ECC[3:0]</td>
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQS[4:0]</td>
+ <td>DQS[3:0]</td>
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQS_N[4:0]</td>
+ <td>DQS_N[3:0]</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>DQS_ECC</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>DQS_ECC_N</td>
  <td>INOUT</td>
 </tr>
 <tr>
@@ -1046,7 +1054,7 @@
  <td>MSSIO13</td>
  <td>Y12</td>
  <td>OUTPUT</td>
- <td>UP</td>
+ <td>DOWN</td>
  <td>OFF</td>
  <td>OFF</td>
  <td>--</td>
@@ -1267,7 +1275,7 @@
  <td>MSSIO37</td>
  <td>V12</td>
  <td>OUTPUT</td>
- <td>UP</td>
+ <td>DOWN</td>
  <td>OFF</td>
  <td>OFF</td>
  <td>--</td>
@@ -1525,28 +1533,28 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[32]</td>
+ <td>DQ_ECC[0]</td>
  <td>AE10</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[33]</td>
+ <td>DQ_ECC[1]</td>
  <td>AE11</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[34]</td>
+ <td>DQ_ECC[2]</td>
  <td>AG10</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[35]</td>
+ <td>DQ_ECC[3]</td>
  <td>AF10</td>
  <td>INOUT</td>
  <td>120</td>
@@ -1581,13 +1589,6 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQS[4]</td>
- <td>AG9</td>
- <td>INOUT</td>
- <td>120</td>
- <td>48</td>
-</tr>
-<tr>
  <td>DQS_N[0]</td>
  <td>AE5</td>
  <td>INOUT</td>
@@ -1616,7 +1617,14 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQS_N[4]</td>
+ <td>DQS_ECC</td>
+ <td>AG9</td>
+ <td>INOUT</td>
+ <td>120</td>
+ <td>48</td>
+</tr>
+<tr>
+ <td>DQS_ECC_N</td>
  <td>AF9</td>
  <td>INOUT</td>
  <td>120</td>

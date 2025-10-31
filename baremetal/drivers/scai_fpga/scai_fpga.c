@@ -693,3 +693,15 @@ uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Image Write and Verify PASSED ---\n");
     return SCAI_FLASH_SUCCESS;
 }
+
+bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
+    if (selectedChip >= SCAI_MEM_TYPES_QUANTITY) {
+        return false;   
+    }
+    if (scai_set_flash_chip(selectedChip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return false;
+    }
+    return true;
+}
+

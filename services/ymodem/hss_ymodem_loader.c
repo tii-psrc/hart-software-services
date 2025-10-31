@@ -83,6 +83,10 @@ static bool hss_loader_mmc_init(void);
 static bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCount);
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer);
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static bool hss_loader_qspi_init(void)
 {
@@ -127,6 +131,45 @@ bool hss_loader_mmc_init(void)
 bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCount)
 {
     bool result = HSS_MMC_WriteBlock(wrAddr, pBuffer, receivedCount);
+    return result;
+}
+#endif
+
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer)
+{
+    bool result = false;
+    mHSS_PRINTF("\nAttempting to flash received data (%u bytes)\n", receivedCount);
+    mHSS_PUTS("\nInitializing QSPI ... ");
+    
+    result = hss_loader_qspi_init();
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
+    }
+    mHSS_PUTS(" Success\n");
+
+    mHSS_PUTS("\nErasing all of QSPI ... ");
+    result = hss_loader_qspi_erase();
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
+    }
+    mHSS_PUTS(" Success\n");
+
+    mHSS_PUTS("\nProgramming QSPI ... ");
+    result = hss_loader_qspi_program((uint8_t *)pBuffer, 0u, receivedCount);
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
+    }
+    mHSS_PUTS(" Success\n");
     return result;
 }
 #endif
@@ -237,6 +280,11 @@ void hss_loader_ymodem_loop(void)
             " 6. Quit -- quit QSPI Utility\n"
             " 7. JTAG Receive -- receive data via JTAG interface\n"
             " 8. YMODEM Receive(Compressed File) -- receive compressed application file\n"
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+            " a. SCAI Write -- write bootloader payload to W25/Nominal storage\n"
+            " b. SCAI Write -- write bootloader payload to W25/Backup storage\n"
+            " c. SCAI Write -- write RootFS to the main storage (MT29F|3dplus)\n"
+#endif
             " Select a number:\n";
 
         mHSS_PUTS(menuText);
@@ -377,19 +425,47 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PRINTF("Decompressed data size : %d\n", receivedCount);
                 break;
-            case '9':
-                mHSS_PUTS("Program received data to MT29F\n");
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
-                uint8_t write_result = scai_flash_write_image_from_ddr(SCAI_MICRON_MT29F, pBuffer, receivedCount);
-                if (write_result != SCAI_FLASH_SUCCESS) {
+            case 'a':
+                if (!scai_select_boot_flash(SCAI_WINBOND_W25N01_DIRECT)) {
                     HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
-                    mHSS_PUTS(" FAILED\n");
+                    mHSS_PUTS("\nFailed programming to the MAIN boot storage\n\n");
                     HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                    break;
                 }
-#else
-                mHSS_PUTS(" SCAI FPGA Service is not enabled\n");
-#endif
+                mHSS_PUTS("\nProgramming W25/Nominal");
+                result = scai_program_flash(receivedCount, pBuffer);
                 break;
+            case 'b':
+                if (!scai_select_boot_flash(SCAI_WINBOND_W25N01_FPGA)) {
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                    mHSS_PUTS("\nFailed programming to the BACKUP boot storage\n\n");
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                    break;
+                }
+                mHSS_PUTS("\nProgramming W25/Backup");
+                result = scai_program_flash(receivedCount, pBuffer);
+                break;
+            case 'c':
+                // mHSS_PUTS("Program received data to MT29F\n");
+                // uint8_t write_result = scai_flash_write_image_from_ddr(SCAI_MICRON_MT29F, pBuffer, receivedCount);
+                // if (write_result != SCAI_FLASH_SUCCESS) {
+                //     HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                //     mHSS_PUTS(" FAILED\n");
+                //     HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                // }
+                // break;
+                if (!scai_select_boot_flash(SCAI_MICRON_MT29F_CHIP_0)) {
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                    mHSS_PUTS("\nFailed programming to the RootFS (MT29F|3dplus) storage\n\n");
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                    break;
+                }
+                mHSS_PUTS("\nProgramming RootFS (MT29F|3dplus)");
+                result = scai_program_flash(receivedCount, pBuffer);
+                break;
+
+#endif
 
             default: // ignore
                 break;

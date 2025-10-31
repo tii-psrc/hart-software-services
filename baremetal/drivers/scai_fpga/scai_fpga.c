@@ -380,10 +380,11 @@ uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba) {
 uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     uint32_t MT29F_TEST_TOTAL_BLOCKS     = 4096;
     size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_TOTAL_BLOCKS * MT29F_TEST_BLOCK_SIZE_BYTES ); // 1 GiB
+    uint8_t  real_chip                   = flash_type + SCAI_MICRON_MT29F_CHIP_0;
 
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting 1 GiB Image Write/Verify Test for MT29F type %d ---\n", flash_type);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting 1 GiB Image Write/Verify Test for MT29F type %d ---\n", real_chip);
 
-    if (flash_type < SCAI_MICRON_MT29F_CHIP_0 || flash_type > SCAI_MICRON_MT29F_CHIP_7) {
+    if (real_chip > SCAI_MICRON_MT29F_CHIP_7) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "This test is only for MT29F chips (types %d-%d).\n",
             SCAI_MICRON_MT29F_CHIP_0, SCAI_MICRON_MT29F_CHIP_7);
         return SCAI_FLASH_ERROR;
@@ -404,7 +405,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     
     // Temporary buffer for read-back during verification.
 
-    if (scai_set_flash_chip(flash_type, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
+    if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
@@ -552,6 +553,10 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page) {
     }
 
     if (Flash_read(read_data, page, 32) == 0) {
+        for (uint32_t i = 0; i < 16; i++) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X\n", read_data[i]);
+        }
+
         return SCAI_FLASH_SUCCESS;
     } else {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
@@ -688,3 +693,15 @@ uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Image Write and Verify PASSED ---\n");
     return SCAI_FLASH_SUCCESS;
 }
+
+bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
+    if (selectedChip >= SCAI_MEM_TYPES_QUANTITY) {
+        return false;   
+    }
+    if (scai_set_flash_chip(selectedChip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return false;
+    }
+    return true;
+}
+

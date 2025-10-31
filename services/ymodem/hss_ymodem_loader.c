@@ -83,6 +83,10 @@ static bool hss_loader_mmc_init(void);
 static bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCount);
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
+bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer);
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static bool hss_loader_qspi_init(void)
 {
@@ -134,6 +138,7 @@ bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCoun
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
 bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer)
 {
+    bool result = false;
     mHSS_PRINTF("\nAttempting to flash received data (%u bytes)\n", receivedCount);
     mHSS_PUTS("\nInitializing QSPI ... ");
     result = hss_loader_qspi_init();

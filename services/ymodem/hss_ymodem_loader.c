@@ -141,18 +141,35 @@ bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer)
     bool result = false;
     mHSS_PRINTF("\nAttempting to flash received data (%u bytes)\n", receivedCount);
     mHSS_PUTS("\nInitializing QSPI ... ");
+    
     result = hss_loader_qspi_init();
-
-    if (result) {
-        mHSS_PUTS(" Success\n");
-
-        mHSS_PUTS("\nProgramming QSPI ... ");
-        result = hss_loader_qspi_program((uint8_t *)pBuffer, 0u, receivedCount);
-
-        if (result) {
-            mHSS_PUTS(" Success\n");
-        }
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
     }
+    mHSS_PUTS(" Success\n");
+
+    mHSS_PUTS("\nErasing all of QSPI ... ");
+    result = hss_loader_qspi_erase();
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
+    }
+    mHSS_PUTS(" Success\n");
+
+    mHSS_PUTS("\nProgramming QSPI ... ");
+    result = hss_loader_qspi_program((uint8_t *)pBuffer, 0u, receivedCount);
+    if (!result) {
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+        mHSS_PUTS(" FAILED\n");
+        HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+        return false;
+    }
+    mHSS_PUTS(" Success\n");
     return result;
 }
 #endif
@@ -418,11 +435,6 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PUTS("\nProgramming W25/Nominal");
                 result = scai_program_flash(receivedCount, pBuffer);
-                if (!result) {
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
-                    mHSS_PUTS(" FAILED\n");
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
-                }
                 break;
             case 'b':
                 if (!scai_select_boot_flash(SCAI_WINBOND_W25N01_FPGA)) {
@@ -433,11 +445,6 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PUTS("\nProgramming W25/Backup");
                 result = scai_program_flash(receivedCount, pBuffer);
-                if (!result) {
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
-                    mHSS_PUTS(" FAILED\n");
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
-                }
                 break;
             case 'c':
                 // mHSS_PUTS("Program received data to MT29F\n");
@@ -456,11 +463,6 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PUTS("\nProgramming RootFS (MT29F|3dplus)");
                 result = scai_program_flash(receivedCount, pBuffer);
-                if (!result) {
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
-                    mHSS_PUTS(" FAILED\n");
-                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
-                }
                 break;
 
 #endif

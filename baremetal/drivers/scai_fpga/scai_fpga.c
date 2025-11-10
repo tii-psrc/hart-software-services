@@ -522,9 +522,10 @@ uint32_t scai_fpga_read_reg(uintptr_t address)
     return value;
 }
 
-uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page) {
+uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page) {
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
 
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Erasing page %u on chip %u...\n", page, real_chip);
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
         return 0;
@@ -539,10 +540,14 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page) {
 }
 
 uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length) {
-    uint8_t read_data[256];
+    uint8_t read_data[4096];
     uint32_t* read_data_32 = (uint32_t*)read_data;
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
 
+    if (length > sizeof(read_data)) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Read length %u exceeds buffer size %zu\n", length, sizeof(read_data));
+        return SCAI_FLASH_ERROR;
+    }
     memset(read_data, 0, sizeof(read_data));
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {

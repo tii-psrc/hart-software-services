@@ -866,7 +866,7 @@ extern uint8_t scai_flash_test(uint8_t chipNumber);
 extern uint8_t scai_fpga_diagnostics(void);
 extern void scai_fpga_write_reg(uintptr_t address, uint32_t value);
 extern uint32_t scai_fpga_read_reg(uintptr_t address);
-extern uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page);
+extern uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page);
 extern uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length);
 extern uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page);
 extern uint8_t scai_fpga_reset(uint8_t chip);
@@ -944,7 +944,7 @@ static void tinyCLI_SCAI_read_reg_(void) {
 static void tinyCLI_SCAI_page_erase_(void) {
     if (argc_tokenCount > 3u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+        const uint32_t page = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
 
         uint8_t result = scai_fpga_page_erase(chip, page);
         if (result == 0u) {

@@ -967,7 +967,7 @@ static void tinyCLI_SCAI_page_read_(void) {
         const uint32_t len  = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[5]);
         mHSS_PRINTF("Reading page %d of chip %d, with offset %d and length %d\n", page, chip, offt, len);
 
-        uint8_t result = scai_fpga_page_read(chip, page, offt);
+        uint8_t result = scai_fpga_page_read(chip, page, offt, len);
         if (result == 0u) {
             mHSS_PRINTF("QSPI FPGA page %u read passed\n", page);
         } else {

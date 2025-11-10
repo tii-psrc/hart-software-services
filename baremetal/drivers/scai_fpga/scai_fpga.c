@@ -395,6 +395,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     uint8_t* ddr_base_ptr     = (uint8_t*)HSS_DDRHi_GetStart();
     uint8_t* read_back_buffer = ddr_base_ptr;
     uint8_t* image_buffer     = ddr_base_ptr + MT29F_TEST_BLOCK_SIZE_BYTES; // Leave 256 KB for read-back
+    uint32_t* image_buffer_32 = (uint32_t*)image_buffer;
 
     // Ensure that we have enough memory.
     if (MT29F_CHIP_SIZE_BYTES > HSS_DDRHi_GetSize()) {
@@ -414,10 +415,11 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // Phase 1: Fill the 1 GiB buffer with test data
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n--- Phase 1: Filling 1 GiB DDR buffer... (this may take a moment)\n");
-    for (size_t i = 0; i < MT29F_CHIP_SIZE_BYTES; i++) {
-        image_buffer[i] = (uint8_t)i; // Simple sequential pattern
-        if ((i & 0xFFFFFF) == 0) {    // Print progress every 16 MB
-            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, MT29F_CHIP_SIZE_BYTES - i);
+    for (size_t i = 0; i < MT29F_CHIP_SIZE_BYTES / 4; i++) {
+        image_buffer_32[i] = (uint32_t)i; // 32-bit pattern
+
+        if ((i & 0x3FFFFF) == 0) {    // Print progress every 16 MB
+            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, MT29F_CHIP_SIZE_BYTES - i * 4);
         }
     }
     HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, 0);
@@ -536,8 +538,9 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page) {
     return Flash_erase_block(page);
 }
 
-uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page) {
+uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length) {
     uint8_t read_data[256];
+    uint32_t* read_data_32 = (uint32_t*)read_data;
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
 
     memset(read_data, 0, sizeof(read_data));
@@ -552,9 +555,9 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_read(read_data, page, 32) == 0) {
-        for (uint32_t i = 0; i < 16; i++) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X\n", read_data[i]);
+    if (Flash_read(read_data, page*4096 + offset, length) == 0) {
+        for (uint32_t i = 0; i < length/4; i++) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X\n", read_data_32[i]);
         }
 
         return SCAI_FLASH_SUCCESS;

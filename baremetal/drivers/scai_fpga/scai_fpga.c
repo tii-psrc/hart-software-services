@@ -540,9 +540,20 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page) {
 }
 
 uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length) {
-    uint8_t read_data[4096];
-    uint32_t* read_data_32 = (uint32_t*)read_data;
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
+
+    // consts for mt29f
+    uint32_t PAGE_SIZE         = 4096;
+    uint32_t BLOCK_SIZE_PAGES  = 64;
+    uint32_t PLANE_SIZE_BLOCKS = 2048;
+    uint32_t DIE_SIZE_PLANES   = 2;
+
+    // local variables
+    uint32_t read_data[PAGE_SIZE / sizeof(uint32_t)];
+    uint32_t block =  page / BLOCK_SIZE_PAGES;
+    uint32_t plane = block / PLANE_SIZE_BLOCKS;
+    uint32_t die   = plane / DIE_SIZE_PLANES;
+
 
     if (length > sizeof(read_data)) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Read length %u exceeds buffer size %zu\n", length, sizeof(read_data));
@@ -560,9 +571,12 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_read(read_data, page*4096 + offset, length) == 0) {
-        for (uint32_t i = 0; i < length/4; i++) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X\n", read_data_32[i]);
+    if (Flash_read((uint8_t*)read_data, page*PAGE_SIZE + offset, length) == 0) {
+        for (uint32_t i = 0; i < length; i++) {
+            uint32_t page_cnt = (read_data[i] >> 12) & 0x3FFFF;
+            uint32_t index_in_page = read_data[i] & 0x00000FFF
+            // mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X\n", read_data[i]);
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
         }
 
         return SCAI_FLASH_SUCCESS;

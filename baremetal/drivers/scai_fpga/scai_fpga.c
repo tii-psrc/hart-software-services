@@ -475,10 +475,10 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
         }
 
         if (memcmp(original_chunk_ptr, read_back_buffer, MT29F_TEST_BLOCK_SIZE_BYTES) != 0) {
-            for (size_t i = 0; i < MT29F_TEST_BLOCK_SIZE_BYTES; i++) {
+            for (uint32_t i = 0; i < MT29F_TEST_BLOCK_SIZE_BYTES; i++) {
                 if (original_chunk_32[i] != read_back_buffer_32[i]) {
-                    size_t error_offset = i * 4;
-                    mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> Data mismatch at block %u, offset 0x%zX: Read = 0x%08X, Expected = 0x%08X\n", 
+                    uint32_t error_offset = (uint32_t)(i * 4);
+                    mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> Data mismatch at block %u, offset 0x%X: Read = 0x%08X, Expected = 0x%08X\n", 
                         block_idx, 
                         error_offset, 
                         read_back_buffer_32[i], 

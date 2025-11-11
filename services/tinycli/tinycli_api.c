@@ -983,7 +983,7 @@ static void tinyCLI_SCAI_page_read_(void) {
 static void tinyCLI_SCAI_page_write_(void) {
     if (argc_tokenCount > 3u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
 
         uint8_t result = scai_fpga_page_write(chip, page);
         if (result == 0u) {

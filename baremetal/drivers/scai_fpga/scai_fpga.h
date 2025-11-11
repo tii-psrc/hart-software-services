@@ -75,7 +75,7 @@ void scai_fpga_write_reg(uintptr_t address, uint32_t value);
 uint32_t scai_fpga_read_reg(uintptr_t address);
 uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page);
 uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length);
-uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page);
+uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page);
 uint8_t scai_fpga_reset(uint8_t chip);
 uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint8_t* image_ptr, size_t image_size);
 bool scai_select_boot_flash(scai_flash_type_t main);

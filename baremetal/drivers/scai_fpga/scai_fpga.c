@@ -572,9 +572,23 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
     }
 }
 
-uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page) {
-    uint8_t test_data[128];
-    uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
+uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
+    uint8_t  real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
+
+    // consts for mt29f
+    uint32_t PAGE_SIZE         = 4096;
+    uint32_t BLOCK_SIZE_PAGES  = 64;
+    uint32_t PLANE_SIZE_BLOCKS = 2048;
+    uint32_t DIE_SIZE_PLANES   = 2;
+
+    // local variables
+    uint32_t test_data[PAGE_SIZE / sizeof(uint32_t)];
+    uint32_t block =  page / BLOCK_SIZE_PAGES;
+    uint32_t plane = block / PLANE_SIZE_BLOCKS;
+    uint32_t die   = plane / DIE_SIZE_PLANES;
+
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: chip=%u, page=%u, block=%u, plane=%u, die=%u\n", 
+        real_chip, page, block, plane, die);
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
@@ -587,14 +601,15 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page) {
     }
     
     for (uint32_t i = 0; i < sizeof(test_data); i++) {
-        test_data[i] = (uint8_t)i;
+        test_data[i] = (page & 0x3FFFF) << 12;  // Upper bits from page number (0..262143)
+        test_data[i] |= i & 0x00000FFF;         // Lower bits from index within page (0..4095)
     }
 
     if (Flash_erase_block(page) != 0) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_program(test_data, page, sizeof(test_data)) != 0) {
+    if (Flash_program((uint8_t*)test_data, page, sizeof(test_data)*sizeof(test_data[0])) != 0) {
         return SCAI_FLASH_ERROR;
     }
     return SCAI_FLASH_SUCCESS;

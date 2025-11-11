@@ -628,6 +628,7 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
     if (Flash_program((uint8_t*)test_data, page, sizeof(test_data)*sizeof(test_data[0])) != 0) {
         return SCAI_FLASH_ERROR;
     }
+    
     return SCAI_FLASH_SUCCESS;
 }
 

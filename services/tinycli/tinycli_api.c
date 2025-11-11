@@ -975,7 +975,7 @@ static void tinyCLI_SCAI_page_read_(void) {
         }
     } else {
         mHSS_PUTS("Usage:\n"
-            "\tqspi page_read <page_number>\n"
+            "\tqspi page_read <mt29f chip> <page_number> <offset> <length>\n"
             "\n");            
     }
 }
@@ -993,7 +993,7 @@ static void tinyCLI_SCAI_page_write_(void) {
         }
     } else {
         mHSS_PUTS("Usage:\n"
-            "\tqspi page_write <page_number>\n"
+            "\tqspi page_write <mt29f chip> <page_number>\n"
             "\n");
     }
 }

@@ -417,10 +417,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n--- Phase 1: Filling 1 GiB DDR buffer... (this may take a moment)\n");
     for (size_t i = 0; i < MT29F_CHIP_SIZE_BYTES / 4; i++) {
-        uint32_t page = (i >> 12) & 0x3FFFF;
-        uint32_t offset = i & 0xFFF;
-
-        image_buffer_32[i] = ((page << 12) | offset);
+        image_buffer_32[i] = (uint32_t)i;
 
         if ((i & 0x3FFFFF) == 0) {    // Print progress every 16 MB
             HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, MT29F_CHIP_SIZE_BYTES - i * 4);

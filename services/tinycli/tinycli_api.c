@@ -960,7 +960,7 @@ static void tinyCLI_SCAI_page_erase_(void) {
 }
 
 static void tinyCLI_SCAI_page_read_(void) {
-    if (argc_tokenCount > 3u) {
+    if (argc_tokenCount > 5u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
         const uint32_t page = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
         const uint32_t offt = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[4]);

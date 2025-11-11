@@ -621,7 +621,7 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
-        return 0;
+        return SCAI_FLASH_ERROR;
     }
 
     if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != 0) {
@@ -629,16 +629,16 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
     
-    for (uint32_t i = 0; i < sizeof(test_data); i++) {
+    for (uint32_t i = 0; i < sizeof(test_data)/sizeof(test_data[0]); i++) {
         test_data[i] = (page & 0x3FFFF) << 12;  // Upper bits from page number (0..262143)
         test_data[i] |= i & 0x00000FFF;         // Lower bits from index within page (0..4095)
     }
 
-    if (Flash_erase_block(page) != 0) {
+    if (Flash_erase_block(block) != 0) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_program((uint8_t*)test_data, page, sizeof(test_data)*sizeof(test_data[0])) != 0) {
+    if (Flash_program((uint8_t*)test_data, page * PAGE_SIZE, sizeof(test_data)) != 0) {
         return SCAI_FLASH_ERROR;
     }
 

@@ -19,6 +19,7 @@
 #include "winbond_w25n01gv_direct.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 // Test Pattern Constants
 uint32_t TEST_PATTERN_PAGE_SHIFT = 12;
@@ -607,8 +608,6 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
 }
 
 uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
-    static uint32_t test_data[PAGE_SIZE_BYTES / sizeof(uint32_t)];
-    
     uint8_t  real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
     uint16_t block     =  page / PAGES_PER_BLOCK;
 
@@ -625,19 +624,28 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
 
+    uint32_t* test_data = (uint32_t*)malloc(PAGE_SIZE_BYTES);
+    if (!test_data) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for test data.\n");
+        return SCAI_FLASH_ERROR;
+    }
+
     for (uint32_t i = 0; i < PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
         test_data[i] = (page & TEST_PATTERN_PAGE_MASK) << TEST_PATTERN_PAGE_SHIFT;  // Upper bits from page number (0..262143)
         test_data[i] |= i & TEST_PATTERN_INDEX_MASK;                                // Lower bits from index within page (0..4095)
     }
 
     if (Flash_erase_block(block) != 0) {
+        free(test_data);
         return SCAI_FLASH_ERROR;
     }
 
     if (Flash_program((uint8_t*)test_data, page * PAGE_SIZE_BYTES, PAGE_SIZE_BYTES) != 0) {
+        free(test_data);
         return SCAI_FLASH_ERROR;
     }
 
+    free(test_data);
     return SCAI_FLASH_SUCCESS;
 }
 

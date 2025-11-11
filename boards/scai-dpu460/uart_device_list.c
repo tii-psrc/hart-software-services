@@ -29,14 +29,14 @@ void *HSS_UART_GetInstance(int hartid)
 
     switch (hartid) {
     default:
-        pUart = pUartDeviceList[0];
+        pUart = pUartDeviceList[2];
         break;
 
     case HSS_HART_E51:
         if (postBoot) {
             pUart = pUartDeviceList[CONFIG_UART_POST_BOOT];
         } else {
-            pUart = pUartDeviceList[0];
+            pUart = pUartDeviceList[2];
         }
         break;
 
@@ -45,7 +45,7 @@ void *HSS_UART_GetInstance(int hartid)
         break;
 
     case HSS_HART_U54_2:
-        pUart = pUartDeviceList[2];
+        pUart = pUartDeviceList[0];
         break;
 
     case HSS_HART_U54_3:

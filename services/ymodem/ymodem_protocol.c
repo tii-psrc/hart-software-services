@@ -73,7 +73,7 @@ enum XYModem_Signals {
 
 /***************************************************************************/
 
-mss_uart_instance_t *g_my_uart = &g_mss_uart0_lo;
+mss_uart_instance_t *g_my_uart = &g_mss_uart2_lo;
 
 static int16_t getchar_with_timeout_(int32_t timeout_sec)
 {

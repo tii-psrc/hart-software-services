@@ -20,6 +20,11 @@
 
 #include <string.h>
 
+// Test Pattern Constants
+uint32_t TEST_PATTERN_PAGE_SHIFT = 12;
+uint32_t TEST_PATTERN_PAGE_MASK  = 0x3FFFF;
+uint32_t TEST_PATTERN_INDEX_MASK = 0x0FFF;
+
 // Driver Definitions
 // Declarations of the driver structs for each supported flash type.
 // Each struct contains function pointers to the specific implementations
@@ -602,22 +607,13 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
 }
 
 uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
+    static uint32_t test_data[PAGE_SIZE_BYTES / sizeof(uint32_t)];
+    
     uint8_t  real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
+    uint16_t block     =  page / PAGES_PER_BLOCK;
 
-    // consts for mt29f
-    uint32_t PAGE_SIZE         = 4096;
-    uint32_t BLOCK_SIZE_PAGES  = 64;
-    uint32_t PLANE_SIZE_BLOCKS = 2048;
-    uint32_t DIE_SIZE_PLANES   = 2;
-
-    // local variables
-    uint32_t test_data[PAGE_SIZE / sizeof(uint32_t)];
-    uint32_t block =  page / BLOCK_SIZE_PAGES;
-    uint32_t plane = block / PLANE_SIZE_BLOCKS;
-    uint32_t die   = plane / DIE_SIZE_PLANES;
-
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: chip=%u, page=%u, block=%u, plane=%u, die=%u\n", 
-        real_chip, page, block, plane, die);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: chip=%u, page=%u, block=%u\n", 
+        chip, page, block);
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
@@ -628,17 +624,17 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
-    
-    for (uint32_t i = 0; i < sizeof(test_data)/sizeof(test_data[0]); i++) {
-        test_data[i] = (page & 0x3FFFF) << 12;  // Upper bits from page number (0..262143)
-        test_data[i] |= i & 0x00000FFF;         // Lower bits from index within page (0..4095)
+
+    for (uint32_t i = 0; i < PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
+        test_data[i] = (page & TEST_PATTERN_PAGE_MASK) << TEST_PATTERN_PAGE_SHIFT;  // Upper bits from page number (0..262143)
+        test_data[i] |= i & TEST_PATTERN_INDEX_MASK;                                // Lower bits from index within page (0..4095)
     }
 
     if (Flash_erase_block(block) != 0) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_program((uint8_t*)test_data, page * PAGE_SIZE, sizeof(test_data)) != 0) {
+    if (Flash_program((uint8_t*)test_data, page * PAGE_SIZE_BYTES, PAGE_SIZE_BYTES) != 0) {
         return SCAI_FLASH_ERROR;
     }
 

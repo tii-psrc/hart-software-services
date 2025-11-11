@@ -104,10 +104,10 @@ typedef union {
 } mt29f_status_reg_t;
 
 // --- Constants from device datasheet ---
-static const uint32_t PAGE_SIZE_BYTES    = 4096;
-static const uint32_t PAGES_PER_BLOCK    = 64;
-static const uint16_t TOTAL_BLOCKS       = 4096;                                // 2048 blocks/die * 2 die
-static const uint32_t BLOCK_SIZE_BYTES   = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+const uint32_t PAGE_SIZE_BYTES    = 4096;
+const uint32_t PAGES_PER_BLOCK    = 64;
+const uint16_t TOTAL_BLOCKS       = 4096;                                // 2048 blocks/die * 2 die
+const uint32_t BLOCK_SIZE_BYTES   = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
 static const uint8_t  DUMMY_BYTE         = 0xFF;
 static const uint32_t MT29F_ROW_MASK     = 0x1FFFF;
 static const uint8_t  MT29F_ROW_SHIFT    = 13;

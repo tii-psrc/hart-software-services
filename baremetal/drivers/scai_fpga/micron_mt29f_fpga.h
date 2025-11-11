@@ -18,6 +18,10 @@
 extern "C" {
 #endif
 
+extern const uint32_t PAGE_SIZE_BYTES;
+extern const uint32_t PAGES_PER_BLOCK;
+extern const uint16_t TOTAL_BLOCKS;
+extern const uint32_t BLOCK_SIZE_BYTES;
 typedef struct {
     uint8_t lock;
     uint8_t config;

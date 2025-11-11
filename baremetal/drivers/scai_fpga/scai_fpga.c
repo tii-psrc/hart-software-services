@@ -418,7 +418,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     for (size_t i = 0; i < MT29F_CHIP_SIZE_BYTES / 4; i++) {
         uint32_t page = (i >> 12) & 0x3FFFF;
         uint32_t offset = i & 0xFFF;
-        
+
         image_buffer_32[i] = ((page << 12) | offset);
 
         if ((i & 0x3FFFFF) == 0) {    // Print progress every 16 MB
@@ -466,6 +466,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
 
         uint32_t block_base_addr    = (uint32_t)block_idx * MT29F_TEST_BLOCK_SIZE_BYTES;
         uint8_t* original_chunk_ptr = image_buffer + block_base_addr;
+        uint32_t* original_chunk_32 = (uint32_t*)original_chunk_ptr;
         
         if (Flash_read(read_back_buffer, block_base_addr, MT29F_TEST_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to read back block %u.\n", block_idx);
@@ -473,7 +474,17 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
         }
 
         if (memcmp(original_chunk_ptr, read_back_buffer, MT29F_TEST_BLOCK_SIZE_BYTES) != 0) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED: Data mismatch found in block %u!\n", block_idx);
+            for (size_t i = 0; i < MT29F_TEST_BLOCK_SIZE_BYTES; i++) {
+                if (original_chunk_32[i] != ((uint32_t*)read_back_buffer[i])) {
+                    size_t error_offset = i * 4;
+                    mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> Data mismatch at block %u, offset 0x%zX: Read = 0x%08X, Expected = 0x%08X\n", 
+                        block_idx, 
+                        error_offset, 
+                        ((uint32_t*)read_back_buffer)[i], 
+                        original_chunk_32[i]);
+                    break;
+                }
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED: Data mismatch found in block %u.\n", block_idx);
             return SCAI_FLASH_ERROR;
         }
     }

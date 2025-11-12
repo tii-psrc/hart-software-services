@@ -409,20 +409,21 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Acquiring 1 GiB buffer pointer from HSS DDR region...\n");
     uint8_t* ddr_base_ptr      = (uint8_t*)HSS_DDRHi_GetStart();
     uint32_t* read_back_buffer = (uint32_t*)ddr_base_ptr;
-    uint8_t* image_buffer     = (uint8_t*)(ddr_base_ptr + MT29F_BLOCK_SIZE_BYTES); // Leave 256 KB for read-back
+    uint32_t* image_buffer     = (uint32_t*)(ddr_base_ptr + MT29F_BLOCK_SIZE_BYTES); // Leave 256 KB for read-back
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "DDR buffer allocated at address 0x%lX.\n", (unsigned long)ddr_base_ptr);
 
     // Fill the DDR buffer with test data
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\nFilling DDR buffer...\n");
-    for (uint32_t i = 0; i < MT29F_CHIP_SIZE_BYTES / sizeof(uint32_t); i++) {
-        image_buffer[i] = (uint8_t)i;
+    for (uint32_t i = 0; i < MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0]); i++) {
+        image_buffer[i] = i;
 
         if ((i & (MT29F_BLOCK_SIZE_BYTES / sizeof(uint32_t) - 1)) == 0) {    // Print progress every block
             HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, MT29F_CHIP_SIZE_BYTES - i * 4);
         }
     }
     HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, 0);
+    __asm__ __volatile__ ("fence w,r");
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Generated test image in DDR memory.\n");
 
     // Write the entire image to the chip

@@ -866,9 +866,9 @@ extern uint8_t scai_flash_test(uint8_t chipNumber);
 extern uint8_t scai_fpga_diagnostics(void);
 extern void scai_fpga_write_reg(uintptr_t address, uint32_t value);
 extern uint32_t scai_fpga_read_reg(uintptr_t address);
-extern uint8_t scai_fpga_page_erase(uint8_t chip, uint16_t page);
-extern uint8_t scai_fpga_page_read(uint8_t chip, uint16_t page);
-extern uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page);
+extern uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page);
+extern uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length);
+extern uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page);
 extern uint8_t scai_fpga_reset(uint8_t chip);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)
@@ -944,7 +944,7 @@ static void tinyCLI_SCAI_read_reg_(void) {
 static void tinyCLI_SCAI_page_erase_(void) {
     if (argc_tokenCount > 3u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+        const uint32_t page = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
 
         uint8_t result = scai_fpga_page_erase(chip, page);
         if (result == 0u) {
@@ -960,11 +960,14 @@ static void tinyCLI_SCAI_page_erase_(void) {
 }
 
 static void tinyCLI_SCAI_page_read_(void) {
-    if (argc_tokenCount > 3u) {
+    if (argc_tokenCount > 5u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+        const uint32_t page = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+        const uint32_t offt = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[4]);
+        const uint32_t len  = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[5]);
+        mHSS_PRINTF("Reading page %d of chip %d, with offset %d and length %d\n", page, chip, offt, len);
 
-        uint8_t result = scai_fpga_page_read(chip, page);
+        uint8_t result = scai_fpga_page_read(chip, page, offt, len);
         if (result == 0u) {
             mHSS_PRINTF("QSPI FPGA page %u read passed\n", page);
         } else {
@@ -972,7 +975,7 @@ static void tinyCLI_SCAI_page_read_(void) {
         }
     } else {
         mHSS_PUTS("Usage:\n"
-            "\tqspi page_read <page_number>\n"
+            "\tqspi page_read <mt29f chip> <page_number> <offset> <length>\n"
             "\n");            
     }
 }
@@ -980,7 +983,7 @@ static void tinyCLI_SCAI_page_read_(void) {
 static void tinyCLI_SCAI_page_write_(void) {
     if (argc_tokenCount > 3u) {
         const uint8_t  chip = (uint8_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
-        const uint16_t page = (uint16_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+        const uint32_t page = (uint32_t)tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
 
         uint8_t result = scai_fpga_page_write(chip, page);
         if (result == 0u) {
@@ -990,7 +993,7 @@ static void tinyCLI_SCAI_page_write_(void) {
         }
     } else {
         mHSS_PUTS("Usage:\n"
-            "\tqspi page_write <page_number>\n"
+            "\tqspi page_write <mt29f chip> <page_number>\n"
             "\n");
     }
 }

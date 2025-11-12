@@ -104,10 +104,11 @@ typedef union {
 } mt29f_status_reg_t;
 
 // --- Constants from device datasheet ---
-static const uint32_t PAGE_SIZE_BYTES    = 4096;
-static const uint32_t PAGES_PER_BLOCK    = 64;
-static const uint16_t TOTAL_BLOCKS       = 4096;                                // 2048 blocks/die * 2 die
-static const uint32_t BLOCK_SIZE_BYTES   = PAGES_PER_BLOCK * PAGE_SIZE_BYTES;
+const uint32_t MT29F_PAGE_SIZE_BYTES     = 4096;
+const uint32_t MT29F_PAGES_PER_BLOCK     = 64;
+const uint16_t MT29F_TOTAL_BLOCKS        = 4096;                                // 2048 blocks/die * 2 die
+const uint32_t MT29F_BLOCK_SIZE_BYTES    = MT29F_PAGES_PER_BLOCK * MT29F_PAGE_SIZE_BYTES;
+
 static const uint8_t  DUMMY_BYTE         = 0xFF;
 static const uint32_t MT29F_ROW_MASK     = 0x1FFFF;
 static const uint8_t  MT29F_ROW_SHIFT    = 13;
@@ -115,7 +116,7 @@ static const uint16_t MT29F_COLMASK      = 0x1FFF;
 static const uint8_t  MT29F_DIE_SHIFT    = 30;
 static const uint8_t  MT29F_DIE_MASK     = 1;
 static const uint8_t  MT29F_JEDEC_SIZE   = 2;                                   // JEDEC ID is 2 bytes for MT29F
-static const uint16_t MT29F_TIMEOUT_ITER = 1000;                               // Timeout iterations for operations
+static const uint16_t MT29F_TIMEOUT_ITER = 1000;                                // Timeout iterations for operations
 static const uint8_t  MT29F_UNLOCK_ALL   = 0x00;                                // Value to unlock all blocks
 
 // --- Static Helper Functions ---
@@ -342,7 +343,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             return 1;
         }
 
-        uint32_t read_len = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
+        uint32_t read_len = (remaining_len > (MT29F_PAGE_SIZE_BYTES - col_addr)) ? (MT29F_PAGE_SIZE_BYTES - col_addr) : remaining_len;
         
         // =========================================================================
         // TRANSACTION 1: Sending command READ_FROM_CACHE
@@ -410,14 +411,14 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
 }
 
 uint8_t SCAI_MT29_Flash_erase(scai_fpga_channel_t* channel) {
-    for (uint16_t i = 0; i < TOTAL_BLOCKS; ++i) {
+    for (uint16_t i = 0; i < MT29F_TOTAL_BLOCKS; ++i) {
         if (SCAI_MT29_Flash_erase_block(channel, i) != 0) return 1;
     }
     return 0;
 }
 
 uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block_nb) {
-    uint32_t logical_addr  = (uint32_t)block_nb * BLOCK_SIZE_BYTES;
+    uint32_t logical_addr  = (uint32_t)block_nb * MT29F_BLOCK_SIZE_BYTES;
     uint32_t physical_addr = logical_to_physical(logical_addr);
     uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
     uint8_t  target_die    = (physical_addr >> MT29F_DIE_SHIFT) & MT29F_DIE_MASK;
@@ -450,7 +451,7 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 }
 
 uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf, uint32_t addr, uint32_t len) {
-    if (len > TOTAL_BLOCKS * BLOCK_SIZE_BYTES || !buf) { 
+    if (len > MT29F_TOTAL_BLOCKS * MT29F_BLOCK_SIZE_BYTES || !buf) { 
         return 1; 
     }
 
@@ -468,7 +469,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
         set_die(channel, target_die);
         scai_fpga_disable_write_protect(channel);
 
-        uint32_t write_len_bytes = (remaining_len > (PAGE_SIZE_BYTES - col_addr)) ? (PAGE_SIZE_BYTES - col_addr) : remaining_len;
+        uint32_t write_len_bytes = (remaining_len > (MT29F_PAGE_SIZE_BYTES - col_addr)) ? (MT29F_PAGE_SIZE_BYTES - col_addr) : remaining_len;
 
         // =========================================================================
         // Step 1: PROGRAM LOAD (Command + Data)

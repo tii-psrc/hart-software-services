@@ -409,7 +409,7 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Acquiring 1 GiB buffer pointer from HSS DDR region...\n");
     uint8_t* ddr_base_ptr      = (uint8_t*)HSS_DDRHi_GetStart();
     uint32_t* read_back_buffer = (uint32_t*)ddr_base_ptr;
-    uint8_t* image_buffer     = (uint8_t*)(ddr_base_ptr + MT29F_BLOCK_SIZE_BYTES); // Leave 256 KB for read-back
+    uint8_t* image_buffer      = (uint8_t*)(ddr_base_ptr + MT29F_BLOCK_SIZE_BYTES); // Leave 256 KB for read-back
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "DDR buffer allocated at address 0x%lX.\n", (unsigned long)ddr_base_ptr);
 

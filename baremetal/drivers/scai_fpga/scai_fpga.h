@@ -68,7 +68,7 @@ uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba);
 uint8_t scai_set_flash_chip(scai_flash_type_t flash_type, mss_qspi_io_format io_format);
 const scai_flash_driver_t* get_scai_flash_driver(void);
 scai_flash_type_t get_scai_flash_type(void);
-uint8_t scai_flash_test(scai_flash_type_t flash_type);
+uint8_t scai_flash_test(scai_flash_type_t chip);
 uint32_t scai_flash_jedec_id(scai_flash_type_t flash_type);
 uint8_t scai_fpga_diagnostics(void);
 void scai_fpga_write_reg(uintptr_t address, uint32_t value);

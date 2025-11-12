@@ -439,13 +439,6 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
             }
         }
 
-        for (uint32_t i = 0; i < (MT29F_BLOCK_SIZE_BYTES / sizeof(image_buffer[0])); i++) {
-            uint32_t current_page = page + (i / (MT29F_PAGE_SIZE_BYTES / sizeof(image_buffer[0])));
-            uint32_t index_in_page = i % words_per_page;
-            image_buffer[i] = ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK);
-            image_buffer[i] |= (i & TEST_PATTERN_INDEX_MASK);
-        }
-
         if (Flash_erase_block(block_idx) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to erase block %u.\n", block_idx);
             free(read_back_buffer);
@@ -768,16 +761,3 @@ bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
     }
     return true;
 }
-
-
-bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
-    if (selectedChip >= SCAI_MEM_TYPES_QUANTITY) {
-        return false;   
-    }
-    if (scai_set_flash_chip(selectedChip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
-        return false;
-    }
-    return true;
-}
-

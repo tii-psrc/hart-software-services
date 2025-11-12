@@ -419,19 +419,19 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         image_buffer[i] = (uint8_t)i;
 
         if ((i & (MT29F_BLOCK_SIZE_BYTES / sizeof(uint32_t) - 1)) == 0) {    // Print progress every block
-            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, MT29F_CHIP_SIZE_BYTES - i * 4);
+            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0], MT29F_CHIP_SIZE_BYTES - i);
         }
     }
-    HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES, 0);
+    HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0], 0);
     __asm__ __volatile__ ("fence w,r");
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Generated test image in DDR memory.\n");
 
     // Write the entire image to the chip
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\nWriting Full Image to Flash...\n");
 
-    for (uint16_t block_idx = 0; block_idx < 10 /*MT29F_TOTAL_BLOCKS*/; block_idx++) {
+    for (uint16_t block_idx = 0; block_idx < MT29F_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)
-            HSS_ShowProgress(10 /*MT29F_TOTAL_BLOCKS*/, 10 /*MT29F_TOTAL_BLOCKS*/ - block_idx);
+            HSS_ShowProgress(MT29F_TOTAL_BLOCKS, MT29F_TOTAL_BLOCKS - block_idx);
         }
 
         uint32_t block_base_addr   = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
@@ -447,15 +447,15 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
             return SCAI_FLASH_ERROR;
         }
     }
-    HSS_ShowProgress(10 /*MT29F_TOTAL_BLOCKS*/, 0);
+    HSS_ShowProgress(MT29F_TOTAL_BLOCKS, 0);
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\nCompleted writing 1 GiB test image to flash.\n");
 
     // Verify the entire image by reading back and comparing
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Phase 3: Verifying Full 1 GiB Image...\n");
 
-    for (uint16_t block_idx = 0; block_idx < 10 /*MT29F_TOTAL_BLOCKS*/; block_idx++) {
+    for (uint16_t block_idx = 0; block_idx < MT29F_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)
-            HSS_ShowProgress(10 /*MT29F_TOTAL_BLOCKS*/, 10 /*MT29F_TOTAL_BLOCKS*/ - block_idx);
+            HSS_ShowProgress(MT29F_TOTAL_BLOCKS, MT29F_TOTAL_BLOCKS - block_idx);
         }
 
         uint32_t  block_base_addr    = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
@@ -481,7 +481,7 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
             return SCAI_FLASH_ERROR;
         }
     }
-    HSS_ShowProgress(10 /*MT29F_TOTAL_BLOCKS*/, 0);
+    HSS_ShowProgress(MT29F_TOTAL_BLOCKS, 0);
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- 1 GiB Full Chip Write/Verify Test PASSED ---\n");
     return SCAI_FLASH_SUCCESS;

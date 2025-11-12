@@ -752,3 +752,15 @@ bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
     return true;
 }
 
+
+bool scai_select_boot_flash(scai_flash_type_t selectedChip) {
+    if (selectedChip >= SCAI_MEM_TYPES_QUANTITY) {
+        return false;   
+    }
+    if (scai_set_flash_chip(selectedChip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
+        return false;
+    }
+    return true;
+}
+

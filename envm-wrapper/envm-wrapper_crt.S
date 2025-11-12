@@ -131,7 +131,7 @@ _start:
 #ifndef CONFIG_CRYPTO_SIGNING
 .e51_print_message:
 	la	a0, g_mss_uart0_lo
-	li	a1, 115200
+	li	a1, 921600
 #  define MSS_UART_DATA_8_BITS     (0x03)
 #  define MSS_UART_NO_PARITY       (0x00)
 #  define MSS_UART_ONE_STOP_BIT    (0x00)

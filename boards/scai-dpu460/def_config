@@ -132,7 +132,7 @@ CONFIG_OPENSBI=y
 # Serial Port
 #
 # CONFIG_UART_SURRENDER is not set
-CONFIG_UART_POST_BOOT=0
+CONFIG_UART_POST_BOOT=2
 # end of Serial Port
 
 #

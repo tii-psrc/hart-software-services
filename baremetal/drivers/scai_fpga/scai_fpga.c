@@ -419,10 +419,10 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         image_buffer[i] = (uint8_t)i;
 
         if ((i & (MT29F_BLOCK_SIZE_BYTES / sizeof(uint32_t) - 1)) == 0) {    // Print progress every block
-            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0], MT29F_CHIP_SIZE_BYTES - i);
+            HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0]), MT29F_CHIP_SIZE_BYTES - i);
         }
     }
-    HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0], 0);
+    HSS_ShowProgress(MT29F_CHIP_SIZE_BYTES / sizeof(image_buffer[0]), 0);
     __asm__ __volatile__ ("fence w,r");
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Generated test image in DDR memory.\n");
 

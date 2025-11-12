@@ -381,11 +381,11 @@ uint8_t Flash_add_entry_to_bb_lut(uint16_t lba, uint16_t pba) {
     return g_active_driver->add_entry_to_bb_lut(g_active_channel, lba, pba);
 }
 
-#define MT29F_TEST_BLOCK_SIZE_BYTES (64 * 4096)      // 256 KB
+#define MT29F_TEST_MT29F_BLOCK_SIZE_BYTES (64 * 4096)      // 256 KB
 
 uint8_t scai_flash_test(scai_flash_type_t flash_type) {
-    uint32_t MT29F_TEST_TOTAL_BLOCKS     = 4096;
-    size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_TOTAL_BLOCKS * MT29F_TEST_BLOCK_SIZE_BYTES ); // 1 GiB
+    uint32_t MT29F_TEST_MT29F_TOTAL_BLOCKS     = 4096;
+    size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_MT29F_TOTAL_BLOCKS * MT29F_TEST_MT29F_BLOCK_SIZE_BYTES ); // 1 GiB
     uint8_t  real_chip                   = flash_type + SCAI_MICRON_MT29F_CHIP_0;
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting 1 GiB Image Write/Verify Test for MT29F type %d ---\n", real_chip);
@@ -401,11 +401,11 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     uint8_t* ddr_base_ptr     = (uint8_t*)HSS_DDRHi_GetStart();
     uint8_t* read_back_buffer = ddr_base_ptr;
     uint32_t* read_back_buffer_32 = (uint32_t*)read_back_buffer;
-    uint8_t* image_buffer     = ddr_base_ptr + MT29F_TEST_BLOCK_SIZE_BYTES; // Leave 256 KB for read-back
+    uint8_t* image_buffer     = ddr_base_ptr + MT29F_TEST_MT29F_BLOCK_SIZE_BYTES; // Leave 256 KB for read-back
     uint32_t* image_buffer_32 = (uint32_t*)image_buffer;
 
     // Ensure that we have enough memory.
-    if (MT29F_CHIP_SIZE_BYTES > HSS_DDRHi_GetSize()) {
+    if ((MT29F_CHIP_SIZE_BYTES + MT29F_TEST_MT29F_BLOCK_SIZE_BYTES) > HSS_DDRHi_GetSize()) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "FATAL: 1 GiB buffer size exceeds available DDR memory! \n0x%llX bytes required, 0x%llX bytes available\n", 
             (unsigned long long) MT29F_CHIP_SIZE_BYTES, (unsigned long long) HSS_DDR_GetSize());
         return SCAI_FLASH_ERROR;
@@ -437,12 +437,12 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n--- Phase 2: Writing Full 1 GiB Image to Flash...\n");
 
-    for (uint32_t block_idx = 0; block_idx < MT29F_TEST_TOTAL_BLOCKS; block_idx++) {
+    for (uint32_t block_idx = 0; block_idx < MT29F_TEST_MT29F_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)
-            HSS_ShowProgress(MT29F_TEST_TOTAL_BLOCKS, MT29F_TEST_TOTAL_BLOCKS - block_idx);
+            HSS_ShowProgress(MT29F_TEST_MT29F_TOTAL_BLOCKS, MT29F_TEST_MT29F_TOTAL_BLOCKS - block_idx);
         }
 
-        uint32_t block_base_addr   = (uint32_t)block_idx * MT29F_TEST_BLOCK_SIZE_BYTES;
+        uint32_t block_base_addr   = (uint32_t)block_idx * MT29F_TEST_MT29F_BLOCK_SIZE_BYTES;
         uint8_t* current_chunk_ptr = image_buffer + block_base_addr;
 
         if (Flash_erase_block(block_idx) != SCAI_FLASH_SUCCESS) {
@@ -450,12 +450,12 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
             return SCAI_FLASH_ERROR;
         }
 
-        if (Flash_program(current_chunk_ptr, block_base_addr, MT29F_TEST_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
+        if (Flash_program(current_chunk_ptr, block_base_addr, MT29F_TEST_MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to program block %u.\n", block_idx);
             return SCAI_FLASH_ERROR;
         }
     }
-    HSS_ShowProgress(MT29F_TEST_TOTAL_BLOCKS, 0);
+    HSS_ShowProgress(MT29F_TEST_MT29F_TOTAL_BLOCKS, 0);
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\nCompleted writing 1 GiB test image to flash.\n");
 
     // =========================================================================
@@ -463,27 +463,26 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- Phase 3: Verifying Full 1 GiB Image...\n");
 
-    for (uint32_t block_idx = 0; block_idx < MT29F_TEST_TOTAL_BLOCKS; block_idx++) {
+    for (uint32_t block_idx = 0; block_idx < MT29F_TEST_MT29F_TOTAL_BLOCKS; block_idx++) {
         if ((block_idx & 0x0F) == 0) { // Print progress every 16 blocks (4 MiB)
-            HSS_ShowProgress(MT29F_TEST_TOTAL_BLOCKS, MT29F_TEST_TOTAL_BLOCKS - block_idx);
+            HSS_ShowProgress(MT29F_TEST_MT29F_TOTAL_BLOCKS, MT29F_TEST_MT29F_TOTAL_BLOCKS - block_idx);
         }
 
-        uint32_t block_base_addr    = (uint32_t)block_idx * MT29F_TEST_BLOCK_SIZE_BYTES;
+        uint32_t block_base_addr    = (uint32_t)block_idx * MT29F_TEST_MT29F_BLOCK_SIZE_BYTES;
         uint8_t* original_chunk_ptr = image_buffer + block_base_addr;
         uint32_t* original_chunk_32 = (uint32_t*)original_chunk_ptr;
         
-        if (Flash_read(read_back_buffer, block_base_addr, MT29F_TEST_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
+        if (Flash_read(read_back_buffer, block_base_addr, MT29F_TEST_MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to read back block %u.\n", block_idx);
             return SCAI_FLASH_ERROR;
         }
 
-        if (memcmp(original_chunk_ptr, read_back_buffer, MT29F_TEST_BLOCK_SIZE_BYTES) != 0) {
-            for (uint32_t i = 0; i < MT29F_TEST_BLOCK_SIZE_BYTES; i++) {
+        if (memcmp(original_chunk_ptr, read_back_buffer, MT29F_TEST_MT29F_BLOCK_SIZE_BYTES) != 0) {
+            for (uint32_t i = 0; i < MT29F_TEST_MT29F_BLOCK_SIZE_BYTES / sizeof(uint32_t); i++) {
                 if (original_chunk_32[i] != read_back_buffer_32[i]) {
-                    uint32_t error_offset = (uint32_t)(i * 4);
                     mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> Data mismatch at block %u, offset 0x%X: Read = 0x%08X, Expected = 0x%08X\n", 
                         block_idx, 
-                        error_offset, 
+                        i * sizeof(uint32_t), 
                         read_back_buffer_32[i], 
                         original_chunk_32[i]);
                     break;
@@ -493,7 +492,7 @@ uint8_t scai_flash_test(scai_flash_type_t flash_type) {
             return SCAI_FLASH_ERROR;
         }
     }
-    HSS_ShowProgress(MT29F_TEST_TOTAL_BLOCKS, 0);
+    HSS_ShowProgress(MT29F_TEST_MT29F_TOTAL_BLOCKS, 0);
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\n--- 1 GiB Full Chip Write/Verify Test PASSED ---\n");
     return SCAI_FLASH_SUCCESS;
@@ -560,56 +559,47 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page) {
 
 uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length) {
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
+    uint32_t block    = page / MT29F_PAGES_PER_BLOCK;
 
-    // consts for mt29f
-    uint32_t PAGE_SIZE         = 4096;
-    uint32_t BLOCK_SIZE_PAGES  = 64;
-    uint32_t PLANE_SIZE_BLOCKS = 2048;
-    uint32_t DIE_SIZE_PLANES   = 2;
-
-    // local variables
-    uint32_t read_data[PAGE_SIZE / sizeof(uint32_t)];
-    uint32_t block =  page / BLOCK_SIZE_PAGES;
-    uint32_t plane = block / PLANE_SIZE_BLOCKS;
-    uint32_t die   = plane / DIE_SIZE_PLANES;
-
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: chip=%u, page=%u, block=%u, plane=%u, die=%u, offset=%u, length=%u\n", 
-        chip, page, block, plane, die, offset, length);
-
-    if (length > sizeof(read_data)) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Read length %u exceeds buffer size %zu\n", length, sizeof(read_data));
-        return SCAI_FLASH_ERROR;
-    }
-    memset(read_data, 0, sizeof(read_data));
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: chip=%u, page=%u, block=%u, offset=%u, length=%u\n", 
+        chip, page, block, offset, length);
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
-        return 0;
+        return SCAI_FLASH_ERROR;
     }
 
-    if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != 0) {
+    if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_read((uint8_t*)read_data, page*PAGE_SIZE + offset, length) == 0) {
-        for (uint32_t i = 0; i < length/sizeof(read_data[0]); i++) {
-            uint32_t page_cnt = (read_data[i] >> 12) & 0x3FFFF;
-            uint32_t index_in_page = read_data[i] & 0x00000FFF;
-            // mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X\n", read_data[i]);
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
-        }
-
-        return SCAI_FLASH_SUCCESS;
-    } else {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
+    uint32_t* read_data = (uint32_t*)malloc(length);
+    if (!read_data) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for read data.\n");
         return SCAI_FLASH_ERROR;
     }
+    memset(read_data, 0, length);
+
+    if (Flash_read((uint8_t*)read_data, page * MT29F_PAGE_SIZE_BYTES + offset, length) != SCAI_FLASH_SUCCESS) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
+        free(read_data);
+        return SCAI_FLASH_ERROR;
+    }
+
+    for (uint32_t i = 0; i < length/sizeof(read_data[0]); i++) {
+        uint32_t page_cnt      = (read_data[i] >> TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK;
+        uint32_t index_in_page = read_data[i] & TEST_PATTERN_INDEX_MASK;
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
+    }
+
+    free(read_data);
+    return SCAI_FLASH_SUCCESS;
 }
 
 uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
     uint8_t  real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
-    uint16_t block     =  page / PAGES_PER_BLOCK;
+    uint16_t block     = page / MT29F_PAGES_PER_BLOCK;
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: chip=%u, page=%u, block=%u\n", 
         chip, page, block);
@@ -619,18 +609,18 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != 0) {
+    if (scai_set_flash_chip(real_chip, MSS_QSPI_QUAD_FULL) != SCAI_FLASH_SUCCESS) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to set flash chip.\n");
         return SCAI_FLASH_ERROR;
     }
 
-    uint32_t* test_data = (uint32_t*)malloc(PAGE_SIZE_BYTES);
+    uint32_t* test_data = (uint32_t*)malloc(MT29F_PAGE_SIZE_BYTES);
     if (!test_data) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for test data.\n");
         return SCAI_FLASH_ERROR;
     }
 
-    for (uint32_t i = 0; i < PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
+    for (uint32_t i = 0; i < MT29F_PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
         test_data[i] = (page & TEST_PATTERN_PAGE_MASK) << TEST_PATTERN_PAGE_SHIFT;  // Upper bits from page number (0..262143)
         test_data[i] |= i & TEST_PATTERN_INDEX_MASK;                                // Lower bits from index within page (0..4095)
     }
@@ -640,7 +630,7 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_program((uint8_t*)test_data, page * PAGE_SIZE_BYTES, PAGE_SIZE_BYTES) != 0) {
+    if (Flash_program((uint8_t*)test_data, page * MT29F_PAGE_SIZE_BYTES, MT29F_PAGE_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
         free(test_data);
         return SCAI_FLASH_ERROR;
     }
@@ -677,9 +667,9 @@ uint8_t scai_fpga_reset(uint8_t chip) {
 uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint8_t* image_ptr, size_t image_size) {
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "--- Starting Image Write/Verify for MT29F type %d ---\n", flash_type);
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Image Source: @ %p, Size: %zu bytes\n", (void*)image_ptr, image_size);
-    uint32_t MT29F_TEST_TOTAL_BLOCKS     = 4096;
-    uint32_t MT29F_BLOCK_SIZE_BYTES      = 64 * 4096; // 256 KB
-    size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_TOTAL_BLOCKS * MT29F_TEST_BLOCK_SIZE_BYTES ); // 1 GiB
+    uint32_t MT29F_TEST_MT29F_TOTAL_BLOCKS     = 4096;
+    uint32_t MT29F_MT29F_BLOCK_SIZE_BYTES      = 64 * 4096; // 256 KB
+    size_t   MT29F_CHIP_SIZE_BYTES       = ( (uint64_t)MT29F_TEST_MT29F_TOTAL_BLOCKS * MT29F_TEST_MT29F_BLOCK_SIZE_BYTES ); // 1 GiB
 
     // Validate image parameters
     if (!image_ptr || image_size == 0 || image_size > MT29F_CHIP_SIZE_BYTES) {
@@ -697,7 +687,7 @@ uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint
         return SCAI_FLASH_ERROR;
     }
 
-    uint32_t num_blocks_to_process = (image_size + MT29F_BLOCK_SIZE_BYTES - 1) / MT29F_BLOCK_SIZE_BYTES;
+    uint32_t num_blocks_to_process = (image_size + MT29F_MT29F_BLOCK_SIZE_BYTES - 1) / MT29F_MT29F_BLOCK_SIZE_BYTES;
 
     // =========================================================================
     // Erase necessary blocks 
@@ -726,14 +716,14 @@ uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint
     // Validation by Read-Back
     // =========================================================================
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Verifying Image on Flash\n");
-    uint8_t read_back_buffer[MT29F_BLOCK_SIZE_BYTES];
+    uint8_t read_back_buffer[MT29F_MT29F_BLOCK_SIZE_BYTES];
 
     for (uint16_t block_idx = 0; block_idx < num_blocks_to_process; block_idx++) {
         HSS_ShowProgress(num_blocks_to_process, num_blocks_to_process - (block_idx + 1));
 
-        uint32_t block_base_addr          = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
+        uint32_t block_base_addr          = (uint32_t)block_idx * MT29F_MT29F_BLOCK_SIZE_BYTES;
         const uint8_t* original_chunk_ptr = image_ptr + block_base_addr;
-        size_t chunk_size                 = (image_size - block_base_addr < MT29F_BLOCK_SIZE_BYTES) ? (image_size % MT29F_BLOCK_SIZE_BYTES) : MT29F_BLOCK_SIZE_BYTES;
+        size_t chunk_size                 = (image_size - block_base_addr < MT29F_MT29F_BLOCK_SIZE_BYTES) ? (image_size % MT29F_MT29F_BLOCK_SIZE_BYTES) : MT29F_MT29F_BLOCK_SIZE_BYTES;
         
         if (Flash_read(read_back_buffer, block_base_addr, chunk_size) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to read back block %u.\n", block_idx);

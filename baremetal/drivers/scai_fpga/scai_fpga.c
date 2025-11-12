@@ -427,8 +427,11 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         }
 
         uint32_t block_base_addr   = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
+        uint32_t page = block_idx * MT29F_PAGES_PER_BLOCK;
         for (uint32_t i = 0; i < (MT29F_BLOCK_SIZE_BYTES / sizeof(image_buffer[0])); i++) {
-            image_buffer[i] = ((block_idx << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) | (i & TEST_PATTERN_INDEX_MASK);
+            uint32_t current_page = page + (i / (MT29F_PAGE_SIZE_BYTES / sizeof(image_buffer[0])));
+            image_buffer[i] = ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK);
+            image_buffer[i] |= (i & TEST_PATTERN_INDEX_MASK);
         }
 
         if (Flash_erase_block(block_idx) != SCAI_FLASH_SUCCESS) {
@@ -457,8 +460,11 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         }
 
         uint32_t  block_base_addr    = (uint32_t)block_idx * MT29F_BLOCK_SIZE_BYTES;
+        uint32_t page = block_idx * MT29F_PAGES_PER_BLOCK;
         for (uint32_t i = 0; i < (MT29F_BLOCK_SIZE_BYTES / sizeof(image_buffer[0])); i++) {
-            image_buffer[i] = ((block_idx << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) | (i & TEST_PATTERN_INDEX_MASK);
+            uint32_t current_page = page + (i / (MT29F_PAGE_SIZE_BYTES / sizeof(image_buffer[0])));
+            image_buffer[i] = ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK);
+            image_buffer[i] |= (i & TEST_PATTERN_INDEX_MASK);
         }
         
         if (Flash_read((uint8_t*)read_back_buffer, block_base_addr, MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {

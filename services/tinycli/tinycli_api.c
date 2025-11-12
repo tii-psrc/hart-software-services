@@ -868,7 +868,7 @@ extern void scai_fpga_write_reg(uintptr_t address, uint32_t value);
 extern uint32_t scai_fpga_read_reg(uintptr_t address);
 extern uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page);
 extern uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length);
-extern uint8_t scai_fpga_page_write(uint8_t chip, uint16_t page);
+extern uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page);
 extern uint8_t scai_fpga_reset(uint8_t chip);
 
 static void tinyCLI_SCAI_FLASH_TEST_(void)

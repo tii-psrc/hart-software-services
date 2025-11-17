@@ -209,6 +209,11 @@ SECTIONS
         *(.note.gnu.build-id)
     } >l2zerodevice
 
+    .hostenv : ALIGN(8) {
+        PROVIDE(hostenv = .);
+        KEEP (hostenv.o)
+    } >l2zerodevice
+
     PROVIDE(_hss_end = .);
 
     /*******************************************************************************

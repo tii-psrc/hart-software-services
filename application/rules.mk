@@ -47,6 +47,9 @@ MAKEDEP=makedepend
 GENCONFIG:=thirdparty/Kconfiglib/genconfig.py
 MENUCONFIG:=thirdparty/Kconfiglib/menuconfig.py
 GUICONFIG:=thirdparty/Kconfiglib/guiconfig.py
+ifdef CONFIG_DEBUG_HOSTENV_INFO
+HOSTENV_FILE:=hostenv
+endif
 
 #
 #

@@ -93,4 +93,12 @@ config LOG_FUNCTION_NAMES
 
 		If you do not know what to do here, say Y.
 
+config DEBUG_HOSTENV_INFO
+	bool "Insert Host Info to Binary"
+	default y
+	help
+		This feature enables output for host environment information.
+
+		If you do not know what to do here, say Y.
+
 endmenu

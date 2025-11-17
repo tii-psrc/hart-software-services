@@ -110,9 +110,52 @@ EXTRA_OBJS-envm = $(EXTRA_OBJS)
 
 OBJS-l2scratch = $(OBJS)
 EXTRA_OBJS-l2scratch = $(EXTRA_OBJS)
+ifdef CONFIG_DEBUG_HOSTENV_INFO
+EXTRA_OBJS-l2scratch += $(HOSTENV_FILE).o
+endif
+
+ifdef CONFIG_DEBUG_HOSTENV_INFO
+define hostenv-prepare
+       $(ECHO) "$$ date" > $(HOSTENV_FILE).txt
+       date >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ git config --list" >> $(HOSTENV_FILE).txt
+       git config --list >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ git branch -a" >> $(HOSTENV_FILE).txt
+       git branch -a >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ git show HEAD" >> $(HOSTENV_FILE).txt
+       git show HEAD >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ git status" >> $(HOSTENV_FILE).txt
+       git status >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ git diff" >> $(HOSTENV_FILE).txt
+       git diff >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv $(HOSTENV_FILE).txt $(HOSTENV_FILE).o"
+       $(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv $(HOSTENV_FILE).txt $(HOSTENV_FILE).o
+       $(NM) -n $(HOSTENV_FILE).o
+
+       $(ECHO) "EXTRA_OBJS-l2scratch : $(EXTRA_OBJS-l2scratch)"
+endef
+else
+define hostenv-prepare
+       $(ECHO) "CONFIG_DEBUG_HOSTENV_INFO feature is disabled..."
+       $(ECHO) "EXTRA_OBJS-l2scratch : $(EXTRA_OBJS-l2scratch)"
+endef
+endif
 
 define main-build-target
 	$(ECHO) " LD        $@";
+	$(ECHO) "$(CC) -T $(LINKER_SCRIPT-$(1)) $(CFLAGS_GCCEXT) $(OPT-y) -static -nostdlib -nostartfiles -nodefaultlibs -Wl,--build-id -Wl,-Map=$(BINDIR)/output-$(1).map -Wl,--gc-sections -o $(BINDIR)/$@ $(OBJS-$(1)) $(EXTRA_OBJS-$(1)) $(LIBS) $(LIBS-y)"
 	$(CC) -T $(LINKER_SCRIPT-$(1)) $(CFLAGS_GCCEXT) $(OPT-y) \
 		 -static -nostdlib -nostartfiles -nodefaultlibs \
 		 -Wl,--build-id -Wl,-Map=$(BINDIR)/output-$(1).map -Wl,--gc-sections \
@@ -134,6 +177,7 @@ $(TARGET-envm): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIP
 	$(SIZE) $(BINDIR)/$(TARGET-envm) 2>/dev/null
 
 $(TARGET-l2scratch): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT-l2scratch) $(LIBS) $(LIBS-y)
+	$(call hostenv-prepare)
 	$(call main-build-target,l2scratch)
 	$(ECHO) " BIN       `basename $@ .elf`.bin"
 	$(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin

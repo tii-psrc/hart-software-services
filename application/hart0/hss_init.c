@@ -185,6 +185,21 @@ void HSS_PrintToolVersions(void)
 }
 #endif
 
+#ifdef CONFIG_DEBUG_HOSTENV_INFO
+extern const char _binary_hostenv_txt_start[];
+extern const char _binary_hostenv_txt_end[];
+
+void print_hostenv(void);
+void print_hostenv(void) {
+	int i;
+	int len = _binary_hostenv_txt_end - _binary_hostenv_txt_start;
+
+	for (i=0; i<len; i++) {
+		mHSS_PRINTF("%c", _binary_hostenv_txt_start[i]);
+	}
+}
+#endif
+
 bool HSS_E51_Banner(void)
 {
 #if !IS_ENABLED(CONFIG_SKIP_DDR)
@@ -224,6 +239,11 @@ bool HSS_E51_Banner(void)
 
 #if IS_ENABLED(CONFIG_DISPLAY_TOOL_VERSIONS)
     HSS_PrintToolVersions();
+#endif
+
+#ifdef CONFIG_DEBUG_HOSTENV_INFO
+    mHSS_FANCY_PRINTF(LOG_STATUS, "Host environment info :\n");
+    print_hostenv();
 #endif
 
     //if (&_hss_start == &__l2_start) {

@@ -231,7 +231,6 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = params->tx_len;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = params->rx_len;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Start       = 1;
-            set_ctrl_1(channel);
 
             // Designed by Sergio that CE bit should be changed in other command
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 1;
@@ -246,13 +245,12 @@ static void qspi_fpga_update_ctrl1(scai_fpga_channel_t* channel,
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Tx_Count    = 0;
             channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Rx_Count    = 0;
 
-            set_ctrl_1(channel);
-
             // Designed by Sergio that CE bit should be changed in other command
             if (!params->keep_ce_active) {
                 channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Chip_Enable = 0;
-                set_ctrl_1(channel);
             }
+
+            set_ctrl_1(channel);
 
             break; 
         default:

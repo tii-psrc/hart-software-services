@@ -314,25 +314,51 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
     uint32_t remaining_len = len;
     uint8_t* current_buf   = buf;
     bool     use_quad_mode = (channel->format == MSS_QSPI_QUAD_FULL);
+#if 0
+    uint32_t *ptr = NULL;
+#endif
 
     while (remaining_len > 0) {
         uint32_t physical_addr = logical_to_physical(current_addr);
         uint32_t row_addr      = (physical_addr >> MT29F_ROW_SHIFT) & MT29F_ROW_MASK;
         uint16_t col_addr      = physical_addr &  MT29F_COLMASK;
         uint8_t  target_die    = (physical_addr >> MT29F_DIE_SHIFT) & MT29F_DIE_MASK; 
-
+#if 0
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "physical_addr : 0x%08X\n", physical_addr);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "row_addr      : 0x%08X\n", row_addr);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "col_addr      : 0x%08X\n", col_addr);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "target_die    : 0x%08X\n", (uint32_t)target_die);
+#endif
         set_die(channel, target_die);
 
+        // =========================================================================
+        // TRANSACTION 0: Sending command PAGE_READ_TO_CACHE(13h)
+        // =========================================================================
         mt29f_page_read_cmd_t page_read_cmd = {
             .opcode     = MT29F_CMD_PAGE_READ_TO_CACHE,
-            .row_addr_2 = (uint8_t)(row_addr >> 16),
-            .row_addr_1 = (uint8_t)(row_addr >> 8),
-            .row_addr_0 = (uint8_t)(row_addr)
+            .row_addr_2 = (uint8_t)((row_addr & 0x00FF0000) >> 16),
+            .row_addr_1 = (uint8_t)((row_addr & 0x0000FF00) >>  8),
+            .row_addr_0 = (uint8_t)((row_addr & 0x000000FF) >>  0)
         };
+#if 0
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "page_read_cmd.opcode     : 0x%02X\n",
+            (uint8_t)page_read_cmd.opcode);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "page_read_cmd.row_addr_2 : 0x%02X\n",
+            (uint8_t)page_read_cmd.row_addr_2);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "page_read_cmd.row_addr_1 : 0x%02X\n",
+            (uint8_t)page_read_cmd.row_addr_1);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "page_read_cmd.row_addr_0 : 0x%02X\n",
+            (uint8_t)page_read_cmd.row_addr_0);
+#endif
         scai_fpga_transaction_t page_read_params = {
             .tx_buffer = &page_read_cmd,
             .tx_len    = sizeof(page_read_cmd)
         };
+#if 0
+        ptr = (uint32_t *)page_read_params.tx_buffer;
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "page_read_params.tx_buffer : 0x%08X\n",
+            (uint32_t)*ptr);
+#endif
         
         scai_fpga_set_byte_mode(channel);
         scai_fpga_set_spi_mode(channel);
@@ -350,10 +376,20 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         // =========================================================================
         mt29f_read_cmd_t read_cmd = {
             .opcode         = use_quad_mode ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
-            .col_addr_1     = (uint8_t)(col_addr >> 8),
-            .col_addr_0     = (uint8_t)(col_addr),
+            .col_addr_1     = (uint8_t)((col_addr & 0x00001F00) >> 8),
+            .col_addr_0     = (uint8_t)((col_addr & 0x000000FF) >> 0),
             .dummy          = 0 // DUMMY_BYTE
         };
+#if 0
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "read_cmd.opcode     : 0x%02X\n",
+            (uint8_t)read_cmd.opcode);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "read_cmd.col_addr_1 : 0x%02X\n",
+            (uint8_t)read_cmd.col_addr_1);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "read_cmd.col_addr_0 : 0x%02X\n",
+            (uint8_t)read_cmd.col_addr_0);
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "read_cmd.dummy : 0x%02X\n",
+            (uint8_t)read_cmd.dummy);
+#endif
 
         scai_fpga_set_spi_mode(channel);  
         scai_fpga_set_byte_mode(channel); 
@@ -364,10 +400,15 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
             .rx_len         = 0, // Tx only
             .keep_ce_active = true
         };
+#if 0
+        ptr = (uint32_t *)cmd_tx_params.tx_buffer;
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "cmd_tx_params.tx_buffer : 0x%08X\n",
+            (uint32_t)*ptr);
+#endif
         scai_fpga_transaction(channel, &cmd_tx_params);
 
         // =========================================================================
-        // TRANSACTION 2: Fake READ (As in Sergio code)
+        // TRANSACTION 2: READ for moving to offset(index) (As in Sergio code)
         // =========================================================================
         if (use_quad_mode) {
             uint32_t dummy_rx_len_words = (col_addr >> 2);
@@ -382,6 +423,9 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
                 .data_size_is_word = true,
                 .keep_ce_active    = true
             };
+#if 0
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "dummy_rx_len_words      : 0x%08X\n", dummy_rx_len_words);
+#endif
             scai_fpga_transaction(channel, &dummy_rx_params);
         }
 
@@ -389,6 +433,9 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         // TRANSACTION 3: Real READ
         // =========================================================================
         uint32_t rx_elements = use_quad_mode ? ((read_len + 3) / 4) : read_len; // Round up to nearest word
+#if 0
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "rx_elements      : 0x%08X\n", rx_elements);
+#endif
 
        if (use_quad_mode) {
             scai_fpga_set_qspi_mode(channel);

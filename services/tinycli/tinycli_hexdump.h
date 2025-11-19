@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 void HSS_TinyCLI_HexDump(uint8_t *pStart, ptrdiff_t count);
+void HSS_TinyCLI_HexDumpEx(uint8_t *pStart, ptrdiff_t count, uint64_t logical_addr);
 
 #ifdef __cplusplus
 }

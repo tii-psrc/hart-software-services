@@ -58,3 +58,45 @@ void HSS_TinyCLI_HexDump(uint8_t *pStart, ptrdiff_t count)
         mHSS_PRINTF("\n");
     }
 }
+
+void HSS_TinyCLI_HexDumpEx(uint8_t *pStart, ptrdiff_t count, uint64_t logical_addr);
+void HSS_TinyCLI_HexDumpEx(uint8_t *pStart, ptrdiff_t count, uint64_t logical_addr)
+{
+  if ((!pStart) || (count == 0u)) { return; }
+
+  for (ptrdiff_t i = 0u; i < count; i+=STEP_SIZE) {
+    mHSS_PRINTF("mem(0x%08x:0x%08x) logical_addr(0x%08X:0x%08X)  ",
+        (uint32_t)(((ptrdiff_t)pStart + i) >> 32),  // upper 32-bits of address
+        (uint32_t)(((ptrdiff_t)pStart + i) & ((1lu<<32)-1u)),
+        (uint32_t)(((ptrdiff_t)logical_addr + i) >> 32),  // upper 32-bits of address
+        (uint32_t)(((ptrdiff_t)logical_addr + i) & ((1lu<<32)-1u))
+        ); // lower 32-bits of address
+
+    for (ptrdiff_t j = 0u; j < STEP_SIZE; j++) {
+      if ((i + j) >= count) {
+        mHSS_PRINTF("   ");
+      } else {
+        mHSS_PRINTF("%02x ", *(pStart + i + j));
+        if ((j % 4) == 3) {
+          mHSS_PRINTF(" ");
+        }
+      }
+    }
+
+    mHSS_PRINTF(" ");
+    for (ptrdiff_t j = 0u; j < STEP_SIZE; j++) {
+      if ((i + j) >= count) {
+        mHSS_PRINTF(" ");
+      } else {
+        uint8_t octet = *(pStart + i + j);
+        if ((octet > 31u) && (octet < 128u)) {
+          ;
+        } else {
+          octet = '.';
+        }
+        mHSS_PRINTF("%c", (char)octet);
+      }
+    }
+    mHSS_PRINTF("\n");
+  }
+}

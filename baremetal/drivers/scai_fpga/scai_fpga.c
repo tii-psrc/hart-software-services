@@ -634,7 +634,57 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
 
     for (uint32_t i = 0; i < MT29F_PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
         test_data[i] = (page & TEST_PATTERN_PAGE_MASK) << TEST_PATTERN_PAGE_SHIFT;  // Upper bits from page number (0..262143)
+#if 0
+        /*
+         *  Word-based address for test_data.
+         *
+         *  Sample log:
+         *  $ qspi read 0 2 0 32
+         *    0x00002000: Page 2, Index 0
+         *    0x00002001: Page 2, Index 1
+         *    0x00002002: Page 2, Index 2
+         *    0x00002003: Page 2, Index 3
+         *    0x00002004: Page 2, Index 4
+         *    0x00002005: Page 2, Index 5
+         *    0x00002006: Page 2, Index 6
+         *    0x00002007: Page 2, Index 7
+         *  $ qspi read 0 2 1024 32
+         *    0x00002100: Page 2, Index 256
+         *    0x00002101: Page 2, Index 257
+         *    0x00002102: Page 2, Index 258
+         *    0x00002103: Page 2, Index 259
+         *    0x00002104: Page 2, Index 260
+         *    0x00002105: Page 2, Index 261
+         *    0x00002106: Page 2, Index 262
+         *    0x00002107: Page 2, Index 263
+         */
         test_data[i] |= i & TEST_PATTERN_INDEX_MASK;                                // Lower bits from index within page (0..4095)
+#else
+        /*
+         *  Byte-based address for test_data
+         *
+         *  Sample log:
+         *  $ qspi read 0 64 0 32
+         *    0x00040000: Page 64, Index 0
+         *    0x00040004: Page 64, Index 4
+         *    0x00040008: Page 64, Index 8
+         *    0x0004000C: Page 64, Index 12
+         *    0x00040010: Page 64, Index 16
+         *    0x00040014: Page 64, Index 20
+         *    0x00040018: Page 64, Index 24
+         *    0x0004001C: Page 64, Index 28
+         *  $ qspi read 0 64 1024 32
+         *    0x00040400: Page 64, Index 1024
+         *    0x00040404: Page 64, Index 1028
+         *    0x00040408: Page 64, Index 1032
+         *    0x0004040C: Page 64, Index 1036
+         *    0x00040410: Page 64, Index 1040
+         *    0x00040414: Page 64, Index 1044
+         *    0x00040418: Page 64, Index 1048
+         *    0x0004041C: Page 64, Index 1052
+         */
+        test_data[i] |= (i * 4) & TEST_PATTERN_INDEX_MASK;                          // Lower bits from index within page (0..4095)
+#endif
     }
 
     if (Flash_erase_block(block) != 0) {

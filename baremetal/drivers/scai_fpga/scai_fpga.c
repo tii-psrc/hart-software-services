@@ -10,6 +10,7 @@
 #include "hss_types.h"
 #include "ddr_service.h"
 #include "hss_progress.h"
+#include "tinycli_hexdump.h"
 
 #include "scai_fpga.h"
 #include "scai_fpga_platform.h"
@@ -604,6 +605,8 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
         uint32_t index_in_page = read_data[i] & TEST_PATTERN_INDEX_MASK;
         mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
     }
+    HSS_TinyCLI_HexDumpEx((uint8_t*)read_data, length, (uint64_t)(page * MT29F_PAGE_SIZE_BYTES + offset));
+
 
     free(read_data);
     return SCAI_FLASH_SUCCESS;

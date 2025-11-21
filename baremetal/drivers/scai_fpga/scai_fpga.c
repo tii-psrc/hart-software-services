@@ -22,18 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-typedef union {
-    uint32_t u32;
-    struct {
-        uint8_t b0;
-        uint8_t b1;
-        uint8_t b2;
-        uint8_t b3;
-    } b;
-} uint32_t_ex;
-
-static uint32_t swap32(uint32_t in);
-static uint32_t swap32(uint32_t in) {
+uint32_t __swap32(uint32_t in) {
   uint32_t_ex out = (uint32_t_ex)in;
   uint32_t swapped =
     ((uint32_t)out.b.b0 << 24)
@@ -460,7 +449,8 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
                     (block_base_addr & TEST_PATTERN_BLOCK_MASK) |
                     ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) |
                     ((i * 4) & TEST_PATTERN_INDEX_MASK);
-                image_buffer[page_idx * words_per_page + i] = swap32(image_buffer[page_idx * words_per_page + i]);
+                image_buffer[page_idx * words_per_page + i] =
+                  __swap32(image_buffer[page_idx * words_per_page + i]);
             }
         }
 
@@ -498,7 +488,8 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
                     (block_base_addr & TEST_PATTERN_BLOCK_MASK) |
                     ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) |
                     ((i * 4) & TEST_PATTERN_INDEX_MASK);
-                image_buffer[page_idx * words_per_page + i] = swap32(image_buffer[page_idx * words_per_page + i]);
+                image_buffer[page_idx * words_per_page + i] =
+                  __swap32(image_buffer[page_idx * words_per_page + i]);
             }
         }
         

@@ -80,6 +80,18 @@ uint8_t scai_fpga_reset(uint8_t chip);
 uint8_t scai_flash_write_image_from_ddr(scai_flash_type_t flash_type, const uint8_t* image_ptr, size_t image_size);
 bool scai_select_boot_flash(scai_flash_type_t main);
 
+typedef union {
+    uint32_t u32;
+    struct {
+        uint8_t b0;
+        uint8_t b1;
+        uint8_t b2;
+        uint8_t b3;
+    } b;
+} uint32_t_ex;
+
+uint32_t __swap32(uint32_t in);
+
 #ifdef __cplusplus
 }
 #endif

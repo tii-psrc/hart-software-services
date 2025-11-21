@@ -78,7 +78,7 @@ inline bool scai_fpga_is_word_mode(scai_fpga_channel_t* channel) {
     return channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Data_Mode == 1;
 }
 
-inline bool scai_fpga_is_quad_mode(scai_fpga_channel_t* channel) {
+inline bool scai_fpga_is_qspi_mode(scai_fpga_channel_t* channel) {
     return channel->ctrl1_state.bits.Scai_Qspi_Ctrl_1_Lane_Width == 1;
 }
 void scai_fpga_enable_ce(scai_fpga_channel_t* channel);

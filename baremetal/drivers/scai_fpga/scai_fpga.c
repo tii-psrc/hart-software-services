@@ -22,10 +22,34 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef union {
+    uint32_t u32;
+    struct {
+        uint8_t b0;
+        uint8_t b1;
+        uint8_t b2;
+        uint8_t b3;
+    } b;
+} uint32_t_ex;
+
+static uint32_t swap32(uint32_t in);
+static uint32_t swap32(uint32_t in) {
+  uint32_t_ex out = (uint32_t_ex)in;
+  uint32_t swapped =
+    ((uint32_t)out.b.b0 << 24)
+    | ((uint32_t)out.b.b1 << 16)
+    | ((uint32_t)out.b.b2 << 8)
+    | ((uint32_t)out.b.b3);
+
+  return swapped;
+};
+
 // Test Pattern Constants
-uint32_t TEST_PATTERN_PAGE_SHIFT = 12;
-uint32_t TEST_PATTERN_PAGE_MASK  = 0x3FFFF;
-uint32_t TEST_PATTERN_INDEX_MASK = 0x0FFF;
+uint32_t TEST_PATTERN_BLOCK_SHIFT = 18;
+uint32_t TEST_PATTERN_BLOCK_MASK  = 0xFFFC0000;
+uint32_t TEST_PATTERN_PAGE_SHIFT  = 12;
+uint32_t TEST_PATTERN_PAGE_MASK   = 0x00003F000;
+uint32_t TEST_PATTERN_INDEX_MASK  = 0x000000FFF;
 
 // Driver Definitions
 // Declarations of the driver structs for each supported flash type.
@@ -406,15 +430,13 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         return SCAI_FLASH_ERROR;
     }
 
-    uint32_t* read_back_buffer = (uint32_t*)malloc(MT29F_BLOCK_SIZE_BYTES);
-    uint32_t* image_buffer     = (uint32_t*)malloc(MT29F_BLOCK_SIZE_BYTES);
+    uintptr_t ptr_addr         = (uintptr_t)malloc(MT29F_BLOCK_SIZE_BYTES * 2);
+    uint32_t* read_back_buffer = (uint32_t*)ptr_addr;
+    uint32_t* image_buffer     = (uint32_t*)(ptr_addr + MT29F_BLOCK_SIZE_BYTES);
     if (!read_back_buffer || !image_buffer) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for test buffers.\n");
         if (read_back_buffer) {
-            free(read_back_buffer);
-        }
-        if (image_buffer) {
-            free(image_buffer);
+            free((void*)ptr_addr);
         }
         return SCAI_FLASH_ERROR;
     }
@@ -434,23 +456,23 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
         for (uint32_t page_idx = 0; page_idx < MT29F_PAGES_PER_BLOCK; page_idx++) {
             uint32_t current_page = page + page_idx;
             for (uint32_t i = 0; i < words_per_page; i++) {
-                image_buffer[page_idx * words_per_page + i] = 
+                image_buffer[page_idx * words_per_page + i] =
+                    (block_base_addr & TEST_PATTERN_BLOCK_MASK) |
                     ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) |
-                    (i & TEST_PATTERN_INDEX_MASK);
+                    ((i * 4) & TEST_PATTERN_INDEX_MASK);
+                image_buffer[page_idx * words_per_page + i] = swap32(image_buffer[page_idx * words_per_page + i]);
             }
         }
 
         if (Flash_erase_block(block_idx) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to erase block %u.\n", block_idx);
-            free(read_back_buffer);
-            free(image_buffer);
+            free((void*)ptr_addr);
             return SCAI_FLASH_ERROR;
         }
 
         if (Flash_program((uint8_t*)image_buffer, block_base_addr, MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to program block %u.\n", block_idx);
-            free(read_back_buffer);
-            free(image_buffer);
+            free((void*)ptr_addr);
             return SCAI_FLASH_ERROR;
         }
     }
@@ -473,15 +495,16 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
             uint32_t current_page = page + page_idx;
             for (uint32_t i = 0; i < words_per_page; i++) {
                 image_buffer[page_idx * words_per_page + i] = 
+                    (block_base_addr & TEST_PATTERN_BLOCK_MASK) |
                     ((current_page << TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK) |
-                    (i & TEST_PATTERN_INDEX_MASK);
+                    ((i * 4) & TEST_PATTERN_INDEX_MASK);
+                image_buffer[page_idx * words_per_page + i] = swap32(image_buffer[page_idx * words_per_page + i]);
             }
         }
         
         if (Flash_read((uint8_t*)read_back_buffer, block_base_addr, MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED to read back block %u.\n", block_idx);
-            free(read_back_buffer);
-            free(image_buffer);
+            free((void*)ptr_addr);
             return SCAI_FLASH_ERROR;
         }
 
@@ -497,16 +520,14 @@ uint8_t scai_flash_test(scai_flash_type_t chip) {
                 }
             }
             mHSS_DEBUG_PRINTF(LOG_ERROR, "\n>> FAILED: Data mismatch found in block %u.\n", block_idx);
-            free(read_back_buffer);
-            free(image_buffer);
+            free((void*)ptr_addr);
             return SCAI_FLASH_ERROR;
         }
     }
     HSS_ShowProgress(MT29F_TOTAL_BLOCKS, 0);
 
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "\n\nFull Chip Write/Verify Test PASSED\n");
-    free(read_back_buffer);
-    free(image_buffer);
+    free((void*)ptr_addr);
     return SCAI_FLASH_SUCCESS;
 }
 
@@ -587,7 +608,8 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
         return SCAI_FLASH_ERROR;
     }
 
-    uint32_t* read_data = (uint32_t*)malloc(length);
+    uintptr_t ptr_addr  = (uintptr_t)malloc(length);
+    uint32_t* read_data = (uint32_t*)ptr_addr;
     if (!read_data) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for read data.\n");
         return SCAI_FLASH_ERROR;
@@ -596,25 +618,27 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
 
     if (Flash_read((uint8_t*)read_data, page * MT29F_PAGE_SIZE_BYTES + offset, length) != SCAI_FLASH_SUCCESS) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
-        free(read_data);
+        free((void*)ptr_addr);
         return SCAI_FLASH_ERROR;
     }
 
+#if 0
     for (uint32_t i = 0; i < length/sizeof(read_data[0]); i++) {
         uint32_t page_cnt      = (read_data[i] >> TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK;
         uint32_t index_in_page = read_data[i] & TEST_PATTERN_INDEX_MASK;
         mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
     }
+#endif
     HSS_TinyCLI_HexDumpEx((uint8_t*)read_data, length, (uint64_t)(page * MT29F_PAGE_SIZE_BYTES + offset));
 
-
-    free(read_data);
+    free((void*)ptr_addr);
     return SCAI_FLASH_SUCCESS;
 }
 
 uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
-    uint8_t  real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
-    uint16_t block     = page / MT29F_PAGES_PER_BLOCK;
+    uint8_t  real_chip       = chip + SCAI_MICRON_MT29F_CHIP_0;
+    uint16_t block           = page / MT29F_PAGES_PER_BLOCK;
+    uint32_t block_base_addr = (block << TEST_PATTERN_BLOCK_SHIFT) & TEST_PATTERN_BLOCK_MASK;
 
     mHSS_DEBUG_PRINTF(LOG_ERROR, "Write: chip=%u, page=%u, block=%u\n", 
         chip, page, block);
@@ -629,78 +653,37 @@ uint8_t scai_fpga_page_write(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
 
-    uint32_t* test_data = (uint32_t*)malloc(MT29F_PAGE_SIZE_BYTES);
+    uintptr_t ptr_addr  = (uintptr_t)malloc(MT29F_BLOCK_SIZE_BYTES);
+    uint32_t* test_data = (uint32_t*)ptr_addr;
     if (!test_data) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for test data.\n");
         return SCAI_FLASH_ERROR;
     }
+    memset(test_data, 0, MT29F_BLOCK_SIZE_BYTES);
 
-    for (uint32_t i = 0; i < MT29F_PAGE_SIZE_BYTES / sizeof(uint32_t); i++) {
-        test_data[i] = (page & TEST_PATTERN_PAGE_MASK) << TEST_PATTERN_PAGE_SHIFT;  // Upper bits from page number (0..262143)
+    for (uint32_t page_idx = 0; page_idx < MT29F_PAGES_PER_BLOCK; page_idx++) {
+      uint32_t words_per_page = MT29F_PAGE_SIZE_BYTES / sizeof(uint32_t);
+      for (uint32_t i = 0; i < words_per_page; i++) {
+        test_data[page_idx * words_per_page + i]  = TEST_PATTERN_BLOCK_MASK & (block    << TEST_PATTERN_BLOCK_SHIFT);
+        test_data[page_idx * words_per_page + i] |= TEST_PATTERN_PAGE_MASK  & (page_idx << TEST_PATTERN_PAGE_SHIFT );
+        test_data[page_idx * words_per_page + i] |= TEST_PATTERN_INDEX_MASK & (i        << 2                       );
 #if 0
-        /*
-         *  Word-based address for test_data.
-         *
-         *  Sample log:
-         *  $ qspi read 0 2 0 32
-         *    0x00002000: Page 2, Index 0
-         *    0x00002001: Page 2, Index 1
-         *    0x00002002: Page 2, Index 2
-         *    0x00002003: Page 2, Index 3
-         *    0x00002004: Page 2, Index 4
-         *    0x00002005: Page 2, Index 5
-         *    0x00002006: Page 2, Index 6
-         *    0x00002007: Page 2, Index 7
-         *  $ qspi read 0 2 1024 32
-         *    0x00002100: Page 2, Index 256
-         *    0x00002101: Page 2, Index 257
-         *    0x00002102: Page 2, Index 258
-         *    0x00002103: Page 2, Index 259
-         *    0x00002104: Page 2, Index 260
-         *    0x00002105: Page 2, Index 261
-         *    0x00002106: Page 2, Index 262
-         *    0x00002107: Page 2, Index 263
-         */
-        test_data[i] |= i & TEST_PATTERN_INDEX_MASK;                                // Lower bits from index within page (0..4095)
-#else
-        /*
-         *  Byte-based address for test_data
-         *
-         *  Sample log:
-         *  $ qspi read 0 64 0 32
-         *    0x00040000: Page 64, Index 0
-         *    0x00040004: Page 64, Index 4
-         *    0x00040008: Page 64, Index 8
-         *    0x0004000C: Page 64, Index 12
-         *    0x00040010: Page 64, Index 16
-         *    0x00040014: Page 64, Index 20
-         *    0x00040018: Page 64, Index 24
-         *    0x0004001C: Page 64, Index 28
-         *  $ qspi read 0 64 1024 32
-         *    0x00040400: Page 64, Index 1024
-         *    0x00040404: Page 64, Index 1028
-         *    0x00040408: Page 64, Index 1032
-         *    0x0004040C: Page 64, Index 1036
-         *    0x00040410: Page 64, Index 1040
-         *    0x00040414: Page 64, Index 1044
-         *    0x00040418: Page 64, Index 1048
-         *    0x0004041C: Page 64, Index 1052
-         */
-        test_data[i] |= (i * 4) & TEST_PATTERN_INDEX_MASK;                          // Lower bits from index within page (0..4095)
+        test_data[page_idx * words_per_page + i]  = swap32(test_data[page_idx * words_per_page + i]);
 #endif
+      }
     }
 
     if (Flash_erase_block(block) != 0) {
-        free(test_data);
+        free((void*)ptr_addr);
         return SCAI_FLASH_ERROR;
     }
 
-    if (Flash_program((uint8_t*)test_data, page * MT29F_PAGE_SIZE_BYTES, MT29F_PAGE_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
-        free(test_data);
+    if (Flash_program((uint8_t*)test_data, block_base_addr, MT29F_BLOCK_SIZE_BYTES) != SCAI_FLASH_SUCCESS) {
+        free((void*)ptr_addr);
         return SCAI_FLASH_ERROR;
     }
 
-    free(test_data);
+    free((void*)ptr_addr);
     return SCAI_FLASH_SUCCESS;
 }
 

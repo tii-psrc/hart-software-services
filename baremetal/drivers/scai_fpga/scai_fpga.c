@@ -579,6 +579,21 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page) {
         return SCAI_FLASH_ERROR;
     }
 
+    if (block >= MT29F_TOTAL_BLOCKS) {
+      uint16_t block_idx = 0;
+      for (block_idx = 0; block_idx < MT29F_TOTAL_BLOCKS; block_idx++) {
+        uint32_t result = Flash_erase_block(block_idx);
+        if (result == SCAI_FLASH_ERROR) {
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash_erase_block: erase failed to %d block...\n",
+              block_idx);
+          return SCAI_FLASH_ERROR;
+        }
+      }
+      mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash_erase_block: erase_block erased(from 0 to %d).\n",
+            block_idx-1);
+      return 0;
+    }
+
     return Flash_erase_block(block);
 }
 

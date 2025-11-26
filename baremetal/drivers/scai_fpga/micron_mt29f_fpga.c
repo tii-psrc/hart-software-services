@@ -199,7 +199,52 @@ static uint8_t wait_flash_ready(scai_fpga_channel_t* channel) {
             return 0; // Success
         }
     }
-    return 1; // Timeout
+
+    uint8_t is_failed = status.bits.oip;
+
+    if (status.bits.e_fail) {
+      mHSS_DEBUG_PRINTF(LOG_ERROR, "Erase fail....\n");
+      is_failed++;
+    }
+    if (status.bits.p_fail) {
+      mHSS_DEBUG_PRINTF(LOG_ERROR, "Program fail....\n");
+      is_failed++;
+    }
+    if (status.bits.eccs0 || status.bits.eccs1 || status.bits.eccs2) {
+      uint8_t ecc_status = (status.bits.eccs0 | status.bits.eccs1 | status.bits.eccs2) >> 4;
+      switch (ecc_status) {
+        case 0:
+          // no errors...
+          is_failed = is_failed;
+          break;
+        case 1:
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X : 1-3 bit errors detected and corrected....\n", ecc_status);
+          break;
+        case 2:
+          is_failed++;
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X : bit errors greather than 8 bits detected and NOT corrected....\n", ecc_status);
+          break;
+        case 3:
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X : 4-6 bit errors detected and corrected. Indicates data refreshment might be taken...\n", ecc_status);
+          break;
+        case 5:
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%02X : 7-8 bit errors detected and corrected. ", ecc_status);
+          mHSS_DEBUG_PRINTF(LOG_ERROR, "Indicates data refreshment must be taken to guarantee data retention...\n");
+          break;
+        default:
+          // Reserved...
+          is_failed = is_failed;
+      }
+    }
+#if 0
+    if (status.bits.crbsy) {
+      /*
+       * Not implemented yet...
+       */
+    }
+#endif
+
+    return is_failed;
 }
 
 static void set_feature(scai_fpga_channel_t* channel, mt29f_register_t feature_addr, uint8_t value) {
@@ -274,7 +319,7 @@ static void unlock_all_blocks(scai_fpga_channel_t* channel) {
     set_feature(channel, MT29F_REG_LOCK, MT29F_UNLOCK_ALL);
 }
 
-static void flash_reset(scai_fpga_channel_t* channel) {
+static uint8_t flash_reset(scai_fpga_channel_t* channel) {
     const uint8_t cmd = MT29F_CMD_RESET_DEVICE;
     scai_fpga_transaction_t params = {
         .tx_buffer      = &cmd,
@@ -282,7 +327,12 @@ static void flash_reset(scai_fpga_channel_t* channel) {
     };
     scai_fpga_transaction(channel, &params);
 
-    wait_flash_ready(channel);
+    uint8_t status = wait_flash_ready(channel);
+    if (status != 0) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "%s failed: status(0x%02X)\n", __func__, status);
+    }
+
+    return status;
 }
 
 static void flash_dump_features(scai_fpga_channel_t* channel) {
@@ -425,8 +475,9 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         scai_fpga_set_spi_mode(channel);
         scai_fpga_transaction(channel, &page_read_params);
         
-        if (wait_flash_ready(channel) != 0) {
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "SCAI_MT29_Flash_read: WiP timeout\n");
+        uint8_t status = wait_flash_ready(channel);
+        if (status != 0) {
+            mHSS_DEBUG_PRINTF(LOG_ERROR, "%s failed: status(0x%02X)\n", __func__, status);
             return 1;
         }
 
@@ -558,7 +609,7 @@ uint8_t SCAI_MT29_Flash_erase_block(scai_fpga_channel_t* channel, uint16_t block
 
     uint8_t status = wait_flash_ready(channel);
     if (status != 0) {
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "MT29_Flash_erase_block: wait timeout\n");
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "%s failed: status(0x%02X)\n", __func__, status);
         return 1;
     }
     return 0;
@@ -701,6 +752,6 @@ uint8_t SCAI_MT29_Flash_get_status(scai_fpga_channel_t* channel) {
     return 0; // Success
 }
 
-void SCAI_MT29_Flash_reset(scai_fpga_channel_t* channel) {
-    flash_reset(channel);
+uint8_t SCAI_MT29_Flash_reset(scai_fpga_channel_t* channel) {
+    return flash_reset(channel);
 }

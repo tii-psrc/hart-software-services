@@ -706,8 +706,7 @@ uint8_t scai_fpga_reset(uint8_t chip) {
         return SCAI_FLASH_ERROR;
     }
 
-    SCAI_MT29_Flash_reset(g_active_channel);
-    return SCAI_FLASH_SUCCESS;
+    return SCAI_MT29_Flash_reset(g_active_channel);
 }
 
 /**

@@ -97,7 +97,7 @@ uint8_t SCAI_MT29_Flash_program(scai_fpga_channel_t* channel, const uint8_t* buf
 uint8_t SCAI_MT29_Flash_read_status_regs(scai_fpga_channel_t* channel, void* regs_out);
 
 uint8_t SCAI_MT29_Flash_get_status(scai_fpga_channel_t* channel);
-void SCAI_MT29_Flash_reset(scai_fpga_channel_t* channel);
+uint8_t SCAI_MT29_Flash_reset(scai_fpga_channel_t* channel);
 
 #ifdef __cplusplus
 }

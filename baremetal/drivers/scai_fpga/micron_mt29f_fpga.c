@@ -482,9 +482,12 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         }
 
         uint32_t read_len = (remaining_len > (MT29F_PAGE_SIZE_BYTES - col_addr)) ? (MT29F_PAGE_SIZE_BYTES - col_addr) : remaining_len;
+#if 0
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "read_len      : 0x%08X\n", read_len);
+#endif
         
         // =========================================================================
-        // TRANSACTION 1: Sending command READ_FROM_CACHE
+        // TRANSACTION 1: Sending command READ_FROM_CACHE(Cache is located in MT29)
         // =========================================================================
         mt29f_read_cmd_t read_cmd = {
             .opcode         = use_quad_mode ? MT29F_CMD_READ_FROM_CACHE_X4 : MT29F_CMD_READ_FROM_CACHE_X1,
@@ -520,29 +523,7 @@ uint8_t SCAI_MT29_Flash_read(scai_fpga_channel_t* channel, uint8_t* buf, uint32_
         scai_fpga_transaction(channel, &cmd_tx_params);
 
         // =========================================================================
-        // TRANSACTION 2: READ for moving to offset(index) (As in Sergio code)
-        // =========================================================================
-        if (use_quad_mode) {
-            uint32_t dummy_rx_len_words = (col_addr >> 2);
-
-            scai_fpga_set_qspi_mode(channel); 
-            scai_fpga_set_word_mode(channel); 
-
-            scai_fpga_transaction_t dummy_rx_params = {
-                .tx_len            = 0,
-                .rx_buffer         = current_buf, 
-                .rx_len            = dummy_rx_len_words,
-                .data_size_is_word = true,
-                .keep_ce_active    = true
-            };
-#if 0
-            mHSS_DEBUG_PRINTF(LOG_ERROR, "dummy_rx_len_words      : 0x%08X\n", dummy_rx_len_words);
-#endif
-            scai_fpga_transaction(channel, &dummy_rx_params);
-        }
-
-        // =========================================================================
-        // TRANSACTION 3: Real READ
+        // TRANSACTION 2: READ data from BUFFER(Host)
         // =========================================================================
         uint32_t rx_elements = use_quad_mode ? ((read_len + 3) / 4) : read_len; // Round up to nearest word
 #if 0

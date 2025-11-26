@@ -600,9 +600,12 @@ uint8_t scai_fpga_page_erase(uint8_t chip, uint32_t page) {
 uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32_t length) {
     uint8_t real_chip = chip + SCAI_MICRON_MT29F_CHIP_0;
     uint32_t block    = page / MT29F_PAGES_PER_BLOCK;
+    uint32_t page_length = ((length + MT29F_PAGE_SIZE_BYTES - 1) &  ~(MT29F_PAGE_SIZE_BYTES - 1));
 
-    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: chip=%u, page=%u, block=%u, offset=%u, length=%u\n", 
-        chip, page, block, offset, length);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "Read: chip=%u, page=%u, block=%u, offset=%u ",
+        chip, page, block, offset);
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "length=%u, page_length=%u\n",
+        length, page_length);
 
     if (real_chip >= SCAI_MEM_TYPES_QUANTITY) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Invalid SCAI flash type: %u\n", chip);
@@ -614,28 +617,21 @@ uint8_t scai_fpga_page_read(uint8_t chip, uint32_t page, uint32_t offset, uint32
         return SCAI_FLASH_ERROR;
     }
 
-    uintptr_t ptr_addr  = (uintptr_t)malloc(length);
+    uintptr_t ptr_addr  = (uintptr_t)malloc(page_length);
     uint32_t* read_data = (uint32_t*)ptr_addr;
     if (!read_data) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Failed to allocate memory for read data.\n");
         return SCAI_FLASH_ERROR;
     }
-    memset(read_data, 0, length);
+    memset(read_data, 0, page_length);
 
-    if (Flash_read((uint8_t*)read_data, page * MT29F_PAGE_SIZE_BYTES + offset, length) != SCAI_FLASH_SUCCESS) {
+    if (Flash_read((uint8_t*)read_data, page * MT29F_PAGE_SIZE_BYTES, page_length) != SCAI_FLASH_SUCCESS) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "Flash read returned error\n");
         free((void*)ptr_addr);
         return SCAI_FLASH_ERROR;
     }
 
-#if 0
-    for (uint32_t i = 0; i < length/sizeof(read_data[0]); i++) {
-        uint32_t page_cnt      = (read_data[i] >> TEST_PATTERN_PAGE_SHIFT) & TEST_PATTERN_PAGE_MASK;
-        uint32_t index_in_page = read_data[i] & TEST_PATTERN_INDEX_MASK;
-        mHSS_DEBUG_PRINTF(LOG_ERROR, "0x%08X: Page %u, Index %u\n", read_data[i], page_cnt, index_in_page);
-    }
-#endif
-    HSS_TinyCLI_HexDumpEx((uint8_t*)read_data, length, (uint64_t)(page * MT29F_PAGE_SIZE_BYTES + offset));
+    HSS_TinyCLI_HexDumpEx((uint8_t*)read_data + offset, length, (uint64_t)(page * MT29F_PAGE_SIZE_BYTES + offset));
 
     free((void*)ptr_addr);
     return SCAI_FLASH_SUCCESS;

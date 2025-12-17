@@ -116,8 +116,24 @@ endif
 
 ifdef CONFIG_DEBUG_HOSTENV_INFO
 define hostenv-prepare
-       $(ECHO) "$$ date" > $(HOSTENV_FILE).txt
+       $(ECHO) "$$ date //build date for this binary" > $(HOSTENV_FILE).txt
        date >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ pwd" >> $(HOSTENV_FILE).txt
+       pwd >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ hostname" >> $(HOSTENV_FILE).txt
+       hostname >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ whoami" >> $(HOSTENV_FILE).txt
+       whoami >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
+       $(ECHO) "$$ ifconfig" >> $(HOSTENV_FILE).txt
+       ifconfig >> $(HOSTENV_FILE).txt
        $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
 
        $(ECHO) "$$ git config --list" >> $(HOSTENV_FILE).txt

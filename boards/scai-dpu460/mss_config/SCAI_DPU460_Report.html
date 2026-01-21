@@ -50,11 +50,11 @@
 </tr>
 <tr>
  <td>Version</td>
- <td>2024.2</td>
+ <td>2025.1</td>
 </tr>
 <tr>
  <td>Date</td>
- <td>Wed Oct 22 14:19:05 2025
+ <td>Wed Jan 21 12:10:06 2026
 </td>
 </tr>
 </table>
@@ -83,7 +83,7 @@
 </tr>
 <tr>
  <td>FIC_1 AXI4 Initiator Interface</td>
- <td>false</td>
+ <td>true</td>
 </tr>
 <tr>
  <td>FIC_1 AXI4 Target Interface</td>
@@ -91,7 +91,7 @@
 </tr>
 <tr>
  <td>FIC_2 AXI4 Target Interface</td>
- <td>false</td>
+ <td>true</td>
 </tr>
 <tr>
  <td>FIC_3 APB Initiator Interface</td>
@@ -522,6 +522,162 @@
  <td>INPUT</td>
 </tr>
 <tr>
+ <td>FIC_1_ACLK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_WREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_BID[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_BRESP[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_BVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RID[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RDATA[63:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RRESP[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RLAST</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_ACLK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWID[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWADDR[37:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWLEN[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWSIZE[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWBURST[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWLOCK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWCACHE[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWQOS[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWPROT[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_WDATA[63:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_WSTRB[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_WLAST</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_WVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_BREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARID[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARADDR[37:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARLEN[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARSIZE[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARBURST[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARLOCK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARCACHE[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARQOS[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARPROT[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
  <td>FIC_3_PCLK</td>
  <td>INPUT</td>
 </tr>
@@ -591,6 +747,14 @@
 </tr>
 <tr>
  <td>FIC_0_DLL_LOCK_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_DLL_LOCK_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_DLL_LOCK_M2F</td>
  <td>OUTPUT</td>
 </tr>
 <tr>
@@ -699,6 +863,154 @@
 </tr>
 <tr>
  <td>FIC_0_AXI4_M_RREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWID[7:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWADDR[37:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWLEN[7:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWSIZE[2:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWBURST[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWLOCK</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWQOS[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWCACHE[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWPROT[2:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_AWVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_WDATA[63:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_WSTRB[7:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_WLAST</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_WVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_BREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARID[7:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARADDR[37:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARLEN[7:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARSIZE[2:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARBURST[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARLOCK</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARQOS[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARCACHE[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARPROT[2:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_ARVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_M_RREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_AWREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_WREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_BID[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_BRESP[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_BVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_ARREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RID[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RDATA[63:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RRESP[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RLAST</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_2_AXI4_S_RVALID</td>
  <td>OUTPUT</td>
 </tr>
 <tr>
@@ -826,15 +1138,23 @@
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQ_ECC[35:32]</td>
+ <td>DQ_ECC[3:0]</td>
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQS[4:0]</td>
+ <td>DQS[3:0]</td>
  <td>INOUT</td>
 </tr>
 <tr>
- <td>DQS_N[4:0]</td>
+ <td>DQS_N[3:0]</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>DQS_ECC</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>DQS_ECC_N</td>
  <td>INOUT</td>
 </tr>
 <tr>
@@ -1264,28 +1584,28 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[32]</td>
+ <td>DQ_ECC[0]</td>
  <td>AE10</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[33]</td>
+ <td>DQ_ECC[1]</td>
  <td>AE11</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[34]</td>
+ <td>DQ_ECC[2]</td>
  <td>AG10</td>
  <td>INOUT</td>
  <td>120</td>
  <td>48</td>
 </tr>
 <tr>
- <td>DQ_ECC[35]</td>
+ <td>DQ_ECC[3]</td>
  <td>AF10</td>
  <td>INOUT</td>
  <td>120</td>
@@ -1320,13 +1640,6 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQS[4]</td>
- <td>AG9</td>
- <td>INOUT</td>
- <td>120</td>
- <td>48</td>
-</tr>
-<tr>
  <td>DQS_N[0]</td>
  <td>AE5</td>
  <td>INOUT</td>
@@ -1355,7 +1668,14 @@
  <td>48</td>
 </tr>
 <tr>
- <td>DQS_N[4]</td>
+ <td>DQS_ECC</td>
+ <td>AG9</td>
+ <td>INOUT</td>
+ <td>120</td>
+ <td>48</td>
+</tr>
+<tr>
+ <td>DQS_ECC_N</td>
  <td>AF9</td>
  <td>INOUT</td>
  <td>120</td>

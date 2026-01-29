@@ -4,7 +4,7 @@
       <design_name>SCAI_NAVC250</design_name>
       <mpfs_part_no>MPFS250T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>01-28-2026_12:27:57</creation_date_time>
+      <creation_date_time>01-29-2026_14:41:23</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -1241,7 +1241,7 @@
             <field Type="RW" name="CAN1_FABRIC" offset="5" width="1">0x0</field>
             <field Type="RW" name="QSPI_FABRIC" offset="6" width="1">0x0</field>
             <field Type="RW" name="MMUART0_FABRIC" offset="7" width="1">0x0</field>
-            <field Type="RW" name="MMUART1_FABRIC" offset="8" width="1">0x0</field>
+            <field Type="RW" name="MMUART1_FABRIC" offset="8" width="1">0x1</field>
             <field Type="RW" name="MMUART2_FABRIC" offset="9" width="1">0x1</field>
             <field Type="RW" name="MMUART3_FABRIC" offset="10" width="1">0x0</field>
             <field Type="RW" name="MMUART4_FABRIC" offset="11" width="1">0x0</field>
@@ -1262,8 +1262,8 @@
             <field Type="RW" name="PAD8" offset="0" width="4">0xF</field>
             <field Type="RW" name="PAD9" offset="4" width="4">0x5</field>
             <field Type="RW" name="PAD10" offset="8" width="4">0x5</field>
-            <field Type="RW" name="PAD11" offset="12" width="4">0x5</field>
-            <field Type="RW" name="PAD12" offset="16" width="4">0x5</field>
+            <field Type="RW" name="PAD11" offset="12" width="4">0xF</field>
+            <field Type="RW" name="PAD12" offset="16" width="4">0xF</field>
             <field Type="RW" name="PAD13" offset="20" width="4">0xB</field>
           </register>
           <register address="0x0000020C" description="Configures the IO Mux structure for each IO pad.  0  implies  SD/SDIO, 1 implies  EMMC, 2 implies QSPI, 3 implies SPI,4 implies USB,5 implies MMUART,6 implies I2C,7 implies CAN,8 implies MDIO,9 implies Miscellaneous,0xA implies Reserved (Equivalent to Tristate),0xB implies GPIO ,0xC implies Fabric-test,0xD implies Logic 0,0xE implies Logic 1, 0xF implies Tristate" name="IOMUX3_CR">

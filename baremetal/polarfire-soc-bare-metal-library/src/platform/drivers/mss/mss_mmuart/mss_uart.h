@@ -362,6 +362,7 @@ extern "C" {
 #define MSS_UART_230400_BAUD    230400U
 #define MSS_UART_460800_BAUD    460800U
 #define MSS_UART_921600_BAUD    921600U
+#define MSS_UART_1500000_BAUD    1500000U
 
 /***************************************************************************//**
   Data Bits Length

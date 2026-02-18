@@ -164,40 +164,46 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
 #  if IS_ENABLED(CONFIG_SERVICE_SCRUB_CACHES)
     static size_t trigger_cache_flush = 0u;
     static enum HSSHartId last_peer = HSS_HART_U54_1;
+    static int l2_flush_wayN = -1;
 
-    if (trigger_cache_flush > CONFIG_SERVICE_SCRUB_CACHES_TRIGGER_SETPOINT) {
+    // If an L2 way-flush is in progress, continue with one way per superloop iteration.
+    // This avoids blocking the E51 superloop (and starving watchdog/IPI services) by
+    // spreading the flush across multiple iterations instead of doing all ways at once.
+    if (l2_flush_wayN >= 0) {
+        // see https://forums.sifive.com/t/flush-invalidate-l1-l2-on-the-u54-mc/4483/9
+        //
+        // the thing to be wary of is the policy is random replacement by way,
+        // so there must be only 1 way enabled at a time...
+        // then for each way individually, still need to go through ~2MiB
+        // (2MiB/16 per way) of reads to safely ensure the L2 is cleared...
+        //
+
+        // restrict E51 D-cache evictions to this way only (WAY_MASK is a bitmask)
+        __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, (1u << l2_flush_wayN), __ATOMIC_RELAXED);
+
+        // read 2MiB/16 from L2 zero device to evict this way
+        for (int i = 0; i < 131*1024; i+=8) { (void)*(volatile uint64_t *)(ZERO_DEVICE_BOTTOM + i); };
+
+        l2_flush_wayN++;
+        if (l2_flush_wayN > (int)LIBERO_SETTING_WAY_ENABLE) {
+            // restore WayMask values and end flush phase
+            __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, LIBERO_SETTING_WAY_MASK_E51_DCACHE, __ATOMIC_RELAXED);
+            l2_flush_wayN = -1;
+        }
+    } else if (trigger_cache_flush > CONFIG_SERVICE_SCRUB_CACHES_TRIGGER_SETPOINT) {
         // flush local E51 I$
         __asm("fence.i"); // flush I$
 
-        // flush remote U54 I$ and TLBs
-
+        // flush remote U54 I$ and TLBs (one U54 per trigger expiry)
         IPI_Send(last_peer, IPI_MSG_SCRUB, 0u, 0u, NULL, NULL);
 
         trigger_cache_flush = 0u;
         last_peer++;
 
         if (last_peer >= HSS_HART_NUM_PEERS) {
-            // flush L2 Cache, way-by-way
-            // see https://forums.sifive.com/t/flush-invalidate-l1-l2-on-the-u54-mc/4483/9
-            //
-            // the thing to be wary of is the policy is random replacement by way,
-            // so there must be only 1 way enabled at a time...
-            // then for each way individually, still need to go through ~2MiB
-            // (2MiB/16 per way) of reads to safely ensure the L2 is cleared...
-            //
-
-            for (int wayMaskN = 0; wayMaskN < LIBERO_SETTING_WAY_ENABLE; wayMaskN++) {
-                // disable evictions from all but WayMaskN
-               __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, wayMaskN, __ATOMIC_RELAXED);
-
-                // read 2MiB/16 from L2 zero device
-                for (int i = 0; i < 131*1024; i+=8) { (void)*(volatile uint64_t *)(ZERO_DEVICE_BOTTOM + i); };
-            }
-
-            // restore WayMask values...
-            __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, LIBERO_SETTING_WAY_MASK_E51_DCACHE, __ATOMIC_RELAXED);
-
+            // all U54s flushed; begin L2 way-by-way flush (one way per superloop iteration)
             last_peer = HSS_HART_U54_1;
+            l2_flush_wayN = 0;
         }
     } else {
         trigger_cache_flush++;

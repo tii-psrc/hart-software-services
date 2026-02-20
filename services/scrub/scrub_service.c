@@ -18,6 +18,7 @@
 #include "hss_debug.h"
 #include "hss_boot_pmp.h"
 #include "hss_trigger.h"
+#include "hss_init.h"
 
 #include "ssmb_ipi.h"
 #include <assert.h>
@@ -161,7 +162,7 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
         }
     }
 
-#  if IS_ENABLED(CONFIG_SERVICE_SCRUB_CACHES)
+#if IS_ENABLED(CONFIG_SERVICE_SCRUB_CACHES)
     static size_t trigger_cache_flush = 0u;
     static enum HSSHartId last_peer = HSS_HART_U54_1;
 
@@ -186,29 +187,53 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
             // (2MiB/16 per way) of reads to safely ensure the L2 is cleared...
             //
 
-            for (int wayMaskN = 0; wayMaskN < LIBERO_SETTING_WAY_ENABLE; wayMaskN++) {
+#if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+            (void)HSS_DDRPrintL2CacheWaysConfig();
+            (void)HSS_DDRPrintL2CacheWayMasks();
+#endif
+
+            unsigned int l2_cache_ways = LIBERO_SETTING_WAY_ENABLE - LIBERO_SETTING_NUM_SCRATCH_PAD_WAYS + 1;
+            unsigned int wayMaskN = 0;
+            unsigned char e51_dcache_config = CACHE_CTRL->WAY_MASK_E51_DCACHE;
+
+            for (wayMaskN = 0; wayMaskN < l2_cache_ways; wayMaskN++) {
                 // disable evictions from all but WayMaskN
-               __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, wayMaskN, __ATOMIC_RELAXED);
+#if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+               mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+#endif
+               __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, (1 << wayMaskN), __ATOMIC_RELAXED);
+#if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+               mHSS_DEBUG_PRINTF(LOG_NORMAL, "[After] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+#endif
 
                 // read 2MiB/16 from L2 zero device
-                for (int i = 0; i < 131*1024; i+=8) { (void)*(volatile uint64_t *)(ZERO_DEVICE_BOTTOM + i); };
+                for (int i = 0; i < 128*1024; i+=8) { (void)*(volatile uint64_t *)(ZERO_DEVICE_BOTTOM + i); };
             }
 
+#if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before ] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+#endif
             // restore WayMask values...
-            __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, LIBERO_SETTING_WAY_MASK_E51_DCACHE, __ATOMIC_RELAXED);
+            __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, e51_dcache_config, __ATOMIC_RELAXED);
+#if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Restore] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+
+            (void)HSS_DDRPrintL2CacheWaysConfig();
+            (void)HSS_DDRPrintL2CacheWayMasks();
+#endif
 
             last_peer = HSS_HART_U54_1;
         }
     } else {
         trigger_cache_flush++;
     }
-#  endif
+#endif
 
-#  if defined(CONFIG_SERVICE_SCRUB_RUN_EVERY_X_SUPERLOOPS)
+#if defined(CONFIG_SERVICE_SCRUB_RUN_EVERY_X_SUPERLOOPS)
     entryCount = (entryCount + 1u) % CONFIG_SERVICE_SCRUB_RUN_EVERY_X_SUPERLOOPS;
-#  else
+#else
     entryCount = 0u;
-#  endif
+#endif
 #endif
 }
 

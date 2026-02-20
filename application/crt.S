@@ -348,8 +348,14 @@ _reset_regs:
 	.align	3
 	.globl	hss_e51_trap_handler
 hss_e51_trap_handler:
-        wfi
-        j	hss_e51_trap_handler
+	addi	sp, sp, -16
+	csrr	a0, CSR_MCAUSE
+	csrr	a1, CSR_MEPC
+	csrr	a2, CSR_MTVAL
+	call	hss_e51_trap_dump
+	addi	sp, sp, 16
+1:	wfi
+	j	1b
 
 /***********************************************************************************
  *

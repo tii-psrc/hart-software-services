@@ -298,3 +298,18 @@ void HSS_Init(void)
     HSS_UARTInit();
     HSS_OpenSBIInit();
 }
+
+/****************************************************************************/
+
+//
+// E51 trap handler - called from hss_e51_trap_handler in crt.S
+// Dumps mcause/mepc/mtval so we can diagnose what caused the exception
+// instead of silently entering a WFI death loop.
+//
+void hss_e51_trap_dump(uintptr_t mcause, uintptr_t mepc, uintptr_t mtval)
+{
+    sbi_printf("\n\n*** E51 TRAP ***\n");
+    sbi_printf("  mcause: 0x%lx\n", (unsigned long)mcause);
+    sbi_printf("  mepc:   0x%lx\n", (unsigned long)mepc);
+    sbi_printf("  mtval:  0x%lx\n", (unsigned long)mtval);
+}

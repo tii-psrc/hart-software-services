@@ -156,6 +156,10 @@ define hostenv-prepare
        git diff >> $(HOSTENV_FILE).txt
        $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
 
+       $(ECHO) "$$ diff -u boards/${BOARD}/def_config .config" >> $(HOSTENV_FILE).txt
+       diff -u boards/${BOARD}/def_config .config >> $(HOSTENV_FILE).txt
+       $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
+
        $(ECHO) "$(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv $(HOSTENV_FILE).txt $(HOSTENV_FILE).o"
        $(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv $(HOSTENV_FILE).txt $(HOSTENV_FILE).o
        $(NM) -n $(HOSTENV_FILE).o

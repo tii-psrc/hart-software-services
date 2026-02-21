@@ -5,7 +5,7 @@ MEMORY
     envm (rx) : ORIGIN = 0x20220100, LENGTH = (128k-256)
     dtim (rwx) : ORIGIN = 0x01000000, LENGTH = 7k
     switch_code (rx) : ORIGIN = 0x01001c00, LENGTH = 1k
-    e51_itim (rwx) : ORIGIN = 0x01800000, LENGTH = 28k
+    e51_itim (rwx) : ORIGIN = 0x01800000, LENGTH = 8k
     u54_1_itim (rwx) : ORIGIN = 0x01808000, LENGTH = 28k
     u54_2_itim (rwx) : ORIGIN = 0x01810000, LENGTH = 28k
     u54_3_itim (rwx) : ORIGIN = 0x01818000, LENGTH = 28k

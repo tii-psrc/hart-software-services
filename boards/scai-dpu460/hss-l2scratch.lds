@@ -96,7 +96,7 @@ MEMORY
     dtim (rwx)         : ORIGIN = 0x01000000, LENGTH = 7k /* DTIM */
     switch_code (rx)   : ORIGIN = 0x01001c00, LENGTH = 1k /* This 1K of DTIM is used to run code
                                                            * when switching the envm clock */
-    e51_itim (rwx)     : ORIGIN = 0x01800000, LENGTH = 28k
+    e51_itim (rwx)     : ORIGIN = 0x01800000, LENGTH = 8k
     u54_1_itim (rwx)   : ORIGIN = 0x01808000, LENGTH = 28k
     u54_2_itim (rwx)   : ORIGIN = 0x01810000, LENGTH = 28k
     u54_3_itim (rwx)   : ORIGIN = 0x01818000, LENGTH = 28k

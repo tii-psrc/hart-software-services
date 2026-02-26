@@ -54,7 +54,7 @@
 </tr>
 <tr>
  <td>Date</td>
- <td>Wed Oct 29 11:51:35 2025
+ <td>Thu Feb 26 11:12:36 2026
 </td>
 </tr>
 </table>
@@ -143,11 +143,11 @@
 </tr>
 <tr>
  <td>MMUART_1</td>
- <td>MSSIO_B4</td>
+ <td>FABRIC</td>
 </tr>
 <tr>
  <td>MMUART_2</td>
- <td>MSSIO_B2</td>
+ <td>FABRIC</td>
 </tr>
 <tr>
  <td>MMUART_3</td>
@@ -538,6 +538,14 @@
  <td>INPUT</td>
 </tr>
 <tr>
+ <td>MMUART_1_RXD_F2M</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>MMUART_2_RXD_F2M</td>
+ <td>INPUT</td>
+</tr>
+<tr>
  <td>MSS_RESET_N_F2M</td>
  <td>INPUT</td>
 </tr>
@@ -678,6 +686,18 @@
  <td>OUTPUT</td>
 </tr>
 <tr>
+ <td>MMUART_1_TXD_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>MMUART_1_TXD_OE_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>MMUART_2_TXD_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
  <td>PLL_CPU_LOCK_M2F</td>
  <td>OUTPUT</td>
 </tr>
@@ -695,22 +715,6 @@
 </tr>
 <tr>
  <td>MMUART_0_TXD</td>
- <td>OUTPUT</td>
-</tr>
-<tr>
- <td>MMUART_1_RXD</td>
- <td>INPUT</td>
-</tr>
-<tr>
- <td>MMUART_1_TXD</td>
- <td>OUTPUT</td>
-</tr>
-<tr>
- <td>MMUART_2_RXD</td>
- <td>INPUT</td>
-</tr>
-<tr>
- <td>MMUART_2_TXD</td>
  <td>OUTPUT</td>
 </tr>
 <tr>
@@ -1024,63 +1028,11 @@
  <td>OFF</td>
 </tr>
 <tr>
- <td>MMUART_1_RXD</td>
- <td>MSSIO11</td>
- <td>Y11</td>
- <td>INPUT</td>
- <td>UP</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>--</td>
- <td>--</td>
-</tr>
-<tr>
- <td>MMUART_1_TXD</td>
- <td>MSSIO12</td>
- <td>AA12</td>
- <td>OUTPUT</td>
- <td>UP</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
- <td>OFF</td>
-</tr>
-<tr>
  <td>GPIO_0_13_OUT</td>
  <td>MSSIO13</td>
  <td>Y12</td>
  <td>OUTPUT</td>
  <td>DOWN</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
- <td>OFF</td>
-</tr>
-<tr>
- <td>MMUART_2_RXD</td>
- <td>MSSIO21</td>
- <td>U7</td>
- <td>INPUT</td>
- <td>UP</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>OFF</td>
- <td>--</td>
- <td>--</td>
-</tr>
-<tr>
- <td>MMUART_2_TXD</td>
- <td>MSSIO22</td>
- <td>U6</td>
- <td>OUTPUT</td>
- <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
  <td>--</td>
@@ -1312,322 +1264,322 @@
  <td>DQ[0]</td>
  <td>AF8</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[1]</td>
  <td>AF7</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[2]</td>
  <td>AE8</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[3]</td>
  <td>AE7</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[4]</td>
  <td>AH7</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[5]</td>
  <td>AH8</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[6]</td>
  <td>AF5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[7]</td>
  <td>AF4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[8]</td>
  <td>AF3</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[9]</td>
  <td>AF2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[10]</td>
  <td>AE2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[11]</td>
  <td>AE1</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[12]</td>
  <td>AG1</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[13]</td>
  <td>AH1</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[14]</td>
  <td>AH3</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[15]</td>
  <td>AJ3</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[16]</td>
  <td>AJ6</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[17]</td>
  <td>AG5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[18]</td>
  <td>AH6</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[19]</td>
  <td>AH4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[20]</td>
  <td>AG6</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[21]</td>
  <td>AG4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[22]</td>
  <td>AK5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[23]</td>
  <td>AL5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[24]</td>
  <td>AK3</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[25]</td>
  <td>AL3</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[26]</td>
  <td>AK2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[27]</td>
  <td>AK1</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[28]</td>
  <td>AL2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[29]</td>
  <td>AM1</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[30]</td>
  <td>AM2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ[31]</td>
  <td>AN2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ_ECC[0]</td>
  <td>AE10</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ_ECC[1]</td>
  <td>AE11</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ_ECC[2]</td>
  <td>AG10</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQ_ECC[3]</td>
  <td>AF10</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS[0]</td>
  <td>AE6</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS[1]</td>
  <td>AG2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS[2]</td>
  <td>AJ4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS[3]</td>
  <td>AL4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_N[0]</td>
  <td>AE5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_N[1]</td>
  <td>AH2</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_N[2]</td>
  <td>AJ5</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_N[3]</td>
  <td>AM4</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_ECC</td>
  <td>AG9</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>
  <td>DQS_ECC_N</td>
  <td>AF9</td>
  <td>INOUT</td>
- <td>120</td>
+ <td>60</td>
  <td>48</td>
 </tr>
 <tr>

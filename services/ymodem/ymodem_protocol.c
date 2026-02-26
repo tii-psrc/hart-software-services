@@ -73,7 +73,7 @@ enum XYModem_Signals {
 
 /***************************************************************************/
 
-mss_uart_instance_t *g_my_uart = &g_mss_uart2_lo;
+mss_uart_instance_t *g_my_uart = NULL;
 
 static int16_t getchar_with_timeout_(int32_t timeout_sec)
 {
@@ -454,9 +454,12 @@ size_t ymodem_receive(uint8_t *buffer, size_t bufferSize)
     struct XYModem_State state = { 0 };
     memset(state.filename, 0, HSS_XYMODEM_MAX_FILENAME_LENGTH);
 
+    g_my_uart = HSS_UART_GetInstance(HSS_HART_E51);
 #if IS_ENABLED(CONFIG_SERVICE_WDOG)
     HSS_Wdog_E51_Tickle();
 #endif
+
+    HSS_UART_enter_ymodem(g_my_uart);
 
     result = XYMODEM_Receive(HSS_XYMODEM_PROTOCOL_YMODEM, &state, (char *)buffer, bufferSize);
 
@@ -467,6 +470,8 @@ size_t ymodem_receive(uint8_t *buffer, size_t bufferSize)
         //mHSS_PRINTF("\n\nExpected %lu bytes in %lu packets (%lu NAKs)\n", state.expectedSize,
         //    state.numReceivedPackets, state.numNAKs);
     }
+
+    HSS_UART_exit_ymodem(g_my_uart);
 
     return result;
 }

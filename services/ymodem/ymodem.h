@@ -36,6 +36,8 @@ extern "C" {
 size_t ymodem_receive(uint8_t *buffer, size_t bufferSize);
 void flush_ymodem_footer(void);
 
+void HSS_UART_enter_ymodem(void *this_uart);
+void HSS_UART_exit_ymodem(void *this_uart);
 #ifdef __cplusplus
 }
 #endif

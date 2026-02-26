@@ -175,7 +175,7 @@ bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer)
 #endif
 
 #include <stdlib.h>
-#define HEADROOM_SZ 0x20000000
+#define HEADROOM_SZ 0x10000000
 volatile int malloc_count = 0;
 void *malloc(size_t size)
 {

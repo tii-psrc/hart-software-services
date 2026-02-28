@@ -188,8 +188,11 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
             //
 
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
+#if 0
+            scrub_dump_stats();
             (void)HSS_DDRPrintL2CacheWaysConfig();
             (void)HSS_DDRPrintL2CacheWayMasks();
+#endif
 #endif
 
             unsigned int l2_cache_ways = LIBERO_SETTING_WAY_ENABLE - LIBERO_SETTING_NUM_SCRATCH_PAD_WAYS + 1;
@@ -218,8 +221,11 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
             mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Restore] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 
+#if 0
+            scrub_dump_stats();
             (void)HSS_DDRPrintL2CacheWaysConfig();
             (void)HSS_DDRPrintL2CacheWayMasks();
+#endif
 #endif
 
             last_peer = HSS_HART_U54_1;

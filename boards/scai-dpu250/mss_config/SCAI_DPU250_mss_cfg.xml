@@ -1,10 +1,10 @@
   <mss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpfs_hw_description.xsd">
     <design_information>
-      <libero_version>2024.2</libero_version>
+      <libero_version>2025.1</libero_version>
       <design_name>SCAI_DPU250</design_name>
       <mpfs_part_no>MPFS250T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>10-24-2025_11:38:50</creation_date_time>
+      <creation_date_time>03-01-2026_15:17:38</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -2548,12 +2548,12 @@
       <segs>
         <registers>
           <register address="0x00000000" description="Cached access at 0x00_8000_0000 (-0x80+0x00) " name="SEG0_0">
-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7F80</field>
+            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7F84</field>
             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>
           <register address="0x00000004" description="Cached access at 0x10_0000_000" name="SEG0_1">
-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7000</field>
+            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7024</field>
             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>
@@ -2603,7 +2603,7 @@
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>
           <register address="0x00000012" description="Non-Cached access at 0x14_0000_0000" name="SEG1_3">
-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6C00</field>
+            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6C70</field>
             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>
@@ -2613,7 +2613,7 @@
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>
           <register address="0x00000020" description="Non-Cached WCB  0x18_0000_0000" name="SEG1_5">
-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6800</field>
+            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6870</field>
             <field Type="RW" name="RESERVED" offset="15" width="6">0x0</field>
             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
           </register>

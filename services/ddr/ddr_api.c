@@ -29,10 +29,19 @@
 #include "csr_helper.h"
 #include <assert.h>
 
+#if 1
 extern const uint64_t __ddr_start;
 extern const uint64_t __ddr_end;
+//extern const uint64_t __ddrhi_start;
 extern const uint64_t __ddrhi_startAddr;
 extern const uint64_t __ddrhi_end;
+//extern const uint64_t __ncddr_start;
+extern const uint64_t __ncddr_startAddr;
+extern const uint64_t __ncddr_end;
+extern const uint64_t __ncddrhi_start;
+extern const uint64_t __ncddrhi_startAddr;
+extern const uint64_t __ncddrhi_end;
+#endif
 
 /////////////////
 
@@ -54,22 +63,35 @@ extern const uint64_t __ddrhi_end;
 // location and use this size in our C code
 //
 
-
 asm("	.globl __ddr_size\n"
     "	.type __ddr_size, @object\n"
     "	.globl __ddrhi_size\n"
     "	.type __ddrhi_size, @object\n"
-    "	.globl __ddrhi_size\n"
-    "	.type __ddrhi_size, @object\n"
+    "	.globl __ncddr_size\n"
+    "	.type __ncddr_size, @object\n"
+    "	.globl __ncddrhi_size\n"
+    "	.type __ncddrhi_size, @object\n"
     "	.globl __ddrhi_startAddr\n"
     "	.type __ddrhi_startAddr, @object\n"
+    "	.globl __ncddr_startAddr\n"
+    "	.type __ncddr_startAddr, @object\n"
+    "	.globl __ncddrhi_startAddr\n"
+    "	.type __ncddrhi_startAddr, @object\n"
     "	.align 3\n"
     "__ddr_size: .quad (__ddr_end-__ddr_start)\n"
-    "__ddrhi_startAddr: .quad(__ddrhi_start)\n"
     "__ddrhi_size: .quad (__ddrhi_end-__ddrhi_start)\n"
+    "__ncddr_size: .quad (__ncddr_end-__ncddr_start)\n"
+    "__ncddrhi_size: .quad (__ncddrhi_end-__ncddrhi_start)\n"
+		"__ddrhi_startAddr: .quad(__ddrhi_start)\n"
+		"__ncddr_startAddr: .quad(__ncddr_start)\n"
+		"__ncddrhi_startAddr: .quad(__ncddrhi_start)\n"
 );
+#if 1
 extern const size_t __ddr_size;
 extern const size_t __ddrhi_size;
+extern const size_t __ncddr_size;
+extern const size_t __ncddrhi_size;
+#endif
 
 size_t HSS_DDR_GetSize(void)
 {
@@ -81,6 +103,16 @@ size_t HSS_DDRHi_GetSize(void)
     return __ddrhi_size;
 }
 
+size_t HSS_ncDDR_GetSize(void)
+{
+    return __ncddr_size;
+}
+
+size_t HSS_ncDDRHi_GetSize(void)
+{
+    return __ncddrhi_size;
+}
+
 uintptr_t HSS_DDR_GetStart(void)
 {
     return (uintptr_t)&__ddr_start;
@@ -90,6 +122,17 @@ uintptr_t HSS_DDRHi_GetStart(void)
 {
     return (uintptr_t)__ddrhi_startAddr;
 }
+
+uintptr_t HSS_ncDDR_GetStart(void)
+{
+    return (uintptr_t)__ncddr_startAddr;
+}
+
+uintptr_t HSS_ncDDRHi_GetStart(void)
+{
+    return (uintptr_t)__ncddrhi_startAddr;
+}
+
 
 void HSS_DDR_Train(void)
 {

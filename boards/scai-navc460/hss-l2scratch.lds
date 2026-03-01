@@ -103,9 +103,10 @@ MEMORY
     u54_4_itim (rwx)   : ORIGIN = 0x01820000, LENGTH = 28k
     l2lim (rwx)        : ORIGIN = 0x08000000, LENGTH = 512k
     l2zerodevice (rwx) : ORIGIN = 0x0A000000, LENGTH = 512k
-    ddr (rwx)          : ORIGIN = 0x80000000, LENGTH = 32m
-    ddrhi (rwx)        : ORIGIN = 0x1000000000, LENGTH = 1888m
-    ncddrhi (rwx)      : ORIGIN = 0x1400000000, LENGTH = 2048m
+    ddr (rwx)          : ORIGIN = 0x80000000, LENGTH = 512m
+    ncddr (rwx)        : ORIGIN = 0xC0000000, LENGTH = 64m
+    ddrhi (rwx)        : ORIGIN = 0x1000000000, LENGTH = 1216m
+    ncddrhi (rwx)      : ORIGIN = 0x1400000000, LENGTH = 256m
 }
 
 PROVIDE(HEAP_SIZE = 0k);
@@ -129,9 +130,12 @@ SECTIONS
     PROVIDE(__ddr_start        = ORIGIN(ddr));
     PROVIDE(__ddr_end          = ORIGIN(ddr) + LENGTH(ddr));
 
+    PROVIDE(__ncddr_start      = ORIGIN(ncddr));
+    PROVIDE(__ncddr_end        = ORIGIN(ncddr) + LENGTH(ncddr));
+
     PROVIDE(__ddrhi_start      = ORIGIN(ddrhi));
     PROVIDE(__ddrhi_end        = ORIGIN(ddrhi) + LENGTH(ddrhi));
-    PROVIDE(__ddrhi_max_end    = ORIGIN(ddrhi) + LENGTH(ncddrhi));
+    PROVIDE(__ddrhi_max_end    = ORIGIN(ddrhi) + LENGTH(ddrhi));
 
     PROVIDE(__ncddrhi_start    = ORIGIN(ncddrhi));
     PROVIDE(__ncddrhi_end      = ORIGIN(ncddrhi) + LENGTH(ncddrhi));

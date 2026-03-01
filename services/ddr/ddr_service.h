@@ -47,6 +47,11 @@ size_t HSS_DDR_GetSize(void);
 uintptr_t HSS_DDR_GetStart(void);
 size_t HSS_DDRHi_GetSize(void);
 uintptr_t HSS_DDRHi_GetStart(void);
+size_t HSS_ncDDR_GetSize(void);
+uintptr_t HSS_ncDDR_GetStart(void);
+size_t HSS_ncDDRHi_GetSize(void);
+uintptr_t HSS_ncDDRHi_GetStart(void);
+
 void HSS_DDR_Train(void);
 bool HSS_DDR_IsAddrInDDR(uintptr_t addr);
 

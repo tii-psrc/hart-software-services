@@ -222,12 +222,14 @@ extern void clear_bootup_cache_ways(void);
 bool HSS_MemTestDDRFast(void)
 {
     bool result = true;
-
-    mHSS_FANCY_PRINTF(LOG_NORMAL, "DDR-Lo size is % 4lu MiB\n",
-        (uint32_t)(HSS_DDR_GetSize()/mMiB_IN_BYTES));
-
     static int perf_ctr_index_mem32 = PERF_CTR_UNINITIALIZED;
     static int perf_ctr_index_mem64 = PERF_CTR_UNINITIALIZED;
+    static int perf_ctr_index_ncmem32 = PERF_CTR_UNINITIALIZED;
+    static int perf_ctr_index_ncmem64 = PERF_CTR_UNINITIALIZED;
+
+    mHSS_FANCY_PRINTF(LOG_NORMAL, "DDR-Lo size is % 4lu MiB from 0x%p\n",
+        (uint32_t)(HSS_DDR_GetSize()/mMiB_IN_BYTES), (uint64_t *)HSS_DDR_GetStart());
+
     HSS_PerfCtr_Allocate(&perf_ctr_index_mem32, "MemTest(DDR32)");
     if ((HSS_MemTestDataBus((uint64_t *)HSS_DDR_GetStart()) != 0u)
             || (HSS_MemTestAddressBus((uint64_t *)HSS_DDR_GetStart(), HSS_DDR_GetSize()) != NULL)) {
@@ -235,8 +237,8 @@ bool HSS_MemTestDDRFast(void)
     }
     HSS_PerfCtr_Lap(perf_ctr_index_mem32);
 
-    mHSS_FANCY_PRINTF(LOG_NORMAL, "DDR-Hi size is % 4lu MiB\n",
-        (uint32_t)(HSS_DDRHi_GetSize()/mMiB_IN_BYTES));
+    mHSS_FANCY_PRINTF(LOG_NORMAL, "DDR-Hi size is % 4lu MiB from 0x%p\n",
+        (uint32_t)(HSS_DDRHi_GetSize()/mMiB_IN_BYTES), (uint64_t *)HSS_DDRHi_GetStart());
 
     HSS_PerfCtr_Allocate(&perf_ctr_index_mem64, "MemTest(DDR64)");
     if ((HSS_MemTestDataBus((uint64_t *)HSS_DDRHi_GetStart()) != 0u)
@@ -244,6 +246,26 @@ bool HSS_MemTestDDRFast(void)
         result = false;
     }
     HSS_PerfCtr_Lap(perf_ctr_index_mem64);
+
+    mHSS_FANCY_PRINTF(LOG_NORMAL, "Non-cached DDR-Lo size is % 4lu MiB from 0x%p\n",
+        (uint32_t)(HSS_ncDDR_GetSize()/mMiB_IN_BYTES), (uint64_t *)HSS_ncDDR_GetStart());
+
+    HSS_PerfCtr_Allocate(&perf_ctr_index_ncmem32, "MemTest(Non-cached DDR32)");
+    if ((HSS_MemTestDataBus((uint64_t *)HSS_ncDDR_GetStart()) != 0u)
+            || (HSS_MemTestAddressBus((uint64_t *)HSS_ncDDR_GetStart(), HSS_ncDDR_GetSize()) != NULL)) {
+        result = false;
+    }
+    HSS_PerfCtr_Lap(perf_ctr_index_ncmem32);
+
+    mHSS_FANCY_PRINTF(LOG_NORMAL, "Non-cached DDR-Hi size is % 4lu MiB from 0x%p\n",
+        (uint32_t)(HSS_ncDDRHi_GetSize()/mMiB_IN_BYTES), (uint64_t *)HSS_ncDDRHi_GetStart());
+
+    HSS_PerfCtr_Allocate(&perf_ctr_index_ncmem64, "MemTest(Non-cached DDR64)");
+    if ((HSS_MemTestDataBus((uint64_t *)HSS_ncDDRHi_GetStart()) != 0u)
+            || (HSS_MemTestAddressBus((uint64_t *)HSS_ncDDRHi_GetStart(), HSS_ncDDRHi_GetSize()) != NULL)) {
+        result = false;
+    }
+    HSS_PerfCtr_Lap(perf_ctr_index_ncmem64);
 
     clear_bootup_cache_ways();
 

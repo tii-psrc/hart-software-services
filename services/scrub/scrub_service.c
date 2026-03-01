@@ -115,14 +115,15 @@ const struct {
     { (uintptr_t)&__ddrhi_start,         (uintptr_t)&__ddrhi_end,      false },
 #  endif
 #  if IS_ENABLED(CONFIG_SERVICE_SCRUB_NONCACHE_DDDR)
-    //{ (uintptr_t)&__ncddrhi_start,       (uintptr_t)&__ncddrhi_end,    false },
+    { (uintptr_t)&__ncddr_start,       (uintptr_t)&__ncddr_end,    false },
+    { (uintptr_t)&__ncddrhi_start,       (uintptr_t)&__ncddrhi_end,    false },
 #  endif
 #endif
-    //{ (uintptr_t)&__e51itim_start,       (uintptr_t)&__e51itim_end,    false },
-    //{ (uintptr_t)&__u54_1_itim_start,    (uintptr_t)&__u54_1_itim_end, false },
-    //{ (uintptr_t)&__u54_2_itim_start,    (uintptr_t)&__u54_2_itim_end, false },
-    //{ (uintptr_t)&__u54_3_itim_start,    (uintptr_t)&__u54_3_itim_end, false },
-    //{ (uintptr_t)&__u54_4_itim_start,    (uintptr_t)&__u54_4_itim_end, false },
+    { (uintptr_t)&__e51itim_start,       (uintptr_t)&__e51itim_end,    false },
+    { (uintptr_t)&__u54_1_itim_start,    (uintptr_t)&__u54_1_itim_end, false },
+    { (uintptr_t)&__u54_2_itim_start,    (uintptr_t)&__u54_2_itim_end, false },
+    { (uintptr_t)&__u54_3_itim_start,    (uintptr_t)&__u54_3_itim_end, false },
+    { (uintptr_t)&__u54_4_itim_start,    (uintptr_t)&__u54_4_itim_end, false },
 };
 
 static uintptr_t offset = 0u;
@@ -138,7 +139,7 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
         if (!entryCount) {
             if ((rams[idx].baseAddr + offset)  >= rams[idx].endAddr) {
                 idx = (idx + 1u) % ARRAY_SIZE(rams);
-                // mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
                 offset = 0u;
             }
 

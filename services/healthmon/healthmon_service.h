@@ -62,8 +62,8 @@ struct HealthMonitor
     char const * const pName;
     uintptr_t pAddr;
     enum HealthMon_CheckType checkType;
-    uint32_t maxValue;
-    uint32_t minValue;
+    uint64_t maxValue;
+    uint64_t minValue;
     uint8_t shift; // shift applied first...
     uint64_t mask; // then mask
     void (*triggerCallback)(uintptr_t pAddr);

@@ -106,9 +106,12 @@ static void healthmon_monitoring_handler(struct StateMachine * const pMyMachine)
     {
         for (size_t i = 0u; i < monitors_array_size; i++) {
             if (HSS_Timer_IsElapsed(monitor_status[i].throttle_startTime, monitors[i].throttleScale * ONE_SEC)) {
-                uint32_t value = *(uint32_t volatile *)(monitors[i].pAddr);
+                uint64_t value = 0;
                 enum HealthMon_CheckType checkType = monitors[i].checkType;
                 bool triggered = false;
+
+                if (monitors[i].mask > 0xFFFFFFFFu) { value = *(uint64_t volatile *)(monitors[i].pAddr); }
+                else { value = *(uint32_t volatile *)(monitors[i].pAddr); }
 
                 if (monitors[i].shift) { value = value >> monitors[i].shift; }
                 if (monitors[i].mask) { value = value & monitors[i].mask; }
@@ -224,9 +227,12 @@ void HSS_Health_DumpStats(void)
         }
 
         if (tmp_buffer[0]) {
+            uint64_t value = 0;
+            if (monitors[i].mask <= 0xFFFFFFFFu) { value = *(uint32_t volatile *)(monitors[i].pAddr); }
+            else { value = *(uint64_t volatile *)(monitors[i].pAddr); }
             // we have an entry with a valid checkType
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "% 60s: %" PRIu64 "\n",
-                tmp_buffer, monitor_status[i].count);
+            mHSS_DEBUG_PRINTF(LOG_NORMAL, "% 60s: %" PRIu64 ", addr(0x%08p):value:0x%016X \n",
+                tmp_buffer, monitor_status[i].count ,monitors[i].pAddr, value);
         }
     }
 }

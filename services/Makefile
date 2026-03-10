@@ -49,3 +49,6 @@ include services/uart/Makefile
 include services/usbdmsc/Makefile
 include services/wdog/Makefile
 include services/ymodem/Makefile
+include services/telemetry/Makefile
+
+

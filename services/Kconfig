@@ -22,5 +22,6 @@ source "services/uart/Kconfig"
 source "services/usbdmsc/Kconfig"
 source "services/wdog/Kconfig"
 source "services/ymodem/Kconfig"
+source "services/telemetry/Kconfig"
 
 endmenu

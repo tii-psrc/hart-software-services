@@ -118,6 +118,9 @@ $(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_direct.o: CFLAGS=$(CFLAGS
 endif
 
 
+EXTRA_SRCS-$(CONFIG_SERVICE_TELEMETRY) += \
+        $(BOARD_DIR)/adcs.c
+
 
 ################################################################################################
 #

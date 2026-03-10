@@ -1,0 +1,18 @@
+config SERVICE_TELEMETRY
+	bool "Telemerty Service support"
+	default n
+	help
+		This feature enables support for telemetry monitoring.
+		If you do not know what to do here, say Y.
+
+menu "Telemetry Service"
+	visible if SERVICE_TELEMETRY
+
+config SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC
+	int "Time delay for debug output (seconds)"
+	default 30
+	depends on SERVICE_TELEMETRY
+	help
+		Timeout for periodic monitoring of telemetry.
+
+endmenu

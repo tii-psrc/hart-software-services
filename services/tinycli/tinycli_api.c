@@ -75,6 +75,10 @@
 #  include "hss_clock.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+#include "telemetry_service.h"
+#endif
+
 #define mMAX_NUM_TOKENS 40
 static size_t argc_tokenCount = 0u;
 static char *argv_tokenArray[mMAX_NUM_TOKENS];
@@ -182,6 +186,9 @@ static void tinyCLI_PerfCtrs_(void);
 #if IS_ENABLED(CONFIG_DEBUG_PROFILING_SUPPORT)
 static void tinyCLI_ProfileCtrs_(void);
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+static void tinyCLI_TM_(void);
+#endif
 static void tinyCLI_OpenSBI_(void);
 static void tinyCLI_Seg_(void);
 static void tinyCLI_L2Cache_(void);
@@ -221,6 +228,7 @@ enum CmdId {
     CMD_DBG_L2CACHE,
     CMD_DBG_PERFCTR,
     CMD_DBG_WDOG,
+    CMD_DBG_TM,
 
     CMD_DBG_MONITOR_CREATE,
     CMD_DBG_MONITOR_DESTROY,
@@ -281,6 +289,9 @@ static const struct tinycli_cmd debugCmds[] = {
 #endif
 #if IS_ENABLED(CONFIG_SERVICE_WDOG)
     { CMD_DBG_WDOG ,    "WDOG",    "display watchdog statistics", HSS_Wdog_DumpStats },
+#endif
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+    { CMD_DBG_TM,      "TM",     "debug Telemetry monitor", tinyCLI_TM_ },
 #endif
 };
 
@@ -575,6 +586,13 @@ static void tinyCLI_IPIDumpStats_(void)
 {
     IPI_DebugDumpStats();
 }
+
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+static void tinyCLI_TM_(void)
+{
+    tm_monitoring_print();
+}
+#endif
 
 static void tinyCLI_Debug_(void)
 {

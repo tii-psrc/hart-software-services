@@ -125,6 +125,13 @@ CONFIG_SERVICE_WDOG_ENABLE_E51=y
 # end of Watchdog Service
 
 CONFIG_SERVICE_YMODEM=y
+CONFIG_SERVICE_TELEMETRY=y
+
+#
+# Telemetry Service
+#
+CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC=30
+# end of Telemetry Service
 # end of Services
 
 #

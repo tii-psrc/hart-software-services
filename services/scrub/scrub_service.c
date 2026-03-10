@@ -139,7 +139,7 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
         if (!entryCount) {
             if ((rams[idx].baseAddr + offset)  >= rams[idx].endAddr) {
                 idx = (idx + 1u) % ARRAY_SIZE(rams);
-                mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
+                //mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
                 offset = 0u;
             }
 

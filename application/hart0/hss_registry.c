@@ -93,6 +93,10 @@
 #  include "lockdown_service.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+#include "telemetry_service.h"
+#endif
+
 #include "startup_service.h"
 
 #include "hss_debug.h"
@@ -259,6 +263,9 @@ struct StateMachine /*@null@*/ * const pGlobalStateMachines[] = {
 #endif
 #if IS_ENABLED(CONFIG_SERVICE_LOCKDOWN)
     &lockdown_service,
+#endif
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+    &tm_service,
 #endif
     &startup_service,
 };

@@ -203,11 +203,11 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
             for (wayMaskN = 0; wayMaskN < l2_cache_ways; wayMaskN++) {
                 // disable evictions from all but WayMaskN
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
-               mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+               //mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 #endif
                __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, (1 << wayMaskN), __ATOMIC_RELAXED);
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
-               mHSS_DEBUG_PRINTF(LOG_NORMAL, "[After] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+               //mHSS_DEBUG_PRINTF(LOG_NORMAL, "[After] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 #endif
 
                 // read 2MiB/16 from L2 zero device
@@ -215,12 +215,12 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
             }
 
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before ] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+            //mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before ] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 #endif
             // restore WayMask values...
             __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, e51_dcache_config, __ATOMIC_RELAXED);
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
-            mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Restore] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+            //mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Restore] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 
 #if 0
             scrub_dump_stats();

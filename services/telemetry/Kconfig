@@ -10,7 +10,7 @@ menu "Telemetry Service"
 
 config SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC
 	int "Time delay for debug output (seconds)"
-	default 30
+	default 0
 	depends on SERVICE_TELEMETRY
 	help
 		Timeout for periodic monitoring of telemetry.

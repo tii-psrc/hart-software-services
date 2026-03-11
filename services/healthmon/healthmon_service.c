@@ -28,7 +28,7 @@
 
 #include "mss_hart_ints.h"
 
-extern int sbi_snprintf(char *out, u32 out_sz, const char *format, ...);
+//extern int sbi_snprintf(char *out, u32 out_sz, const char *format, ...);
 
 static void healthmon_init_handler(struct StateMachine * const pMyMachine);
 static void healthmon_monitoring_handler(struct StateMachine * const pMyMachine);

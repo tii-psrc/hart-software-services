@@ -12,9 +12,7 @@
 
 #include "hss_state_machine.h"
 #include "hss_clock.h"
-
-#undef mHSS_DEBUG_PRINTF
-#define mHSS_DEBUG_PRINTF(level, ...) sbi_printf(__VA_ARGS__)
+#include "uart_helper.h"
 
 static HSSTicks_t tm_ticks = 0;
 
@@ -62,8 +60,7 @@ static void format_telemetry(uint32_t data, char *ptr)
 	i = data/1000000;
 	j = (data - i*1000000)/1000;
 
-//  sbi_sprintf(buf, " " __VA_ARGS__);
-	sbi_sprintf(ptr, "%d.%03d", i, j);
+	sbi_snprintf(ptr, sizeof(ptr), "%d.%03d", i, j);
 }
 
 static void format_tel_line(const char *format, uint32_t d1, uint32_t d2)
@@ -75,7 +72,7 @@ static void format_tel_line(const char *format, uint32_t d1, uint32_t d2)
 	format_telemetry(d1, ptr1);
 	format_telemetry(d2, ptr2);
 	format_telemetry(power, ptr3);
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, format, ptr1, ptr2, ptr3);
+	custom_uart_printf(HSS_HART_E51, format, ptr1, ptr2, ptr3);
 }
 
 static void format_tel_line1(const char *format, uint32_t d1)
@@ -83,17 +80,18 @@ static void format_tel_line1(const char *format, uint32_t d1)
 	char ptr1[16];
 
 	format_telemetry(d1, ptr1);
-	mHSS_DEBUG_PRINTF(LOG_NORMAL,format, ptr1);
+	custom_uart_printf(HSS_HART_E51, format, ptr1);
 }
 
 void tm_monitoring_print(void)
 {
 	uint32_t adc[24];
 
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\n");
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTelemetry test\r\n\r\n");
+	custom_uart_printf(HSS_HART_E51, "\r\n");
+	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTelemetry\r\n");
 
 	get_adc_telemetry(adc);
+	custom_uart_printf(HSS_HART_E51, "\r\n");
 
 	format_tel_line ("Input voltage     => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[6], adc[14]);
 	format_tel_line ("1.0V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[1], adc[0]);
@@ -115,7 +113,7 @@ void tm_monitoring_print(void)
 	format_tel_line1("Voltage Cams Telem=> Voltage : %sV\r\n", adc[23]);
 	format_tel_line1("Reference Voltage => ADC_TEL : %sV\r\n", adc[20]);
 
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nSanity check (Digital Status Signals):");
+	custom_uart_printf(HSS_HART_E51, "\r\nSanity check (Digital Status Signals):");
 	format_sanity("\r\n    1.0V:          => PGOOD   : %s - IMON: %s", F15_CTRL_PGOOD0, G15_CTRL_nIFLT0);
 	format_sanity("\r\n    1.2V:          => PGOOD   : %s - IMON: %s", J18_CTRL_PGOOD1, H18_CTRL_nIFLT1);
 	format_sanity("\r\n    1.8V:          => PGOOD   : %s - IMON: %s", E13_CTRL_PGOOD4, F14_CTRL_nIFLT4);
@@ -125,7 +123,7 @@ void tm_monitoring_print(void)
 	format_sanity_vtt("Fabric DDR VTT", E16_FVTT_ENA, C13_CTRL_PGOOD7);
 #endif
 
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\n");
+	custom_uart_printf(HSS_HART_E51, "\r\n");
 }
 
 static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
@@ -135,7 +133,7 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 	HSSTicks_t ticks = HSS_GetTime();
 	size_t msecs = ((ticks - tm_ticks) + (TICKS_PER_MILLISEC / 2)) / TICKS_PER_MILLISEC;
 
-	if (msecs > CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC*1000) {
+	if (CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC && msecs > CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC*1000) {
 		tm_monitoring_print();
 		tm_ticks = HSS_GetTime();
 	}

@@ -626,11 +626,13 @@ void HSS_BootSelectSPI(void)
 
 #if IS_ENABLED(CONFIG_SERVICE_BOOT) && IS_ENABLED(CONFIG_SERVICE_YMODEM)
 
+#if 0
 #define custom_uart_printf(hartid, ...) do {  \
   char buf[1024]; \
   sbi_sprintf(buf, " " __VA_ARGS__); \
   uart_putstring(hartid, buf); \
 } while (0)
+#endif
 
 static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const pBootImage)
 {

@@ -15,6 +15,8 @@
 #include "hss_debug.h"
 #include "hss_clock.h"
 
+#include "uart_helper.h"
+
 #undef DPU_BOARD
 
 #define APB_BASE_ADDRESS                0x40000000UL
@@ -211,36 +213,36 @@ static void get_adc0_telemetry(uint16_t *adc, uint32_t *d)
 	uint64_t aux = 0;
 
 	//Channel 0: P_1V0.IMON in micro Amperes
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 0 : %04d - %d", adc[0], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 0 : %04d - %d", adc[0], aux);
 	aux = 2500000ULL *(uint64_t)adc[0] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
 	d[0] = (int32_t)aux;
 
 	//Channel 1: P_1V0.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[1] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 1 : %04d - %d", adc[1], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 1 : %04d - %d", adc[1], aux);
 	d[1] = (int32_t)aux;
 
 	//Channel 2: P_1V2.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[2] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 2 : %04d - %d", adc[2], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 2 : %04d - %d", adc[2], aux);
 	d[2] = (int32_t)aux;
 	//Channel 3: P_1V2.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[3] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 3 : %04d - %d", adc[3], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 3 : %04d - %d", adc[3], aux);
 	d[3] = (int32_t)aux;
 	//Channel 4: P_1V8.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[4] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 4 : %04d - %d", adc[4], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 4 : %04d - %d", adc[4], aux);
 	d[4] = (int32_t)aux;
 	//Channel 5: P_1V8.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[5] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 5 : %04d - %d", adc[5], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 5 : %04d - %d", adc[5], aux);
 	d[5] = (int32_t)aux;
 	//Channel 6: PWR__5V.5V0 in micro Volts
 	aux = 5000000ULL *(uint64_t)adc[6] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 6 : %04d - %d", adc[6], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 6 : %04d - %d", adc[6], aux);
 	d[6] = (int32_t)aux;
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 7 : %04d", adc[7]);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 7 : %04d", adc[7]);
 	//Channel 7: Vref in micro Volts
 	d[7] = (int32_t)2500000;
 }
@@ -251,32 +253,32 @@ static void get_adc1_telemetry(uint16_t *adc, uint32_t *d)
 
 	//Channel 0: P_2V5.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[0] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 10 : %04d - %d", adc[0], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 10 : %04d - %d", adc[0], aux);
 	d[0] = (int32_t)aux;
 
 	//Channel 1: P_2V5.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[1] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 11 : %04d - %d", adc[1], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 11 : %04d - %d", adc[1], aux);
 	d[1] = (int32_t)aux;
 
 	//Channel 2: P_3V3.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[2] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 12 : %04d - %d", adc[2], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 12 : %04d - %d", adc[2], aux);
 	d[2] = (int32_t)aux;
 
 	//Channel 3: P_3V3.Vout in micro Volts
 	aux = 5000000ULL *(uint64_t)adc[3] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 13 : %04d - %d", adc[3], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 13 : %04d - %d", adc[3], aux);
 	d[3] = (int32_t)aux;
 
 	//Channel 4: FVTT.VTT in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[4] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 14 : %04d - %d", adc[4], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 14 : %04d - %d", adc[4], aux);
 	d[4] = (int32_t)aux;
 
 	//Channel 5: SVTT.VTT in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[5] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 15 : %04d - %d", adc[5], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 15 : %04d - %d", adc[5], aux);
 	d[5] = (int32_t)aux;
 
 #if defined(DPU_BOARD)
@@ -285,9 +287,9 @@ static void get_adc1_telemetry(uint16_t *adc, uint32_t *d)
 	//Iout = ((2.5V * N6 * Gain) / (N7* Rmon))*1e6 = ((2.5*N6*41500)/(N7*43200))*1e6 = ((2.5*N6*415*)/(N7*432)) = 2401620*N6/N7 =
 
 	aux = (2401620ULL * (uint64_t)adc[6]) / (uint64_t)adc[7];
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 16 : %04d - %d", adc[6], aux);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 16 : %04d - %d", adc[6], aux);
 	d[6] = (int32_t)aux;
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTel 17 : %04d", adc[7]);
+	custom_uart_printf(HSS_HART_E51, "\r\nTel 17 : %04d", adc[7]);
 #else
 	//Channel 6: PWR_5V.IMON in micro Amperte
 

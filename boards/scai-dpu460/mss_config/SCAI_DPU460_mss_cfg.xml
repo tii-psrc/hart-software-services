@@ -4,7 +4,7 @@
       <design_name>SCAI_DPU460</design_name>
       <mpfs_part_no>MPFS460T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>03-01-2026_15:16:36</creation_date_time>
+      <creation_date_time>03-17-2026_16:05:46</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -1441,38 +1441,38 @@
             <field Type="RW" name="DEFAULT_ON_START" offset="2" width="1">0x0</field>
           </register>
           <register address="0x0000027C" description="To limit the number of interrupts fed to the PLINT, the seventy GPIO interrupts (GPIO0=14, GPIO1=24, GPIO2=32) are reduced down to 41 interrupts by OR'ing some together. There is some flexibility regarding which interrupts are OR'd or are direct. This selection is controlled by a 32-bit system register(GPIO_INTERRUPT_FAB_CR). For example, if bit 0 of the register is set to 1, gpio2_0 is chosen as a direct interrupt on the PLIC and gpio0_0 will be OR'd with any other non-direct gpio0 interrupts. Please see the GPIO driver for more details on using GPIO interrupts." name="GPIO_INTERRUPT_FAB_CR">
-            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x0</field>
+            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x1</field>
           </register>
         </registers>
       </io_mux>
@@ -1682,38 +1682,38 @@
             <field Type="R" name="RESERVED" offset="15" width="17">0x0</field>
           </register>
           <register address="0x0000027C" description="To limit the number of interrupts fed to the PLINT, the seventy GPIO interrupts (GPIO0=14, GPIO1=24, GPIO2=32) are reduced down to 41 interrupts by OR'ing some together. There is some flexibility regarding which interrupts are OR'd or are direct. This selection is controlled by a 32-bit system register(GPIO_INTERRUPT_FAB_CR). For example, if bit 0 of the register is set to 1, gpio2_0 is chosen as a direct interrupt on the PLIC and gpio0_0 will be OR'd with any other non-direct gpio0 interrupts. Please see the GPIO driver for more details on using GPIO interrupts." name="ALT_GPIO_INTERRUPT_FAB_CR">
-            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x0</field>
-            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x0</field>
-            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x0</field>
+            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x1</field>
+            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x1</field>
+            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x1</field>
           </register>
         </registers>
       </io_mux_alt>
@@ -1829,8 +1829,8 @@
             <field Type="RW" name="REG_REFCLK_EN_RXMODE_N" offset="6" width="2">0x3</field>
             <field Type="RW" name="REG_REFCLK_CLKBUF_EN_PULLUP" offset="8" width="1">0x0</field>
             <field Type="RW" name="REG_CLKMUX_FCLK_SEL" offset="9" width="3">0x0</field>
-            <field Type="RW" name="REG_CLKMUX_PLL0_RFCLK0_SEL" offset="12" width="2">0x1</field>
-            <field Type="RW" name="REG_CLKMUX_PLL0_RFCLK1_SEL" offset="14" width="2">0x1</field>
+            <field Type="RW" name="REG_CLKMUX_PLL0_RFCLK0_SEL" offset="12" width="2">0x3</field>
+            <field Type="RW" name="REG_CLKMUX_PLL0_RFCLK1_SEL" offset="14" width="2">0x3</field>
             <field Type="RW" name="REG_CLKMUX_SPARE0" offset="16" width="16">0xf000</field>
           </register>
           <register address="0x0000001C" description="Dynamic control registers" name="DYN_CNTL">
@@ -3748,7 +3748,7 @@
             <field Type="RW" name="VERSION" offset="0" width="32">0x1</field>
           </register>
           <register address="4" description="Ref Clock rate in Hz" name="MSS_EXT_SGMII_REF_CLK">
-            <field Type="RW" name="MSS_EXT_SGMII_REF_CLK" offset="0" width="32">100000000</field>
+            <field Type="RW" name="MSS_EXT_SGMII_REF_CLK" offset="0" width="32">125000000</field>
           </register>
           <register address="8" description="CPU Clock rate in Hz" name="MSS_COREPLEX_CPU_CLK">
             <field Type="RW" name="MSS_COREPLEX_CPU_CLK" offset="0" width="32">600000000</field>
@@ -3787,7 +3787,7 @@
             <field Type="RW" name="RESERVED2" offset="18" width="14">0x0</field>
           </register>
           <register address="0x00000008" description="RTC clock divider" name="RTC_CLOCK_CR">
-            <field Type="RW" name="PERIOD" offset="0" width="12">0x64</field>
+            <field Type="RW" name="PERIOD" offset="0" width="12">0x7D</field>
           </register>
           <register address="0x0000000C" description="ENVM AHB Controller setup - - Clock period = (Value+1) * (1000/AHBFREQMHZ) e.g. 7 will generate a 40ns period 25MHz clock if the AHB clock is 200MHz" name="ENVM_CR">
             <field Type="RW" name="CLOCK_PERIOD" offset="0" width="6">0x5</field>
@@ -4092,13 +4092,13 @@
             <field Type="RW" name="FBCK_SEL" offset="1" width="2">0x0</field>
             <field Type="RW" name="FOUTFB_SELMUX_EN" offset="3" width="1">0x0</field>
             <field Type="RSVD" name="RESERVE12" offset="4" width="4">0x0</field>
-            <field Type="RW" name="RFDIV" offset="8" width="6">0x19</field>
+            <field Type="RW" name="RFDIV" offset="8" width="6">0x1</field>
             <field Type="RSVD" name="RESERVE13" offset="14" width="2">0x0</field>
             <field Type="RSVD" name="RESERVE14" offset="16" width="12">0x0</field>
             <field Type="RSVD" name="RESERVE15" offset="28" width="4">0x0</field>
           </register>
           <register address="0x0000000C" description="PLL fractional register" name="PLL_FRACN">
-            <field Type="RW" name="FRACN_EN" offset="0" width="1">0x0</field>
+            <field Type="RW" name="FRACN_EN" offset="0" width="1">0x1</field>
             <field Type="RW" name="FRACN_DAC_EN" offset="1" width="1">0x0</field>
             <field Type="RSVD" name="RESERVE16" offset="2" width="6">0x0</field>
             <field Type="RSVD" name="RESERVE17" offset="8" width="24">0x0</field>
@@ -4161,7 +4161,7 @@
           </register>
           <register address="0x00000024" description="SSCG registers 0" name="SSCG_REG_0">
             <field Type="RW" name="DIVVAL" offset="0" width="6">0x0</field>
-            <field Type="RW" name="FRACIN" offset="6" width="24">0x0</field>
+            <field Type="RW" name="FRACIN" offset="6" width="24">0x4FDF3B</field>
             <field Type="RSVD" name="RESERVE00" offset="30" width="2">0x0</field>
           </register>
           <register address="0x00000028" description="SSCG registers 1" name="SSCG_REG_1">
@@ -4171,7 +4171,7 @@
             <field Type="RSVD" name="RESERVE01" offset="30" width="2">0x0</field>
           </register>
           <register address="0x0000002C" description="SSCG registers 2" name="SSCG_REG_2">
-            <field Type="RW" name="INTIN" offset="0" width="12">0x29A</field>
+            <field Type="RW" name="INTIN" offset="0" width="12">0x15</field>
             <field Type="RO" name="INTMOD" offset="12" width="12">0x0</field>
             <field Type="RSVD" name="RESERVE02" offset="24" width="8">0x0</field>
           </register>
@@ -4200,10 +4200,10 @@
           </register>
           <register address="0x00000008" description="Input mux  selections" name="PLL_CKMUX">
             <field Type="RW" name="CLK_IN_MAC_TSU_SEL" offset="0" width="2">0x1</field>
-            <field Type="RW" name="PLL0_RFCLK0_SEL" offset="2" width="2">0x1</field>
-            <field Type="RW" name="PLL0_RFCLK1_SEL" offset="4" width="2">0x1</field>
-            <field Type="RW" name="PLL1_RFCLK0_SEL" offset="6" width="2">0x1</field>
-            <field Type="RW" name="PLL1_RFCLK1_SEL" offset="8" width="2">0x1</field>
+            <field Type="RW" name="PLL0_RFCLK0_SEL" offset="2" width="2">0x3</field>
+            <field Type="RW" name="PLL0_RFCLK1_SEL" offset="4" width="2">0x3</field>
+            <field Type="RW" name="PLL1_RFCLK0_SEL" offset="6" width="2">0x3</field>
+            <field Type="RW" name="PLL1_RFCLK1_SEL" offset="8" width="2">0x3</field>
             <field Type="RW" name="PLL1_FDR_SEL" offset="10" width="5">0x0</field>
             <field Type="RW" name="RESERVED" offset="15" width="17">0x0</field>
           </register>
@@ -4248,8 +4248,8 @@
       <sgmii_cfm>
         <registers>
           <register address="0x00000004" description="Input mux  selections" name="REFCLKMUX">
-            <field Type="RW" name="PLL0_RFCLK0_SEL" offset="0" width="2">0x1</field>
-            <field Type="RW" name="PLL0_RFCLK1_SEL" offset="2" width="2">0x1</field>
+            <field Type="RW" name="PLL0_RFCLK0_SEL" offset="0" width="2">0x3</field>
+            <field Type="RW" name="PLL0_RFCLK1_SEL" offset="2" width="2">0x3</field>
             <field Type="RW" name="RESERVED" offset="4" width="28">0x0</field>
           </register>
           <register address="0x00000008" description="sgmii clk mux" name="SGMII_CLKMUX">

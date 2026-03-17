@@ -139,7 +139,7 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
         if (!entryCount) {
             if ((rams[idx].baseAddr + offset)  >= rams[idx].endAddr) {
                 idx = (idx + 1u) % ARRAY_SIZE(rams);
-                //mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
+                mHSS_DEBUG_PRINTF(LOG_NORMAL, "Scrubbing %p to %p\n", rams[idx].baseAddr, rams[idx].endAddr);
                 offset = 0u;
             }
 
@@ -203,7 +203,7 @@ static void scrub_scrubbing_handler(struct StateMachine * const pMyMachine)
             for (wayMaskN = 0; wayMaskN < l2_cache_ways; wayMaskN++) {
                 // disable evictions from all but WayMaskN
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)
-               //mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
+               mHSS_DEBUG_PRINTF(LOG_NORMAL, "[Before] CACHE_CTRL->WAY_MASK_E51_DCACHE: 0x%08X\n", CACHE_CTRL->WAY_MASK_E51_DCACHE);
 #endif
                __atomic_store_8(&CACHE_CTRL->WAY_MASK_E51_DCACHE, (1 << wayMaskN), __ATOMIC_RELAXED);
 #if IS_ENABLED(CONFIG_LOG_FUNCTION_NAMES)

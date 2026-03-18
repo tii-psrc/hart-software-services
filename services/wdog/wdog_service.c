@@ -128,11 +128,9 @@ static void wdog_idle_handler(struct StateMachine * const pMyMachine)
 
 /////////////////
 
-#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_E51)
 #  if IS_ENABLED(CONFIG_SERVICE_WDOG_DEBUG)
 static HSSTicks_t lastEntryTime = 0u;
 #  endif
-#endif
 
 static void wdog_monitoring_handler(struct StateMachine * const pMyMachine)
 {
@@ -157,8 +155,14 @@ static void wdog_monitoring_handler(struct StateMachine * const pMyMachine)
     wdog_status = (wdog_status >> 4) & mHSS_BITMASK_ALL_U54; // move bits[8:4] to [4:0]
     wdog_status &= hartBitmask.uint;
 
+#if 0
     if (wdog_status)
         HSS_reboot(wdog_status);
+#else
+    if (wdog_status)
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "[%s] HSS_reboot(wdog_status:%d) required...\n",
+            __func__, wdog_status);
+#endif
 }
 
 

@@ -144,8 +144,8 @@ define hostenv-prepare
        git branch -a >> $(HOSTENV_FILE).txt
        $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
 
-       $(ECHO) "$$ git show HEAD" >> $(HOSTENV_FILE).txt
-       git show HEAD >> $(HOSTENV_FILE).txt
+       $(ECHO) "$$ git show --no-patch" >> $(HOSTENV_FILE).txt
+       git show --no-patch >> $(HOSTENV_FILE).txt
        $(ECHO) "\n\n\n" >> $(HOSTENV_FILE).txt
 
        $(ECHO) "$$ git status" >> $(HOSTENV_FILE).txt

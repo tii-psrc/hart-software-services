@@ -44,6 +44,10 @@
 #  include "qspi_service.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+#  include "fpga_qspi_service.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_MMC)
 #  include "mmc_service.h"
 #  include "gpt.h"
@@ -86,6 +90,7 @@ static bool tryBootFunction_(struct HSS_Storage *pStorage, HSS_GetBootImageFnPtr
 #endif
 
 static bool getBootImageFromQSPI_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
+static bool getBootImageFromFPGAQSPI_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 static bool getBootImageFromMMC_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 static bool getBootImageFromSpiFlash_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 static bool getBootImageFromPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
@@ -95,6 +100,17 @@ static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct 
 //
 //
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static struct HSS_Storage fpgaqspiStorage_ = {
+    .name = "FPGA_QSPI",
+    .getBootImage = getBootImageFromFPGAQSPI_,
+    .init = HSS_FPGA_QSPIInit,
+    .readBlock = NULL,
+    .writeBlock = NULL,
+    .getInfo = HSS_FPGA_GetInfo,
+    .flushWriteBuffer = NULL
+};
+#endif
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static struct HSS_Storage qspiStorage_ = {
     .name = "QSPI",
@@ -153,6 +169,9 @@ static struct HSS_Storage ymodemPayload_ = {
 
 static struct HSS_Storage *pStorages[] =
 {
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+	&fpgaqspiStorage_,
+#endif
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 	&qspiStorage_,
 #endif
@@ -172,7 +191,7 @@ static struct HSS_Storage *pStorages[] =
 
 static struct HSS_Storage *pDefaultStorage = NULL;
 
-#if IS_ENABLED(CONFIG_SERVICE_MMC) || IS_ENABLED(CONFIG_SERVICE_QSPI) || (IS_ENABLED(CONFIG_SERVICE_SPI) && (SPI_FLASH_BOOT_ENABLED)) || IS_ENABLED(CONFIG_SERVICE_YMODEM)
+#if IS_ENABLED(CONFIG_SERVICE_MMC) || IS_ENABLED(CONFIG_SERVICE_QSPI) || IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || (IS_ENABLED(CONFIG_SERVICE_SPI) && (SPI_FLASH_BOOT_ENABLED)) || IS_ENABLED(CONFIG_SERVICE_YMODEM)
 struct HSS_BootImage bootImage __attribute__((aligned(8)));
 #elif IS_ENABLED(CONFIG_SERVICE_BOOT_USE_PAYLOAD)
 //
@@ -318,6 +337,57 @@ static void printBootImageDetails_(struct HSS_BootImage const * const pBootImage
     mHSS_DEBUG_PRINTF(LOG_NORMAL, " - magic is    %08x\n", pBootImage->magic);
     mHSS_DEBUG_PRINTF(LOG_NORMAL, " - length is   %08x\n", pBootImage->bootImageLength);
 #  endif
+}
+#endif
+
+#if IS_ENABLED(CONFIG_SERVICE_BOOT) && (IS_ENABLED(CONFIG_SERVICE_YMODEM) || IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI))
+#if 0
+#define custom_uart_printf(hartid, ...) do {  \
+  char buf[1024]; \
+  sbi_sprintf(buf, " " __VA_ARGS__); \
+  uart_putstring(hartid, buf); \
+} while (0)
+#endif
+static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const pBootImage)
+{
+  int i;
+
+  custom_uart_printf(hartid, "HSS Boot Image Header\r\n");
+
+  custom_uart_printf(hartid, "  - magic              : 0x%08X \r\n", pBootImage->magic);
+  custom_uart_printf(hartid, "  - version            : 0x%08X \r\n", pBootImage->version);
+  custom_uart_printf(hartid, "  - headerLength       : 0x%08X(%d) \r\n", pBootImage->headerLength, pBootImage->headerLength);
+  custom_uart_printf(hartid, "  - headerCrc          : 0x%08X \r\n", pBootImage->headerCrc);
+  custom_uart_printf(hartid, "  - chunkTableOffset   : 0x%08X \r\n", pBootImage->chunkTableOffset);
+  custom_uart_printf(hartid, "  - ziChunkTableOffset : 0x%08X \r\n", pBootImage->ziChunkTableOffset);
+  custom_uart_printf(hartid, "  - set name           : %s     \r\n", pBootImage->set_name);
+  custom_uart_printf(hartid, "  - bootImageLength    : 0x%08X(%d) \r\n", pBootImage->bootImageLength, pBootImage->bootImageLength);
+
+  for (i=0; i<MAX_NUM_HARTS-1; i++) {
+    custom_uart_printf(hartid, "    - U54 hart[%d].entryPoint    : 0x%08X \r\n", i+1, pBootImage->hart[i].entryPoint);
+    custom_uart_printf(hartid, "    - U54 hart[%d].privMode      : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].privMode);
+    custom_uart_printf(hartid, "    - U54 hart[%d].flags         : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].flags);
+    custom_uart_printf(hartid, "    - U54 hart[%d].numChunks     : 0x%08X \r\n", i+1, pBootImage->hart[i].numChunks);
+    custom_uart_printf(hartid, "    - U54 hart[%d].firstChunk    : 0x%08X \r\n", i+1, pBootImage->hart[i].firstChunk);
+    custom_uart_printf(hartid, "    - U54 hart[%d].lastChunk     : 0x%08X \r\n", i+1, pBootImage->hart[i].lastChunk);
+    custom_uart_printf(hartid, "    - U54 hart[%d].name          : %s     \r\n", i+1, pBootImage->hart[i].name);
+  }
+
+  custom_uart_printf(hartid, "  - signature.digest   : ");
+  for (i=0; i<sizeof(pBootImage->signature.digest); i++) {
+    if (i % 0x10 == 0)
+      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
+    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.digest[i]);
+  }
+  custom_uart_printf(hartid, "\r\n");
+
+  custom_uart_printf(hartid, "  - signature.ecdsaSig   : ");
+  for (i=0; i<sizeof(pBootImage->signature.ecdsaSig); i++) {
+    if (i % 0x10 == 0)
+      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
+    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.ecdsaSig[i]);
+  }
+  custom_uart_printf(hartid, "\r\n");
 }
 #endif
 
@@ -532,6 +602,72 @@ void HSS_BootSelectQSPI(void)
 #endif
 }
 
+static bool getBootImageFromFPGAQSPI_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage)
+{
+  bool result = false;
+
+#if IS_ENABLED(CONFIG_SERVICE_BOOT) && IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+  assert(ppBootImage);
+  assert(pStorage);
+
+  uint32_t off = 0;
+  uint64_t len = sizeof(struct HSS_BootImage);
+  uintptr_t dest = CONFIG_SERVICE_BOOT_DDR_TARGET_ADDR;
+
+  mHSS_DEBUG_PRINTF(LOG_NORMAL, "Preparing to copy from FPGA QSPI to DDR ...\n");
+  mHSS_DEBUG_PRINTF(LOG_NORMAL, "Attempting to read image header (%d bytes) ...\n",
+      sizeof(struct HSS_BootImage));
+
+  off = 0;
+  len = sizeof(struct HSS_BootImage);
+  result = HSS_FPGA_QSPIRead((uintptr_t)&bootImage, off, len);
+  if (!result) {
+    mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_FPGA_QSPIRead() failed\n");
+  } else {
+    //memcpy((void *)&bootImage, (void *)dest, sizeof(struct HSS_BootImage));
+    result = HSS_Boot_VerifyMagic(&bootImage);
+    if (!result) {
+      mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_Boot_VerifyMagic() failed\n");
+    } else {
+      __print_boot_img_info(HSS_HART_E51, &bootImage);
+      __print_boot_img_info(HSS_HART_U54_1, &bootImage);
+
+      int perf_ctr_index = PERF_CTR_UNINITIALIZED;
+      HSS_PerfCtr_Allocate(&perf_ctr_index, "Boot Image QSPI Copy");
+
+      off = 0;
+      len = bootImage.bootImageLength;
+      result = HSS_FPGA_QSPIRead(dest, off, len);
+      if (!result) {
+        mHSS_DEBUG_PRINTF(LOG_ERROR, "copyBootImageToDDR_() failed\n");
+				return result;
+      }
+
+      *ppBootImage = (struct HSS_BootImage *)dest;
+
+      HSS_PerfCtr_Lap(perf_ctr_index);
+
+    }
+  }
+
+#endif
+
+  return result;
+}
+
+void HSS_BootSelectFPGAQSPI(void)
+{
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Selecting FPGA QSPI as boot source ...\n");
+    pDefaultStorage = &fpgaqspiStorage_;
+#  if IS_ENABLED(CONFIG_SERVICE_BOOT)
+    HSS_Register_Boot_Image(NULL);
+#  endif
+#else
+    (void)getBootImageFromFPGAQSPI_;
+#endif
+}
+
 static bool getBootImageFromPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage)
 {
     bool result = false;
@@ -623,59 +759,6 @@ void HSS_BootSelectSPI(void)
     (void)getBootImageFromSpiFlash_;
 #endif
 }
-
-#if IS_ENABLED(CONFIG_SERVICE_BOOT) && IS_ENABLED(CONFIG_SERVICE_YMODEM)
-
-#if 0
-#define custom_uart_printf(hartid, ...) do {  \
-  char buf[1024]; \
-  sbi_sprintf(buf, " " __VA_ARGS__); \
-  uart_putstring(hartid, buf); \
-} while (0)
-#endif
-
-static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const pBootImage)
-{
-  int i;
-
-  custom_uart_printf(hartid, "HSS Boot Image Header\r\n");
-
-  custom_uart_printf(hartid, "  - magic              : 0x%08X \r\n", pBootImage->magic);
-  custom_uart_printf(hartid, "  - version            : 0x%08X \r\n", pBootImage->version);
-  custom_uart_printf(hartid, "  - headerLength       : 0x%08X(%d) \r\n", pBootImage->headerLength, pBootImage->headerLength);
-  custom_uart_printf(hartid, "  - headerCrc          : 0x%08X \r\n", pBootImage->headerCrc);
-  custom_uart_printf(hartid, "  - chunkTableOffset   : 0x%08X \r\n", pBootImage->chunkTableOffset);
-  custom_uart_printf(hartid, "  - ziChunkTableOffset : 0x%08X \r\n", pBootImage->ziChunkTableOffset);
-  custom_uart_printf(hartid, "  - set name           : %s     \r\n", pBootImage->set_name);
-  custom_uart_printf(hartid, "  - bootImageLength    : 0x%08X(%d) \r\n", pBootImage->bootImageLength, pBootImage->bootImageLength);
-
-  for (i=0; i<MAX_NUM_HARTS-1; i++) {
-    custom_uart_printf(hartid, "    - U54 hart[%d].entryPoint    : 0x%08X \r\n", i+1, pBootImage->hart[i].entryPoint);
-    custom_uart_printf(hartid, "    - U54 hart[%d].privMode      : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].privMode);
-    custom_uart_printf(hartid, "    - U54 hart[%d].flags         : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].flags);
-    custom_uart_printf(hartid, "    - U54 hart[%d].numChunks     : 0x%08X \r\n", i+1, pBootImage->hart[i].numChunks);
-    custom_uart_printf(hartid, "    - U54 hart[%d].firstChunk    : 0x%08X \r\n", i+1, pBootImage->hart[i].firstChunk);
-    custom_uart_printf(hartid, "    - U54 hart[%d].lastChunk     : 0x%08X \r\n", i+1, pBootImage->hart[i].lastChunk);
-    custom_uart_printf(hartid, "    - U54 hart[%d].name          : %s     \r\n", i+1, pBootImage->hart[i].name);
-  }
-
-  custom_uart_printf(hartid, "  - signature.digest   : ");
-  for (i=0; i<sizeof(pBootImage->signature.digest); i++) {
-    if (i % 0x10 == 0)
-      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
-    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.digest[i]);
-  }
-  custom_uart_printf(hartid, "\r\n");
-
-  custom_uart_printf(hartid, "  - signature.ecdsaSig   : ");
-  for (i=0; i<sizeof(pBootImage->signature.ecdsaSig); i++) {
-    if (i % 0x10 == 0)
-      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
-    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.ecdsaSig[i]);
-  }
-  custom_uart_printf(hartid, "\r\n");
-}
-#endif
 
 static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage)
 {

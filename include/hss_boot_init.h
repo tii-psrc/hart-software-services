@@ -43,6 +43,7 @@ void HSS_BootSelectSDCARD(void);
 void HSS_BootSelectPayload(void);
 void HSS_BootSelectSPI(void);
 void HSS_BootSelectYModemPayload(void);
+void HSS_BootSelectFPGAQSPI(void);
 
 void HSS_BootListStorageProviders(void);
 #ifdef __cplusplus

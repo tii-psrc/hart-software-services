@@ -1,0 +1,26 @@
+config SERVICE_FPGA_QSPI
+	bool "Boot from FPGA QSPI NAND flash support"
+	default y
+	help
+                This feature enables support for booting via FPGA QSPI NAND Flash.
+                Currently the fpga Winbond W25N01GV is supported.
+
+		If you do not know what to do here, say Y.
+
+menu "FPGA_QSPI"
+	visible if SERVICE_FPGA_QSPI
+
+choice
+	prompt "QSPI Driver"
+	default SERVICE_FPGA_QSPI_WINBOND_W25N01GV
+
+config SERVICE_FPGA_QSPI_WINBOND_W25N01GV
+	bool "FPGA Winbond W25N01GV"
+	depends on SERVICE_FPGA_QSPI
+	help
+		This feature enables support for FPGA Winbond W25N01GV SPI NAND flash.
+		If you don't know what to do here, say Y.
+endchoice
+
+
+endmenu

@@ -38,6 +38,7 @@ include services/lockdown/Makefile
 include services/mmc/Makefile
 include services/opensbi/Makefile
 include services/powermode/Makefile
+include services/fpga_qspi/Makefile
 include services/qspi/Makefile
 include services/reboot/Makefile
 include services/scrub/Makefile

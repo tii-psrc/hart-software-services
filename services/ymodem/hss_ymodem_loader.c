@@ -49,6 +49,10 @@
 #include "drivers/mss/mss_sys_services/mss_sys_services.h"
 #include "mss_sysreg.h"
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+#include "fpga_qspi_service.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 #  include "qspi_service.h"
 #  if IS_ENABLED(CONFIG_SERVICE_QSPI_WINBOND_W25N01GV)
@@ -71,6 +75,16 @@
 //
 // Local prototypes
 //
+
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static bool hss_loader_fpga_qspi_init(void);
+static bool hss_loader_fpga_qspi_program(uintptr_t pBuffer, size_t wrAddr,
+		size_t receivedCount);
+static bool hss_loader_fpga_qspi_erase(void);
+static bool fpga_qspi_initialized = false;
+#endif
+
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 static bool hss_loader_qspi_init(void);
 static bool hss_loader_qspi_program(uint8_t *pBuffer, size_t wrAddr, size_t receivedCount);
@@ -85,6 +99,40 @@ static bool hss_loader_mmc_program(uint8_t *pBuffer, size_t wrAddr, size_t recei
 
 #if IS_ENABLED(CONFIG_SERVICE_SCAI_FPGA)
 bool scai_program_flash(uint32_t receivedCount, uint8_t *pBuffer);
+#endif
+
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static bool hss_loader_fpga_qspi_init(void)
+{
+    bool result = false;
+
+    if (fpga_qspi_initialized)
+      return fpga_qspi_initialized;
+
+    result = HSS_FPGA_QSPIInit();
+    fpga_qspi_initialized = result;
+    HSS_FPGA_QSPIIsbad();
+
+    return result;
+}
+
+static bool hss_loader_fpga_qspi_program(uintptr_t pBuffer, size_t wrAddr,
+		size_t receivedCount)
+{
+    bool result = HSS_FPGA_QSPIWrite(pBuffer, (uint32_t)wrAddr,
+				(uint64_t)receivedCount);
+    return result;
+}
+
+static bool hss_loader_fpga_qspi_erase(void)
+{
+		uint32_t writesize, erasesize, nandsize;
+
+		HSS_FPGA_GetInfo(&writesize, &erasesize, &nandsize);
+    HSS_FPGA_QSPIErase(0, nandsize);
+
+    return true;
+}
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
@@ -285,6 +333,10 @@ void hss_loader_ymodem_loop(void)
             " b. SCAI Write -- write bootloader payload to W25/Backup storage\n"
             " c. SCAI Write -- write RootFS to the main storage (MT29F|3dplus)\n"
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+            " d. FPQA QSPI Erase -- erase all blocks\n"
+            " e. FPQA QSPI Write -- write application file to the Device\n"
+#endif
             " Select a number:\n";
 
         mHSS_PUTS(menuText);
@@ -463,6 +515,52 @@ void hss_loader_ymodem_loop(void)
                 }
                 mHSS_PUTS("\nProgramming RootFS (MT29F|3dplus)");
                 result = scai_program_flash(receivedCount, pBuffer);
+                break;
+
+#endif
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+            case 'd':
+                mHSS_PUTS("\nInitializing FPGA QSPI ... ");
+                result = hss_loader_fpga_qspi_init();
+
+                if (result) {
+                    mHSS_PUTS(" Success\n");
+
+                    mHSS_PUTS("\nErasing all of FPGA QSPI ... \n");
+                    result = hss_loader_fpga_qspi_erase();
+
+                    if (result) {
+                        mHSS_PUTS(" Success\n");
+                    }
+                }
+
+                if (!result) {
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                    mHSS_PUTS(" FAILED\n");
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                }
+                break;
+            case 'e':
+                mHSS_PRINTF("\nAttempting to flash received data (%u bytes)\n", receivedCount);
+                mHSS_PUTS("\nInitializing QSPI ... ");
+                result = hss_loader_fpga_qspi_init();
+
+                if (result) {
+                    mHSS_PUTS(" Success\n");
+
+                    mHSS_PUTS("\nProgramming QSPI ... ");
+                    result = hss_loader_fpga_qspi_program((uintptr_t)pBuffer, 0u, receivedCount);
+
+                    if (result) {
+                        mHSS_PUTS(" Success\n");
+                    }
+                }
+
+                if (!result) {
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_ERROR);
+                    mHSS_PUTS(" FAILED\n");
+                    HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
+                }
                 break;
 
 #endif

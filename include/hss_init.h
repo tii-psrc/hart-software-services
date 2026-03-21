@@ -46,6 +46,7 @@ bool HSS_QueuesInit(void);
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 #  include "qspi_service.h"
 #endif
+#include "fpga_qspi_service.h"
 
 #if IS_ENABLED(CONFIG_SERVICE_MMC)
 #  include "mmc_service.h"

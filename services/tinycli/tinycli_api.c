@@ -51,6 +51,10 @@
 #    include "usbdmsc_service.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+#include "fpga_qspi_service.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_QSPI)
 #    include "qspi_service.h"
 #endif
@@ -139,7 +143,15 @@ static void tinyCLI_SCAI_page_write_(void);
 static void tinyCLI_SCAI_reset_(void);
 #endif
 #endif
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static void tinyCLI_FPGA_QSPI_Scan_(void);
+static void tinyCLI_FPGA_QSPI_Erase_(void);
+static void tinyCLI_FPGA_QSPI_Bad_(void);
+static void tinyCLI_FPGA_QSPI_Read_(void);
+static void tinyCLI_FPGA_QSPI_Write_(void);
+#endif
 static void tinyCLI_QSPI_(void);
+static void tinyCLI_FPGA_QSPI_(void);
 #if IS_ENABLED(CONFIG_SERVICE_TINYCLI_MONITOR)
 static void tinyCLI_MonitorHelp_(void)
 static void tinyCLI_MonitorCreate_(void);
@@ -206,6 +218,7 @@ enum CmdId {
     CMD_DEBUG,
     CMD_MEMTEST,
     CMD_QSPI,
+    CMD_FPGA_QSPI,
     CMD_EMMC,
     CMD_SDCARD,
     CMD_MMC,
@@ -242,6 +255,13 @@ enum CmdId {
 
     CMD_QSPI_ERASE,
     CMD_QSPI_SCAN,
+
+    CMD_FPGA_QSPI_ERASE,
+    CMD_FPGA_QSPI_SCAN,
+    CMD_FPGA_QSPI_BAD,
+    CMD_FPGA_QSPI_READ,
+    CMD_FPGA_QSPI_DUMP,
+    CMD_FPGA_QSPI_WRITE,
 
     CMD_SCAI_FLASH_TEST,
     CMD_SCAI_JEDEC,
@@ -323,6 +343,17 @@ static const struct tinycli_cmd qspiCmds[] = {
 };
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static const struct tinycli_cmd fpgaQspiCmds[] = {
+    { CMD_FPGA_QSPI_SCAN,    "SCAN",      "Scan FPGA QSPI Flash",                tinyCLI_FPGA_QSPI_Scan_  },
+    { CMD_FPGA_QSPI_BAD,     "BAD",       "Scan FPGA QSPI Flash for bad blocks", tinyCLI_FPGA_QSPI_Bad_   },
+    { CMD_FPGA_QSPI_ERASE,   "ERASE",     "ERASE FPGA QSPI Flash",               tinyCLI_FPGA_QSPI_Erase_ },
+    { CMD_FPGA_QSPI_READ,    "READ",      "Read FPGA QSPI Flash to dest addr",   tinyCLI_FPGA_QSPI_Read_  },
+    { CMD_FPGA_QSPI_DUMP,    "DUMP",      "Dump FPGA QSPI Flash to console ",    tinyCLI_FPGA_QSPI_Read_  },
+    { CMD_FPGA_QSPI_WRITE,   "WRITE",     "Write data to FPGA QSPI Flash",       tinyCLI_FPGA_QSPI_Write_ },
+};
+#endif
+
 static const struct tinycli_cmd toplevelCmds[] = {
 #if IS_ENABLED(CONFIG_SERVICE_YMODEM)
     { CMD_YMODEM,  "YMODEM",  "Run YMODEM utility to download an image to DDR.", tinyCLI_YModem_ },
@@ -340,6 +371,7 @@ static const struct tinycli_cmd toplevelCmds[] = {
     { CMD_MEMTEST, "MEMTEST", "Full DDR memory test.", tinyCLI_MemTest_ },
 #endif
     { CMD_QSPI,    "QSPI",    "Select boot via QSPI.", tinyCLI_QSPI_ },
+    { CMD_FPGA_QSPI,    "FPGA_QSPI",    "Select boot via FPGA QSPI.", tinyCLI_FPGA_QSPI_ },
     { CMD_EMMC,    "EMMC",    "Select boot via eMMC.", tinyCLI_EMMC_ },
     { CMD_MMC,     "MMC",     "Select boot via SDCARD/eMMC.", tinyCLI_MMC_ },
     { CMD_SDCARD,  "SDCARD",  "Select boot via SDCARD.", tinyCLI_SDCARD_ },
@@ -373,6 +405,7 @@ static struct tinycli_toplevel_cmd_safe toplevelCmdsSafeAfterBootFlags[] = {
     { CMD_MEMTEST, true },
 #endif
     { CMD_QSPI,    true },
+    { CMD_FPGA_QSPI,    true },
     { CMD_EMMC,    true },
     { CMD_MMC,     true },
     { CMD_SDCARD,  true },
@@ -733,6 +766,114 @@ static void tinyCLI_QSPI_(void)
     }
 #else
     tinyCLI_UnsupportedBootMechanism_("QSPI");
+#endif
+}
+
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+static void tinyCLI_FPGA_QSPI_Write_(void)
+{
+  uint32_t startAddr = 0;
+  uint64_t len = 0;
+  uintptr_t src = 0;
+
+  if (argc_tokenCount == 4u || argc_tokenCount == 5u) {
+    startAddr = tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+    len = tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+    src = argc_tokenCount == 5u ? tinyCLI_strtoul_wrapper_(argv_tokenArray[4]) : 0;
+  } else {
+    mHSS_DEBUG_PRINTF(LOG_NORMAL,
+        "Usage: %s %s <start offset> <length> <Option : src addr>\n",
+        argv_tokenArray[0], argv_tokenArray[1]);
+    return ;
+  }
+
+  HSS_FPGA_QSPIInit();
+  HSS_FPGA_QSPIIsbad();
+  HSS_FPGA_QSPIWrite(src, startAddr, len);
+}
+
+static void tinyCLI_FPGA_QSPI_Read_(void)
+{
+  uint32_t startAddr = 0;
+  uint64_t len = 0;
+  uintptr_t dest = 0;
+
+  if (argc_tokenCount == 4u || argc_tokenCount == 5u) {
+    startAddr = tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+    len = tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+    dest = argc_tokenCount == 5u ? tinyCLI_strtoul_wrapper_(argv_tokenArray[4]) : 0;
+  } else {
+    mHSS_DEBUG_PRINTF(LOG_NORMAL,
+        "Usage: %s %s <start offset> <length> <Option : dest addr>\n",
+        argv_tokenArray[0], argv_tokenArray[1]);
+    return ;
+  }
+
+  HSS_FPGA_QSPIInit();
+  HSS_FPGA_QSPIIsbad();
+  HSS_FPGA_QSPIRead(dest, startAddr, len);
+}
+
+static void tinyCLI_FPGA_QSPI_Erase_(void)
+{
+  uint32_t startAddr = 0;
+  uint64_t len = 0;
+
+  if (argc_tokenCount == 4u) {
+    startAddr = tinyCLI_strtoul_wrapper_(argv_tokenArray[2]);
+    len = tinyCLI_strtoul_wrapper_(argv_tokenArray[3]);
+  } else {
+    mHSS_DEBUG_PRINTF(LOG_NORMAL,
+        "Usage: %s %s <start offset> <length>\n",
+        argv_tokenArray[0], argv_tokenArray[1]);
+    return ;
+  }
+
+  HSS_FPGA_QSPIInit();
+  HSS_FPGA_QSPIIsbad();
+  HSS_FPGA_QSPIErase(startAddr, len);
+}
+
+static void tinyCLI_FPGA_QSPI_Bad_(void)
+{
+	HSS_FPGA_QSPIInit();
+	HSS_FPGA_QSPIIsbad();
+	//HSS_FPGA_QSPI_BadBlocksInfo();
+}
+
+static void tinyCLI_FPGA_QSPI_Scan_(void)
+{
+	uint32_t writesize = 0;
+	uint32_t erasesize = 0;
+	uint32_t nandsize = 0;
+
+	HSS_FPGA_QSPIInit();
+	HSS_FPGA_GetInfo(&writesize, &erasesize, &nandsize);
+	HSS_FPGA_QSPIIsbad();
+
+	mHSS_DEBUG_PRINTF(LOG_NORMAL,
+			"writesize : %d(0x%08X) Byte\n", writesize, writesize);
+	mHSS_DEBUG_PRINTF(LOG_NORMAL,
+			"erasesize : %d(0x%08X) Byte\n", erasesize, erasesize);
+	mHSS_DEBUG_PRINTF(LOG_NORMAL,
+			"nandsize  : %d(0x%08X) Byte\n", nandsize, nandsize);
+}
+#endif
+
+
+static void tinyCLI_FPGA_QSPI_(void)
+{
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
+
+    if (argc_tokenCount > 1u) {
+        if (!dispatch_command_(fpgaQspiCmds, ARRAY_SIZE(fpgaQspiCmds), 1u)) {
+            display_help_(fpgaQspiCmds, ARRAY_SIZE(fpgaQspiCmds), 1u);
+        }
+    } else {
+        HSS_BootSelectFPGAQSPI(); // fpga qspi on its own
+    }
+#else
+    tinyCLI_UnsupportedBootMechanism_("FPGA_QSPI");
 #endif
 }
 

@@ -117,6 +117,27 @@ $(BINDIR)/baremetal/drivers/scai_fpga/micron_mt29f_fpga.o: CFLAGS=$(CFLAGS_GCCEX
 $(BINDIR)/baremetal/drivers/scai_fpga/winbond_w25n01gv_direct.o: CFLAGS=$(CFLAGS_GCCEXT)
 endif
 
+#ifdef CONFIG_SERVICE_FPGA_QSPI
+INCLUDES += \
+	-Ibaremetal/drivers/scai_fpgaqspi \
+
+EXTRA_SRCS-$(CONFIG_SERVICE_FPGA_QSPI) += \
+	baremetal/drivers/scai_fpgaqspi/bbt.c \
+	baremetal/drivers/scai_fpgaqspi/nandcore.c \
+	baremetal/drivers/scai_fpgaqspi/mtdcore.c \
+	baremetal/drivers/scai_fpgaqspi/scai_fpgaqspi.c \
+	baremetal/drivers/scai_fpgaqspi/spicore.c	\
+	baremetal/drivers/scai_fpgaqspi/winbond.c \
+	baremetal/drivers/scai_fpgaqspi/scai_fpgaqspi_service.c
+
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/bbt.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/nandcore.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/mtdcore.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/spicore.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/scai_fpgaqspi.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/winbond.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/drivers/scai_fpgaqspi/scai_fpgaqspi_service.o: CFLAGS=$(CFLAGS_GCCEXT)
+#endif
 
 EXTRA_SRCS-$(CONFIG_SERVICE_TELEMETRY) += \
         $(BOARD_DIR)/adcs.c

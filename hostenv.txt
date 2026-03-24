@@ -1,0 +1,630 @@
+$ date //build date for this binary
+Fri Mar 20 15:43:40 Romance Standard Time 2026
+\n\n\n
+$ pwd
+C:/sfs/NavCTest/NavCTest_2023_R01/Soft/MSS_Soft/hart-software-services
+\n\n\n
+$ hostname
+TII-SSIROTA
+\n\n\n
+$ whoami
+Sergio.Sirota
+\n\n\n
+$ ifconfig
+\n\n\n
+$ git config --list
+diff.astextplain.textconv=astextplain
+filter.lfs.clean=git-lfs clean -- %f
+filter.lfs.smudge=git-lfs smudge -- %f
+filter.lfs.process=git-lfs filter-process
+filter.lfs.required=true
+http.sslbackend=openssl
+http.sslcainfo=C:/Users/sergio.sirota/AppData/Local/Programs/Git/mingw64/etc/ssl/certs/ca-bundle.crt
+core.autocrlf=true
+core.fscache=true
+core.symlinks=false
+pull.rebase=false
+credential.helper=manager
+credential.https://dev.azure.com.usehttppath=true
+init.defaultbranch=master
+core.repositoryformatversion=0
+core.filemode=false
+core.bare=false
+core.logallrefupdates=true
+core.symlinks=false
+core.ignorecase=true
+submodule.active=.
+remote.origin.url=https://github.com/tii-psrc/hart-software-services.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.psrc2025.remote=origin
+branch.psrc2025.merge=refs/heads/psrc2025
+remote.upstream.url=https://github.com/polarfire-soc/hart-software-services.git
+remote.upstream.fetch=+refs/heads/*:refs/remotes/upstream/*
+branch.master.remote=upstream
+branch.master.merge=refs/heads/master
+\n\n\n
+$ git branch -a
+  master
+* psrc2025
+  remotes/origin/HEAD -> origin/psrc2025
+  remotes/origin/flash-debug
+  remotes/origin/flash-debug-slow
+  remotes/origin/hss_radtest
+  remotes/origin/master
+  remotes/origin/next
+  remotes/origin/psrc
+  remotes/origin/psrc2025
+  remotes/origin/psrc2025_3dplus
+  remotes/origin/psrc2025_backup_w25
+  remotes/origin/psrc2025_mt29_fix
+  remotes/origin/psrc2025_radiation_test
+  remotes/origin/psrc2025_tty
+  remotes/upstream/HEAD -> upstream/master
+  remotes/upstream/master
+  remotes/upstream/next
+\n\n\n
+$ git show HEAD
+commit 61ead14d598af8cc6d4e04484b8f1ffbf07b0293
+Author: kwangsu-unikie <kwangsu.jung@unikie.com>
+Date:   Wed Mar 18 13:16:42 2026 +0000
+
+    fix: soft watchdog for U54_X hart is disabled for debug
+
+diff --git a/services/wdog/wdog_service.c b/services/wdog/wdog_service.c
+index 3f04c2cb..ed315be9 100644
+--- a/services/wdog/wdog_service.c
++++ b/services/wdog/wdog_service.c
+@@ -128,11 +128,9 @@ static void wdog_idle_handler(struct StateMachine * const pMyMachine)
+ 
+ /////////////////
+ 
+-#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_E51)
+ #  if IS_ENABLED(CONFIG_SERVICE_WDOG_DEBUG)
+ static HSSTicks_t lastEntryTime = 0u;
+ #  endif
+-#endif
+ 
+ static void wdog_monitoring_handler(struct StateMachine * const pMyMachine)
+ {
+@@ -157,8 +155,14 @@ static void wdog_monitoring_handler(struct StateMachine * const pMyMachine)
+     wdog_status = (wdog_status >> 4) & mHSS_BITMASK_ALL_U54; // move bits[8:4] to [4:0]
+     wdog_status &= hartBitmask.uint;
+ 
++#if 0
+     if (wdog_status)
+         HSS_reboot(wdog_status);
++#else
++    if (wdog_status)
++        mHSS_DEBUG_PRINTF(LOG_ERROR, "[%s] HSS_reboot(wdog_status:%d) required...\n",
++            __func__, wdog_status);
++#endif
+ }
+ 
+ 
+\n\n\n
+$ git status
+On branch psrc2025
+Your branch is up to date with 'origin/psrc2025'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .cproject
+	modified:   baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_ddr.c
+	modified:   boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml
+	modified:   init/hss_ddr_init.c
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.settings/
+	boards/scai-dpu460/mss_config/MSS_DPU.cfg
+	boards/scai-dpu460/mss_config/MSS_DPU.cxz
+	boards/scai-dpu460/mss_config/MSS_DPU_Report.html
+	boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml.ori
+	hostenv.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+\n\n\n
+$ git diff
+diff --git a/.cproject b/.cproject
+index 9ab5dad6..8842905a 100644
+--- a/.cproject
++++ b/.cproject
+@@ -64,7 +64,7 @@
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.nomoveloopinvariants.849146837" name="Disable loop invariant move (-fno-move-loop-invariants)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.nomoveloopinvariants"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.other.849734253" name="Other optimization flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.optimization.other"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.name.287412271" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.name" value="RISC-V GCC/Newlib" valueType="string"/>
+-							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id.347667512" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id" value="-2032619395" valueType="string"/>
++							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id.347667512" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.toolchain.id" value="2262347901" valueType="string"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.syntaxonly.1090120752" name="Check syntax only (-fsyntax-only)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.syntaxonly"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.pedantic.1358902478" name="Pedantic (-pedantic)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.pedantic"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.pedanticerrors.1687889152" name="Pedantic warnings as errors (-pedantic-errors)" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.warnings.pedanticerrors"/>
+@@ -90,7 +90,7 @@
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.other.108675996" name="Other debugging flags" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.debugging.other"/>
+ 							<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.showDevicesTab.1116696807" name="showDevicesTab" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.showDevicesTab"/>
+ 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform.1224651973" isAbstract="false" osList="all" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.targetPlatform"/>
+-							<builder arguments="BOARD=mpfs-icicle-kit-es" command="make" id="ilg.gnumcueclipse.managedbuild.cross.riscv.builder.286219479" incrementalBuildTarget="all -j 16" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.builder"/>
++							<builder arguments="BOARD=scai-DPU460" command="make" id="ilg.gnumcueclipse.managedbuild.cross.riscv.builder.286219479" incrementalBuildTarget="all -j 16" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.builder"/>
+ 							<tool id="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.assembler.577187616" name="GNU RISC-V Cross Assembler" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.assembler">
+ 								<option id="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.usepreprocessor.988012712" name="Use preprocessor" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.option.assembler.usepreprocessor" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+ 								<inputType id="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.assembler.input.186647031" superClass="ilg.gnumcueclipse.managedbuild.cross.riscv.tool.assembler.input"/>
+diff --git a/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_ddr.c b/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_ddr.c
+index 4e56f4bf..ae594a4e 100644
+--- a/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_ddr.c
++++ b/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_ddr.c
+@@ -17,6 +17,13 @@
+ #include <stdio.h>
+ #include "mpfs_hal/mss_hal.h"
+ #include "mss_nwc_init.h"
++
++//SFS: Added To get more flexibility in DDR training
++static int last_dqdqs_offset = 1, can_increase_offset=0;
++#define MAX_TIMEOUT 0x100
++
++
++
+ #ifdef DDR_SUPPORT
+ #include "mss_ddr_debug.h"
+ #ifdef FABRIC_NOISE_TEST
+@@ -378,6 +385,15 @@ static uint32_t ddr_setup(void)
+ 
+     ddr_type = LIBERO_SETTING_DDRPHY_MODE & DDRPHY_MODE_MASK;
+ 
++    {
++        void sfs_debug(int ddr_training_state);
++
++        sfs_debug(ddr_training_state);
++    }
++/*    if((ddr_training_state==DDR_TRAINING_INIT) || (ddr_training_state == DDR_TRAINING_CHECK_FOR_OFFMODE))
++        mHSS_DEBUG_PRINTF_EX("\r\n");
++    mHSS_DEBUG_PRINTF_EX("[%02d]", ddr_training_state);
++*/
+ /*
+  * Usually in Renode we want to skip DDR training, as it is slow and does not
+  * do anything useful. If the user wants to explicitly simulate the training,
+@@ -655,6 +671,16 @@ static uint32_t ddr_setup(void)
+              */
+             set_ddr_rpc_regs(ddr_type);
+             ddr_training_state = DDR_TRAINING_SOFT_RESET;
++            //SFS I will increase the DQDQS_OFFSET to get a better flexibility in SDDR training.
++             //The QM boards have differences between them yet in the same batch
++             if(can_increase_offset)
++             {
++                 last_dqdqs_offset++;
++                 if(last_dqdqs_offset==11)
++                     last_dqdqs_offset = 1;
++             }
++             CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
++             can_increase_offset = 0;
+             break;
+         case DDR_TRAINING_SOFT_RESET:
+             /*
+@@ -692,7 +718,7 @@ static uint32_t ddr_setup(void)
+              *  Configure the DDR PLL
+              */
+             ddr_pll_config(SCB_UPDATE);
+-            timeout = 0xFFFF;
++            timeout = MAX_TIMEOUT;
+             ddr_training_state = DDR_TRAINING_VERIFY_PLL_LOCK;
+             break;
+         case DDR_TRAINING_VERIFY_PLL_LOCK:
+@@ -878,7 +904,7 @@ static uint32_t ddr_setup(void)
+ 
+                 CFG_DDR_SGMII_PHY->tip_cfg_params.tip_cfg_params =\
+                                                                 tip_cfg_params;
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+ 
+                 if(use_software_bclk_sclk_training(ddr_type) == 1U)
+                 {
+@@ -1271,7 +1297,7 @@ static uint32_t ddr_setup(void)
+                 DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000000U;
+                 DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000001U;
+ 
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_START_CHECK;
+             }
+ #ifdef DEBUG_DDR_INIT
+@@ -1312,7 +1338,7 @@ static uint32_t ddr_setup(void)
+                 {
+                     ddr_training_state = DDR_TRAINING_IP_SM_BCLKSCLK;
+                 }
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+             }
+             if(--timeout == 0U)
+             {
+@@ -1322,7 +1348,7 @@ static uint32_t ddr_setup(void)
+         case DDR_TRAINING_IP_SM_BCLKSCLK:
+             if(CFG_DDR_SGMII_PHY->training_status.training_status & BCLK_SCLK_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_ADDCMD;
+             }
+             if(--timeout == 0U)
+@@ -1334,12 +1360,12 @@ static uint32_t ddr_setup(void)
+         case DDR_TRAINING_IP_SM_ADDCMD:
+             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & ADDCMD_BIT)
+             {
+-                timeout = 0xFFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_WRLVL;
+             }
+             else if(CFG_DDR_SGMII_PHY->training_status.training_status & ADDCMD_BIT)
+             {
+-                timeout = 0xFFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_WRLVL;
+             }
+             if(--timeout == 0U)
+@@ -1364,12 +1390,13 @@ static uint32_t ddr_setup(void)
+             /* END VREFTRN */
+             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & WRLVL_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
+             }
+             else if(CFG_DDR_SGMII_PHY->training_status.training_status & WRLVL_BIT)
+             {
+-                timeout = 0xFFFFF;
++                timeout = MAX_TIMEOUT;
++                ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
+                 ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
+             }
+             if(--timeout == 0U)
+@@ -1385,12 +1412,12 @@ static uint32_t ddr_setup(void)
+             /* end addition 11th Feb 22 */
+             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & RDGATE_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_DQ_DQS;
+             }
+             else if(CFG_DDR_SGMII_PHY->training_status.training_status & RDGATE_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_DQ_DQS;
+             }
+             if(--timeout == 0U)
+@@ -1401,12 +1428,12 @@ static uint32_t ddr_setup(void)
+         case DDR_TRAINING_IP_SM_DQ_DQS:
+             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & DQ_DQS_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_VERIFY;
+             }
+             else if(CFG_DDR_SGMII_PHY->training_status.training_status & DQ_DQS_BIT)
+             {
+-                timeout = 0xFFFF;
++                timeout = MAX_TIMEOUT;
+                 ddr_training_state = DDR_TRAINING_IP_SM_VERIFY;
+             }
+             if(--timeout == 0U)
+@@ -1796,6 +1823,8 @@ static uint32_t ddr_setup(void)
+             {
+                 write_latency = DDR_CAL_MIN_LATENCY;
+                 ddr_training_state = DDR_TRAINING_FAIL_MIN_LATENCY;
++                //SFS: I will try to increase the offset
++                can_increase_offset = 1;
+             }
+             else
+             {
+diff --git a/boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml b/boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml
+index 85759484..bb9fda2b 100644
+--- a/boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml
++++ b/boards/scai-dpu460/mss_config/SCAI_DPU460_mss_cfg.xml
+@@ -1,10 +1,10 @@
+   <mss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpfs_hw_description.xsd">
+     <design_information>
+       <libero_version>2025.1</libero_version>
+-      <design_name>SCAI_DPU460</design_name>
++      <design_name>MSS_DPU</design_name>
+       <mpfs_part_no>MPFS460T</mpfs_part_no>
+       <mpfs_package>FCG1152</mpfs_package>
+-      <creation_date_time>03-17-2026_16:40:38</creation_date_time>
++      <creation_date_time>03-20-2026_13:19:40</creation_date_time>
+       <xml_format_version>0.6.8</xml_format_version>
+     </design_information>
+     <mss_memory_map>
+@@ -1441,38 +1441,38 @@
+             <field Type="RW" name="DEFAULT_ON_START" offset="2" width="1">0x0</field>
+           </register>
+           <register address="0x0000027C" description="To limit the number of interrupts fed to the PLINT, the seventy GPIO interrupts (GPIO0=14, GPIO1=24, GPIO2=32) are reduced down to 41 interrupts by OR'ing some together. There is some flexibility regarding which interrupts are OR'd or are direct. This selection is controlled by a 32-bit system register(GPIO_INTERRUPT_FAB_CR). For example, if bit 0 of the register is set to 1, gpio2_0 is chosen as a direct interrupt on the PLIC and gpio0_0 will be OR'd with any other non-direct gpio0 interrupts. Please see the GPIO driver for more details on using GPIO interrupts." name="GPIO_INTERRUPT_FAB_CR">
+-            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x1</field>
++            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x0</field>
+           </register>
+         </registers>
+       </io_mux>
+@@ -1682,38 +1682,38 @@
+             <field Type="R" name="RESERVED" offset="15" width="17">0x0</field>
+           </register>
+           <register address="0x0000027C" description="To limit the number of interrupts fed to the PLINT, the seventy GPIO interrupts (GPIO0=14, GPIO1=24, GPIO2=32) are reduced down to 41 interrupts by OR'ing some together. There is some flexibility regarding which interrupts are OR'd or are direct. This selection is controlled by a 32-bit system register(GPIO_INTERRUPT_FAB_CR). For example, if bit 0 of the register is set to 1, gpio2_0 is chosen as a direct interrupt on the PLIC and gpio0_0 will be OR'd with any other non-direct gpio0 interrupts. Please see the GPIO driver for more details on using GPIO interrupts." name="ALT_GPIO_INTERRUPT_FAB_CR">
+-            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x1</field>
+-            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x1</field>
+-            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x1</field>
++            <field Type="RW" name="GPIO0_0_OR_GPIO2_0" offset="0" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_1_OR_GPIO2_1" offset="1" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_2_OR_GPIO2_2" offset="2" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_3_OR_GPIO2_3" offset="3" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_4_OR_GPIO2_4" offset="4" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_5_OR_GPIO2_5" offset="5" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_6_OR_GPIO2_6" offset="6" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_7_OR_GPIO2_7" offset="7" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_8_OR_GPIO2_8" offset="8" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_9_OR_GPIO2_9" offset="9" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_10_OR_GPIO2_10" offset="10" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_11_OR_GPIO2_11" offset="11" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_12_OR_GPIO2_12" offset="12" width="1">0x0</field>
++            <field Type="RW" name="GPIO0_13_OR_GPIO2_13" offset="13" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_0_OR_GPIO2_14" offset="14" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_1_OR_GPIO2_15" offset="15" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_2_OR_GPIO2_16" offset="16" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_3_OR_GPIO2_17" offset="17" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_4_OR_GPIO2_18" offset="18" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_5_OR_GPIO2_19" offset="19" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_6_OR_GPIO2_20" offset="20" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_7_OR_GPIO2_21" offset="21" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_8_OR_GPIO2_22" offset="22" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_9_OR_GPIO2_23" offset="23" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_10_OR_GPIO2_24" offset="24" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_11_OR_GPIO2_25" offset="25" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_12_OR_GPIO2_26" offset="26" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_13_OR_GPIO2_27" offset="27" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_14_OR_GPIO2_28" offset="28" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_15_OR_GPIO2_29" offset="29" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_16_OR_GPIO2_30" offset="30" width="1">0x0</field>
++            <field Type="RW" name="GPIO1_17_OR_GPIO2_31" offset="31" width="1">0x0</field>
+           </register>
+         </registers>
+       </io_mux_alt>
+@@ -2133,10 +2133,10 @@
+             <field Type="RSVD" name="RESERVE01" offset="20" width="12">0x0</field>
+           </register>
+           <register address="0x00000008" description="Need to be set by software in all modes but OFF mode. Decoding options should follow ODT_STR table, depends on drive STR setting" name="RPC_ODT_DQ">
+-            <field Type="RW" name="RPC_ODT_DQ" offset="0" width="32">0x2</field>
++            <field Type="RW" name="RPC_ODT_DQ" offset="0" width="32">0x6</field>
+           </register>
+           <register address="0x00000012" description="Need to be set by software in all modes but OFF mode. Decoding options should follow ODT_STR table, depends on drive STR setting" name="RPC_ODT_DQS">
+-            <field Type="RW" name="RPC_ODT_DQS" offset="0" width="32">0x2</field>
++            <field Type="RW" name="RPC_ODT_DQS" offset="0" width="32">0x6</field>
+           </register>
+           <register address="0x00000016" description="Need to be set by software in all modes but OFF mode. Decoding options should follow ODT_STR table, depends on drive STR setting" name="RPC_ODT_ADDCMD">
+             <field Type="RW" name="RPC_ODT_ADDCMD" offset="0" width="32">0x2</field>
+@@ -2484,7 +2484,7 @@
+             <field Type="RW" name="MSS_DDR_DM4" offset="6" width="1">0x1</field>
+           </register>
+           <register address="0x00000064" description="Sets starting DQDQS start training window offset. It should default to 1." name="RPC_156_VALUE">
+-            <field Type="RW" name="VALUE" offset="0" width="32">0xA</field>
++            <field Type="RW" name="VALUE" offset="0" width="32">0x1</field>
+           </register>
+         </registers>
+       </io_bank>
+@@ -2548,12 +2548,12 @@
+       <segs>
+         <registers>
+           <register address="0x00000000" description="Cached access at 0x00_8000_0000 (-0x80+0x00) " name="SEG0_0">
+-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7F84</field>
++            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7F80</field>
+             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+           <register address="0x00000004" description="Cached access at 0x10_0000_000" name="SEG0_1">
+-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7024</field>
++            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x7000</field>
+             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+@@ -2603,7 +2603,7 @@
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+           <register address="0x00000012" description="Non-Cached access at 0x14_0000_0000" name="SEG1_3">
+-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6C70</field>
++            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6C00</field>
+             <field Type="RW" name="RESERVED" offset="15" width="16">0x0</field>
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+@@ -2613,7 +2613,7 @@
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+           <register address="0x00000020" description="Non-Cached WCB  0x18_0000_0000" name="SEG1_5">
+-            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6870</field>
++            <field Type="RW" name="ADDRESS_OFFSET" offset="0" width="15">0x6800</field>
+             <field Type="RW" name="RESERVED" offset="15" width="6">0x0</field>
+             <field Type="RW" name="LOCKED" offset="31" width="1">0x1</field>
+           </register>
+@@ -2632,10 +2632,10 @@
+       <ddrc>
+         <registers>
+           <register address="0x00002400" description="IP Blk = ADDR_MAP Access=RW " name="CFG_MANUAL_ADDRESS_MAP">
+-            <field Type="RW" name="CFG_MANUAL_ADDRESS_MAP" offset="0" width="32">0x0</field>
++            <field Type="RW" name="CFG_MANUAL_ADDRESS_MAP" offset="0" width="32">0x1</field>
+           </register>
+           <register address="0x00002404" description="IP Blk = ADDR_MAP Access=RW " name="CFG_CHIPADDR_MAP">
+-            <field Type="RW" name="CFG_CHIPADDR_MAP" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_CHIPADDR_MAP" offset="0" width="32">0x00001D</field>
+           </register>
+           <register address="0x00002408" description="IP Blk = ADDR_MAP Access=RW " name="CFG_CIDADDR_MAP">
+             <field Type="RW" name="CFG_CIDADDR_MAP" offset="0" width="32">0x00000000</field>
+@@ -2647,28 +2647,28 @@
+             <field Type="RW" name="CFG_MB_AUTOPCH_COL_BIT_POS_HIGH" offset="0" width="32">0x0000000A</field>
+           </register>
+           <register address="0x00002414" description="IP Blk = ADDR_MAP Access=RW " name="CFG_BANKADDR_MAP_0">
+-            <field Type="RW" name="CFG_BANKADDR_MAP_0" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_BANKADDR_MAP_0" offset="0" width="32">0x01C6DA</field>
+           </register>
+           <register address="0x00002418" description="IP Blk = ADDR_MAP Access=RW " name="CFG_BANKADDR_MAP_1">
+             <field Type="RW" name="CFG_BANKADDR_MAP_1" offset="0" width="32">0x0</field>
+           </register>
+           <register address="0x0000241C" description="IP Blk = ADDR_MAP Access=RW " name="CFG_ROWADDR_MAP_0">
+-            <field Type="RW" name="CFG_ROWADDR_MAP_0" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_ROWADDR_MAP_0" offset="0" width="32">0xCE34C2CA</field>
+           </register>
+           <register address="0x00002420" description="IP Blk = ADDR_MAP Access=RW " name="CFG_ROWADDR_MAP_1">
+-            <field Type="RW" name="CFG_ROWADDR_MAP_1" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_ROWADDR_MAP_1" offset="0" width="32">0x44D24503</field>
+           </register>
+           <register address="0x00002424" description="IP Blk = ADDR_MAP Access=RW " name="CFG_ROWADDR_MAP_2">
+-            <field Type="RW" name="CFG_ROWADDR_MAP_2" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_ROWADDR_MAP_2" offset="0" width="32">0x6585D655</field>
+           </register>
+           <register address="0x00002428" description="IP Blk = ADDR_MAP Access=RW " name="CFG_ROWADDR_MAP_3">
+-            <field Type="RW" name="CFG_ROWADDR_MAP_3" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_ROWADDR_MAP_3" offset="0" width="32">0x000</field>
+           </register>
+           <register address="0x0000242C" description="IP Blk = ADDR_MAP Access=RW " name="CFG_COLADDR_MAP_0">
+-            <field Type="RW" name="CFG_COLADDR_MAP_0" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_COLADDR_MAP_0" offset="0" width="32">0x440C2040</field>
+           </register>
+           <register address="0x00002430" description="IP Blk = ADDR_MAP Access=RW " name="CFG_COLADDR_MAP_1">
+-            <field Type="RW" name="CFG_COLADDR_MAP_1" offset="0" width="32">0x00000000</field>
++            <field Type="RW" name="CFG_COLADDR_MAP_1" offset="0" width="32">0x02481C61</field>
+           </register>
+           <register address="0x00002434" description="IP Blk = ADDR_MAP Access=RW " name="CFG_COLADDR_MAP_2">
+             <field Type="RW" name="CFG_COLADDR_MAP_2" offset="0" width="32">0x00000000</field>
+@@ -2704,10 +2704,10 @@
+             <field Type="RW" name="CFG_GENERATE_REFRESH_ON_SRX" offset="0" width="32">0x00000001</field>
+           </register>
+           <register address="0x00002828" description="IP Blk = MC_BASE3 Access=RW " name="CFG_DBI_CL">
+-            <field Type="RW" name="CFG_DBI_CL" offset="0" width="32">0xC</field>
++            <field Type="RW" name="CFG_DBI_CL" offset="0" width="32">0x9</field>
+           </register>
+           <register address="0x0000282C" description="IP Blk = MC_BASE3 Access=RW " name="CFG_NON_DBI_CL">
+-            <field Type="RW" name="CFG_NON_DBI_CL" offset="0" width="32">0xC</field>
++            <field Type="RW" name="CFG_NON_DBI_CL" offset="0" width="32">0x9</field>
+           </register>
+           <register address="0x00002830" description="IP Blk = MC_BASE3 Access=RW " name="INIT_FORCE_WRITE_DATA_0">
+             <field Type="RW" name="INIT_FORCE_WRITE_DATA_0" offset="0" width="32">0x00000000</field>
+@@ -3034,7 +3034,7 @@
+             <field Type="RW" name="CFG_XSR" offset="0" width="32">0x00000024</field>
+           </register>
+           <register address="0x00004080" description="IP Blk = MC_BASE2 Access=RW " name="CFG_CL">
+-            <field Type="RW" name="CFG_CL" offset="0" width="32">0xC</field>
++            <field Type="RW" name="CFG_CL" offset="0" width="32">0x9</field>
+           </register>
+           <register address="0x00004088" description="IP Blk = MC_BASE2 Access=RW " name="CFG_READ_TO_WRITE">
+             <field Type="RW" name="CFG_READ_TO_WRITE" offset="0" width="32">0xF</field>
+@@ -3097,7 +3097,7 @@
+             <field Type="RW" name="CFG_MEM_BANKBITS" offset="0" width="32">0x3</field>
+           </register>
+           <register address="0x000040E0" description="IP Blk = MC_BASE2 Access=RW " name="CFG_ODT_RD_MAP_CS0">
+-            <field Type="RW" name="CFG_ODT_RD_MAP_CS0" offset="0" width="32">0x01</field>
++            <field Type="RW" name="CFG_ODT_RD_MAP_CS0" offset="0" width="32">0x00</field>
+           </register>
+           <register address="0x000040E4" description="IP Blk = MC_BASE2 Access=RW " name="CFG_ODT_RD_MAP_CS1">
+             <field Type="RW" name="CFG_ODT_RD_MAP_CS1" offset="0" width="32">0x00</field>
+diff --git a/init/hss_ddr_init.c b/init/hss_ddr_init.c
+index ebb788e3..f1d6a17c 100644
+--- a/init/hss_ddr_init.c
++++ b/init/hss_ddr_init.c
+@@ -220,3 +220,12 @@ void ddr_report_progress(void) // override weak symbol to report training progre
+ 
+     return;
+ }
++
++void sfs_debug(int ddr_training_state);
++
++void sfs_debug(int ddr_training_state)
++{
++    if((ddr_training_state==DDR_TRAINING_INIT) || (ddr_training_state == DDR_TRAINING_CHECK_FOR_OFFMODE))
++        mHSS_PRINTF("\r\n");
++    mHSS_PRINTF("[%02d]", ddr_training_state);
++}
+\n\n\n
+$ diff -u boards/scai-DPU460/def_config .config
+\n\n\n

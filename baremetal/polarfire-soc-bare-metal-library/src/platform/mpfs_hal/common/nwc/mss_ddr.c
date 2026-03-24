@@ -17,6 +17,13 @@
 #include <stdio.h>
 #include "mpfs_hal/mss_hal.h"
 #include "mss_nwc_init.h"
+
+//SFS: Added To get more flexibility in DDR training
+static int last_dqdqs_offset = 1, can_increase_offset=0;
+#define MAX_TIMEOUT 0x100
+
+
+
 #ifdef DDR_SUPPORT
 #include "mss_ddr_debug.h"
 #ifdef FABRIC_NOISE_TEST
@@ -378,6 +385,15 @@ static uint32_t ddr_setup(void)
 
     ddr_type = LIBERO_SETTING_DDRPHY_MODE & DDRPHY_MODE_MASK;
 
+    {
+        void sfs_debug(int ddr_training_state);
+
+        sfs_debug(ddr_training_state);
+    }
+/*    if((ddr_training_state==DDR_TRAINING_INIT) || (ddr_training_state == DDR_TRAINING_CHECK_FOR_OFFMODE))
+        mHSS_DEBUG_PRINTF_EX("\r\n");
+    mHSS_DEBUG_PRINTF_EX("[%02d]", ddr_training_state);
+*/
 /*
  * Usually in Renode we want to skip DDR training, as it is slow and does not
  * do anything useful. If the user wants to explicitly simulate the training,
@@ -655,6 +671,16 @@ static uint32_t ddr_setup(void)
              */
             set_ddr_rpc_regs(ddr_type);
             ddr_training_state = DDR_TRAINING_SOFT_RESET;
+            //SFS I will increase the DQDQS_OFFSET to get a better flexibility in SDDR training.
+             //The QM boards have differences between them yet in the same batch
+             if(can_increase_offset)
+             {
+                 last_dqdqs_offset++;
+                 if(last_dqdqs_offset==11)
+                     last_dqdqs_offset = 1;
+             }
+             CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
+             can_increase_offset = 0;
             break;
         case DDR_TRAINING_SOFT_RESET:
             /*
@@ -692,7 +718,7 @@ static uint32_t ddr_setup(void)
              *  Configure the DDR PLL
              */
             ddr_pll_config(SCB_UPDATE);
-            timeout = 0xFFFF;
+            timeout = MAX_TIMEOUT;
             ddr_training_state = DDR_TRAINING_VERIFY_PLL_LOCK;
             break;
         case DDR_TRAINING_VERIFY_PLL_LOCK:
@@ -878,7 +904,7 @@ static uint32_t ddr_setup(void)
 
                 CFG_DDR_SGMII_PHY->tip_cfg_params.tip_cfg_params =\
                                                                 tip_cfg_params;
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
 
                 if(use_software_bclk_sclk_training(ddr_type) == 1U)
                 {
@@ -1271,7 +1297,7 @@ static uint32_t ddr_setup(void)
                 DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000000U;
                 DDRCFG->MC_BASE2.CTRLR_INIT.CTRLR_INIT = 0x00000001U;
 
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_START_CHECK;
             }
 #ifdef DEBUG_DDR_INIT
@@ -1312,7 +1338,7 @@ static uint32_t ddr_setup(void)
                 {
                     ddr_training_state = DDR_TRAINING_IP_SM_BCLKSCLK;
                 }
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
             }
             if(--timeout == 0U)
             {
@@ -1322,7 +1348,7 @@ static uint32_t ddr_setup(void)
         case DDR_TRAINING_IP_SM_BCLKSCLK:
             if(CFG_DDR_SGMII_PHY->training_status.training_status & BCLK_SCLK_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_ADDCMD;
             }
             if(--timeout == 0U)
@@ -1334,12 +1360,12 @@ static uint32_t ddr_setup(void)
         case DDR_TRAINING_IP_SM_ADDCMD:
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & ADDCMD_BIT)
             {
-                timeout = 0xFFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_WRLVL;
             }
             else if(CFG_DDR_SGMII_PHY->training_status.training_status & ADDCMD_BIT)
             {
-                timeout = 0xFFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_WRLVL;
             }
             if(--timeout == 0U)
@@ -1364,12 +1390,13 @@ static uint32_t ddr_setup(void)
             /* END VREFTRN */
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & WRLVL_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
             }
             else if(CFG_DDR_SGMII_PHY->training_status.training_status & WRLVL_BIT)
             {
-                timeout = 0xFFFFF;
+                timeout = MAX_TIMEOUT;
+                ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
                 ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
             }
             if(--timeout == 0U)
@@ -1385,12 +1412,12 @@ static uint32_t ddr_setup(void)
             /* end addition 11th Feb 22 */
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & RDGATE_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_DQ_DQS;
             }
             else if(CFG_DDR_SGMII_PHY->training_status.training_status & RDGATE_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_DQ_DQS;
             }
             if(--timeout == 0U)
@@ -1401,12 +1428,12 @@ static uint32_t ddr_setup(void)
         case DDR_TRAINING_IP_SM_DQ_DQS:
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & DQ_DQS_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_VERIFY;
             }
             else if(CFG_DDR_SGMII_PHY->training_status.training_status & DQ_DQS_BIT)
             {
-                timeout = 0xFFFF;
+                timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_VERIFY;
             }
             if(--timeout == 0U)
@@ -1796,6 +1823,8 @@ static uint32_t ddr_setup(void)
             {
                 write_latency = DDR_CAL_MIN_LATENCY;
                 ddr_training_state = DDR_TRAINING_FAIL_MIN_LATENCY;
+                //SFS: I will try to increase the offset
+                can_increase_offset = 1;
             }
             else
             {

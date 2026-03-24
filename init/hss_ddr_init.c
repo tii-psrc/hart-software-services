@@ -220,3 +220,12 @@ void ddr_report_progress(void) // override weak symbol to report training progre
 
     return;
 }
+
+void sfs_debug(int ddr_training_state);
+
+void sfs_debug(int ddr_training_state)
+{
+    if((ddr_training_state==DDR_TRAINING_INIT) || (ddr_training_state == DDR_TRAINING_CHECK_FOR_OFFMODE))
+        mHSS_PRINTF("\r\n");
+    mHSS_PRINTF("[%02d]", ddr_training_state);
+}

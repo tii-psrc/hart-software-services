@@ -97,8 +97,9 @@ static bool getBootImageFromPayload_(struct HSS_Storage *pStorage, struct HSS_Bo
 static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct HSS_BootImage **ppBootImage);
 
 
-//
-//
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
+unsigned long __active_slot = 0;
+#endif
 
 #if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
 static struct HSS_Storage fpgaqspiStorage_ = {
@@ -321,6 +322,17 @@ bool tryBootFunction_(struct HSS_Storage *pStorage, HSS_GetBootImageFnPtr_t cons
     if (result) {
         HSS_Register_Boot_Image(pBootImage);
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "%s: Boot Image registered ...\n", pStorage->name);
+
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
+        if (!strncmp(pStorage->name, "FPGA_QSPI", 9)) {
+          __active_slot = (unsigned long)'b';
+        } else if (!strncmp(pStorage->name, "QSPI", 4)) {
+          __active_slot = (unsigned long)'a';
+        } else {
+          __active_slot = 0;
+        }
+#endif
+
     } else {
         HSS_Register_Boot_Image(NULL);
     }

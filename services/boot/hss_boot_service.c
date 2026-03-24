@@ -165,8 +165,18 @@ struct HSS_Boot_LocalData {
 };
 
 
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
+extern unsigned long __active_slot;
+#endif
+
 static struct HSS_Boot_LocalData localData[MAX_NUM_HARTS-1] = {
-    { HSS_HART_U54_1, NULL, NULL, 0u, 0u, 0u, IPI_MAX_NUM_OUTSTANDING_COMPLETES, 0u, PERF_CTR_UNINITIALIZED, 0u, 0u, { 0u, 0u, 0u, 0u } },
+    { HSS_HART_U54_1, NULL, NULL, 0u, 0u, 0u, IPI_MAX_NUM_OUTSTANDING_COMPLETES, 0u, PERF_CTR_UNINITIALIZED, 0u,
+#if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
+			(uintptr_t)&__active_slot,
+#else
+			0u,
+#endif
+			{ 0u, 0u, 0u, 0u } },
     { HSS_HART_U54_2, NULL, NULL, 0u, 0u, 0u, IPI_MAX_NUM_OUTSTANDING_COMPLETES, 0u, PERF_CTR_UNINITIALIZED, 0u, 0u, { 0u, 0u, 0u, 0u } },
     { HSS_HART_U54_3, NULL, NULL, 0u, 0u, 0u, IPI_MAX_NUM_OUTSTANDING_COMPLETES, 0u, PERF_CTR_UNINITIALIZED, 0u, 0u, { 0u, 0u, 0u, 0u } },
     { HSS_HART_U54_4, NULL, NULL, 0u, 0u, 0u, IPI_MAX_NUM_OUTSTANDING_COMPLETES, 0u, PERF_CTR_UNINITIALIZED, 0u, 0u, { 0u, 0u, 0u, 0u } },

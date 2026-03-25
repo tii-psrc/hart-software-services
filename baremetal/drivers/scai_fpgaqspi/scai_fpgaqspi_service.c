@@ -21,14 +21,22 @@
 #include "tinycli_hexdump.h"
 
 static struct scai_fpgaqspi_priv w25_priv = {
-	.regs          = 0x40000310, /* backup w25 */
-	.gpio1_regs    = 0x40000110, /* GPIO1 Base & Size (Common) */
-	.gpio2_regs    = 0x40000120, /* GPIO2 Base & Size (Common) */
-	.ctrl1_sw_copy = 0,
-	.tx_buf        = NULL,
-	.rx_buf        = NULL,
-	.tx_len        = 0,
-	.rx_len        = 0,
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+    .regs          = 0x40000510,
+    .gpio1_regs    = 0x0,
+    .gpio2_regs    = 0x0,
+#elif defined(CONFIG_BOARD_SCAI_NAVC250)
+    .regs          = 0x40000310,
+    .gpio1_regs    = 0x40000110,
+    .gpio2_regs    = 0x40000120,
+#else
+    #error "FPGA QSPI doesn't support..."
+#endif
+    .ctrl1_sw_copy = 0,
+    .tx_buf        = NULL,
+    .rx_buf        = NULL,
+    .tx_len        = 0,
+    .rx_len        = 0,
 };
 
 static struct spinand_device spinand_device = { 0 };

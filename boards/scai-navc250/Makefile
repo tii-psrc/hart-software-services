@@ -29,6 +29,10 @@
 
 $(info scai-navc250 selected)
 
+ifeq ($(BOARD), scai-navc250)
+CORE_CFLAGS += -DCONFIG_BOARD_SCAI_NAVC250
+endif
+
 TARGET-l2scratch=hss-l2scratch.elf
 TARGET-envm-wrapper=hss-envm-wrapper.elf
 RISCV_TARGET=$(TARGET-l2scratch) $(TARGET-envm-wrapper)

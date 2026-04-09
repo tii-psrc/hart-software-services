@@ -111,12 +111,12 @@ const struct {
 #endif
 #if !IS_ENABLED(CONFIG_SKIP_DDR)
 #  if IS_ENABLED(CONFIG_SERVICE_SCRUB_CACHED_DDR)
-    { (uintptr_t)&__ddr_start,           (uintptr_t)&__ddr_end,        false },
-    { (uintptr_t)&__ddrhi_start,         (uintptr_t)&__ddrhi_end,      false },
+//    { (uintptr_t)&__ddr_start,           (uintptr_t)&__ddr_end,        false },
+//    { (uintptr_t)&__ddrhi_start,         (uintptr_t)&__ddrhi_end,      false },
 #  endif
 #  if IS_ENABLED(CONFIG_SERVICE_SCRUB_NONCACHE_DDDR)
-    { (uintptr_t)&__ncddr_start,       (uintptr_t)&__ncddr_end,    false },
-    { (uintptr_t)&__ncddrhi_start,       (uintptr_t)&__ncddrhi_end,    false },
+//    { (uintptr_t)&__ncddr_start,       (uintptr_t)&__ncddr_end,    false },
+//    { (uintptr_t)&__ncddrhi_start,       (uintptr_t)&__ncddrhi_end,    false },
 #  endif
 #endif
     { (uintptr_t)&__e51itim_start,       (uintptr_t)&__e51itim_end,    false },

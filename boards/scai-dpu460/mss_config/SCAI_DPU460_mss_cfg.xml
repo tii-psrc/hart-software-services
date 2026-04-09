@@ -1,10 +1,10 @@
   <mss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpfs_hw_description.xsd">
     <design_information>
       <libero_version>2025.1</libero_version>
-      <design_name>DPU_MSS</design_name>
+      <design_name>SCAI_DPU460</design_name>
       <mpfs_part_no>MPFS460T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>03-25-2026_08:26:18</creation_date_time>
+      <creation_date_time>04-09-2026_12:32:34</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>

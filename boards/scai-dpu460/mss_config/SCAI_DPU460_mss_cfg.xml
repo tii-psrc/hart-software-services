@@ -4,7 +4,7 @@
       <design_name>SCAI_DPU460</design_name>
       <mpfs_part_no>MPFS460T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>04-20-2026_14:41:34</creation_date_time>
+      <creation_date_time>05-13-2026_11:41:34</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -1244,7 +1244,7 @@
             <field Type="RW" name="MMUART1_FABRIC" offset="8" width="1">0x1</field>
             <field Type="RW" name="MMUART2_FABRIC" offset="9" width="1">0x1</field>
             <field Type="RW" name="MMUART3_FABRIC" offset="10" width="1">0x1</field>
-            <field Type="RW" name="MMUART4_FABRIC" offset="11" width="1">0x0</field>
+            <field Type="RW" name="MMUART4_FABRIC" offset="11" width="1">0x1</field>
             <field Type="RW" name="MDIO0_FABRIC" offset="12" width="1">0x1</field>
             <field Type="RW" name="MDIO1_FABRIC" offset="13" width="1">0x0</field>
           </register>
@@ -4312,14 +4312,14 @@
             <field Type="RW" name="MMUART1" offset="9" width="1">0x1</field>
             <field Type="RW" name="MMUART2" offset="10" width="1">0x1</field>
             <field Type="RW" name="MMUART3" offset="11" width="1">0x1</field>
-            <field Type="RW" name="MMUART4" offset="12" width="1">0x0</field>
+            <field Type="RW" name="MMUART4" offset="12" width="1">0x1</field>
             <field Type="RW" name="I2C0" offset="13" width="1">0x0</field>
             <field Type="RW" name="I2C1" offset="14" width="1">0x0</field>
             <field Type="RW" name="CAN0" offset="15" width="1">0x0</field>
             <field Type="RW" name="CAN1" offset="16" width="1">0x0</field>
             <field Type="RW" name="GPIO0" offset="17" width="1">0x0</field>
             <field Type="RW" name="GPIO1" offset="18" width="1">0x0</field>
-            <field Type="RW" name="GPIO2" offset="19" width="1">0x0</field>
+            <field Type="RW" name="GPIO2" offset="19" width="1">0x1</field>
           </register>
         </registers>
       </mss_peripherals>

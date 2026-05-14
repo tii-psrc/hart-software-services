@@ -25,7 +25,7 @@ static struct scai_fpgaqspi_priv w25_priv = {
     .regs          = 0x40000510,
     .gpio1_regs    = 0x0,
     .gpio2_regs    = 0x0,
-#elif defined(CONFIG_BOARD_SCAI_NAVC250)
+#elif defined(CONFIG_BOARD_SCAI_NAVC250) || defined(CONFIG_BOARD_SCAI_NAVC460) 
     .regs          = 0x40000310,
     .gpio1_regs    = 0x40000110,
     .gpio2_regs    = 0x40000120,

@@ -21,7 +21,7 @@
 
 //SFS: Added To get more flexibility in DDR training
 //static int last_dqdqs_offset = 1, can_increase_offset=0;
-static int last_dqdqs_offset = 1, last_odt = 6, can_increase_offset=0;  //lsat_odt = 6 => ODT 40.... next value 4,3,2,8,6 and so
+//static int last_dqdqs_offset = 1, last_odt = 6, can_increase_offset=0;  //lsat_odt = 6 => ODT 40.... next value 4,3,2,8,6 and so
 #define MAX_TIMEOUT 0x100
 
 
@@ -32,6 +32,8 @@ static int last_dqdqs_offset = 1, last_odt = 6, can_increase_offset=0;  //lsat_o
 #include "drivers/mss/mss_gpio/mss_gpio.h"
 #endif
 
+static int last_dqdqs_offset = 1, last_odt_dq = 2, last_odt_dqs = 8, can_increase_offset=0;  //lsat_odt = 4 => ODT 60.... next value 6, 8, 2, 3, 4 and so
+static int block_incr = 0;
 /*******************************************************************************
  * Local Defines
  */
@@ -387,24 +389,17 @@ static uint32_t ddr_setup(void)
 
     ddr_type = LIBERO_SETTING_DDRPHY_MODE & DDRPHY_MODE_MASK;
 
-    {
-        void sfs_debug(int ddr_training_state);
-
-        sfs_debug(ddr_training_state);
-    }
-/*    if((ddr_training_state==DDR_TRAINING_INIT) || (ddr_training_state == DDR_TRAINING_CHECK_FOR_OFFMODE))
-        mHSS_DEBUG_PRINTF_EX("\r\n");
-    mHSS_DEBUG_PRINTF_EX("[%02d]", ddr_training_state);
-*/
+    delay(DELAY_CYCLES_50_MICRO);
+    delay(DELAY_CYCLES_50_MICRO);
+ 
     switch(ddr_training_state)
     {
-        case 37:    mHSS_PRINTF("+");break;
-        case 45:    mHSS_PRINTF("!");break;
-        default:    delay(DELAY_CYCLES_50_MICRO);break;
+       case DDR_LOAD_PATTERN_TO_CACHE: mHSS_PRINTF("1");break;
+        case DDR_FULL_32BIT_WRC_CHECK:  mHSS_PRINTF("2");break;
+        case 37:                        mHSS_PRINTF("+");break;
+        default:                        break;//mHSS_PRINTF("[%02d]", ddr_training_state);break;
     }
-/*
- * Usually in Renode we want to skip DDR training, as it is slow and does not
- * do anything useful. If the user wants to explicitly simulate the training,
+ /* do anything useful. If the user wants to explicitly simulate the training,
  * then RENODE_SIM_DDR_TRAINING should be defined.
  * The Training skip is achieved by reading from a register that should always
  * return 0's in Hardware. In this case, the MPFS_DDRMock module will return
@@ -683,30 +678,51 @@ static uint32_t ddr_setup(void)
              //The QM boards have differences between them yet in the same batch
              if(can_increase_offset)
              {
-                 last_dqdqs_offset++;
-                 if(last_dqdqs_offset==11)
-                 {
-                     last_dqdqs_offset = 1;
-                    switch(last_odt)
+               if(block_incr)
+                {
+                    block_incr--;
+                    can_increase_offset = 0;
+                    mHSS_PRINTF("\r\nForcing the same parameters");
+                }
+            }
+
+            if(can_increase_offset)
+            {
+                last_dqdqs_offset++;
+                if(last_dqdqs_offset==11)
+                {
+                    last_dqdqs_offset = 1;
+//Voy a barrer desacoplado
+                    switch(last_odt_dq)
                     {
-                        case 6: last_odt = 8; break;
-                        case 4: last_odt = 6; break;
-                        case 3: last_odt = 4; break;
-                        case 2: last_odt = 3; break;
-                        case 8: last_odt = 2; break;
+                        case 2: last_odt_dq = 3; break;
+                        case 3: last_odt_dq = 4; break;
+                        case 4: last_odt_dq = 6; break;
+                        case 6: last_odt_dq = 8; break;
+                        case 8: last_odt_dq = 2; break;
+                    }
+                    if(last_odt_dq == 2)
+                    {
+                        switch(last_odt_dqs)
+                        {
+                            case 2: last_odt_dqs = 3; break;
+                            case 3: last_odt_dqs = 4; break;
+                            case 4: last_odt_dqs = 6; break;
+                            case 6: last_odt_dqs = 8; break;
+                            case 8: last_odt_dqs = 2; break;
+                        }
                     }
                 }
+
+
+
                 CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
-                CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
-                CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt;
-                delay(DELAY_CYCLES_50_MICRO);
-                mHSS_PRINTF("(%d-%d)", CFG_DDR_SGMII_PHY->rpc156.rpc156, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT);
-//                uart_printf(U_DBG0, "\r\nAdjusting DQDQS_OFFSET a %d y ODT a %d", CFG_DDR_SGMII_PHY->rpc156.rpc156, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT);
+                CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt_dq;
+                CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt_dqs;
+//mHSS_PRINTF("(%d-%d)", CFG_DDR_SGMII_PHY->rpc156.rpc156, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT);
+                mHSS_PRINTF("(ODT_DQS %d - ODQ_DQ %d - Offset %02d)\r\n", CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT, CFG_DDR_SGMII_PHY->rpc156.rpc156);
              }
-//             CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
              can_increase_offset = 0;
-//            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
-//            CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt;
             break;
         case DDR_TRAINING_SOFT_RESET:
             /*
@@ -1435,7 +1451,7 @@ static uint32_t ddr_setup(void)
                 turn back on ODT */
             CFG_DDR_SGMII_PHY->DPC_BITS.DPC_BITS = dpc_bits ;
 //SFS       CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = LIBERO_SETTING_RPC_ODT_DQ;
-            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
+            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt_dq;
             /* end addition 11th Feb 22 */
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & RDGATE_BIT)
             {
@@ -1446,6 +1462,8 @@ static uint32_t ddr_setup(void)
             {
                 timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_DQ_DQS;
+//Sergio
+                timeout = 50;
             }
             if(--timeout == 0U)
             {
@@ -1701,7 +1719,7 @@ static uint32_t ddr_setup(void)
              *
              */
             number_of_lanes_to_calibrate = get_num_lanes();
-//            uart_printf(U_DBG0, "{%d}", number_of_lanes_to_calibrate);
+//            mHSS_PRINTF("{%d}", number_of_lanes_to_calibrate);
             /*
              *  Now start the write calibration as training has been successful
              */
@@ -2059,6 +2077,10 @@ static uint32_t ddr_setup(void)
                     num_rpc_166_retires = 0U;
                     rpc_166_fifo_offset = DEFAULT_RPC_166_VALUE;
                     ddr_training_state = DDR_TRAINING_FAIL;
+
+                    //Sergio I will repeat up to 3 times the same parameters set
+                    if(!block_incr)
+                        block_incr = 3;
                 }
                 CFG_DDR_SGMII_PHY->rpc166.rpc166 = rpc_166_fifo_offset;
 
@@ -3248,7 +3270,7 @@ static uint8_t \
                 (void)uprint32(g_debug_uart, "\n\rLane passed:",laneToTest);
                 (void)uprint32(g_debug_uart, " All lanes status:",calib_data.write_cal.status_lower);
 #endif
-//                uart_printf(U_DBG0, "(%d-%02d)",laneToTest, calib_data.write_cal.status_lower);
+//                mHSS_PRINTF("(%d-%02d)",laneToTest, calib_data.write_cal.status_lower);
                 uint32_t laneToCheck;
                 for (laneToCheck = 0x00U;\
                     laneToCheck<number_of_lanes_to_calibrate; laneToCheck++)

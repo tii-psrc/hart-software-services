@@ -17,9 +17,11 @@
 #include <stdio.h>
 #include "mpfs_hal/mss_hal.h"
 #include "mss_nwc_init.h"
+#include "hss_debug.h"
 
 //SFS: Added To get more flexibility in DDR training
-static int last_dqdqs_offset = 1, can_increase_offset=0;
+//static int last_dqdqs_offset = 1, can_increase_offset=0;
+static int last_dqdqs_offset = 1, last_odt = 6, can_increase_offset=0;  //lsat_odt = 6 => ODT 40.... next value 4,3,2,8,6 and so
 #define MAX_TIMEOUT 0x100
 
 
@@ -394,6 +396,12 @@ static uint32_t ddr_setup(void)
         mHSS_DEBUG_PRINTF_EX("\r\n");
     mHSS_DEBUG_PRINTF_EX("[%02d]", ddr_training_state);
 */
+    switch(ddr_training_state)
+    {
+        case 37:    mHSS_PRINTF("+");break;
+        case 45:    mHSS_PRINTF("!");break;
+        default:    delay(DELAY_CYCLES_50_MICRO);break;
+    }
 /*
  * Usually in Renode we want to skip DDR training, as it is slow and does not
  * do anything useful. If the user wants to explicitly simulate the training,
@@ -677,10 +685,28 @@ static uint32_t ddr_setup(void)
              {
                  last_dqdqs_offset++;
                  if(last_dqdqs_offset==11)
+                 {
                      last_dqdqs_offset = 1;
+                    switch(last_odt)
+                    {
+                        case 6: last_odt = 8; break;
+                        case 4: last_odt = 6; break;
+                        case 3: last_odt = 4; break;
+                        case 2: last_odt = 3; break;
+                        case 8: last_odt = 2; break;
+                    }
+                }
+                CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
+                CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
+                CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt;
+                delay(DELAY_CYCLES_50_MICRO);
+                mHSS_PRINTF("(%d-%d)", CFG_DDR_SGMII_PHY->rpc156.rpc156, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT);
+//                uart_printf(U_DBG0, "\r\nAdjusting DQDQS_OFFSET a %d y ODT a %d", CFG_DDR_SGMII_PHY->rpc156.rpc156, CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT);
              }
-             CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
+//             CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
              can_increase_offset = 0;
+//            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
+//            CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt;
             break;
         case DDR_TRAINING_SOFT_RESET:
             /*
@@ -1408,7 +1434,8 @@ static uint32_t ddr_setup(void)
              /* vrgen, revert temp change during write leveling for lpddr4,
                 turn back on ODT */
             CFG_DDR_SGMII_PHY->DPC_BITS.DPC_BITS = dpc_bits ;
-            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = LIBERO_SETTING_RPC_ODT_DQ;
+//SFS       CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = LIBERO_SETTING_RPC_ODT_DQ;
+            CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt;
             /* end addition 11th Feb 22 */
             if(LIBERO_SETTING_TRAINING_SKIP_SETTING & RDGATE_BIT)
             {
@@ -1674,6 +1701,7 @@ static uint32_t ddr_setup(void)
              *
              */
             number_of_lanes_to_calibrate = get_num_lanes();
+//            uart_printf(U_DBG0, "{%d}", number_of_lanes_to_calibrate);
             /*
              *  Now start the write calibration as training has been successful
              */
@@ -3220,6 +3248,7 @@ static uint8_t \
                 (void)uprint32(g_debug_uart, "\n\rLane passed:",laneToTest);
                 (void)uprint32(g_debug_uart, " All lanes status:",calib_data.write_cal.status_lower);
 #endif
+//                uart_printf(U_DBG0, "(%d-%02d)",laneToTest, calib_data.write_cal.status_lower);
                 uint32_t laneToCheck;
                 for (laneToCheck = 0x00U;\
                     laneToCheck<number_of_lanes_to_calibrate; laneToCheck++)

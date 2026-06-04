@@ -47,7 +47,7 @@ extern void pdma_transfer_complete( uint64_t base_address);
  * Local data declarations
  */
 #ifdef DEBUG_DDR_INIT
-mss_uart_instance_t *g_debug_uart;
+mss_uart_instance_t *g_debug_uart = NULL;
 #endif
 
 uint64_t ddr_test;
@@ -84,9 +84,19 @@ __attribute__((weak))\
     SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART0_MASK);
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= (uint32_t)(~SUBBLK_CLOCK_CR_MMUART0_MASK);
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+    MSS_UART_init( uart,
+        MSS_UART_921600_BAUD,
+        MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+#elif defined(CONFIG_BOARD_SCAI_NAVC250) || defined(CONFIG_BOARD_SCAI_NAVC460)
+    MSS_UART_init( uart,
+        MSS_UART_1500000_BAUD,
+        MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+#else
     MSS_UART_init( uart,
         MSS_UART_115200_BAUD,
-            MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+        MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+#endif
     return(0U);
 #endif
 }
@@ -405,6 +415,7 @@ uint32_t ddr_read
         else
         {
 #ifdef DEBUG_DDR_RD_RW_PASS
+###
             //printf("\n\r READ/ WRITE ACCESS passED AT ADDR: 0x%x expected data = 0x%x, Data read 0x%x",DDR_word_ptr, DATA, *DDR_word_ptr);
             uprint64(g_debug_uart, "\n\r READ/ WRITE ACCESS PASSED AT ADDR: 0x"\
                     , (uintptr_t)DDR_word_ptr);

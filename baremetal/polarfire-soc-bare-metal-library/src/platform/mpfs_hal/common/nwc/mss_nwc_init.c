@@ -16,7 +16,9 @@
 
 #ifdef DEBUG_DDR_INIT
 #include "drivers/mss/mss_mmuart/mss_uart.h"
-extern mss_uart_instance_t *g_debug_uart ;
+#include "uart_helper.h"
+#include "hss_types.h"
+extern mss_uart_instance_t *g_debug_uart;
 #endif
 
 /*******************************************************************************
@@ -321,7 +323,7 @@ uint8_t mss_nwc_init_ddr(void)
         /*
          * Defaults to UART0 if none selected by user boot code
          */
-        g_debug_uart = &g_mss_uart0_lo;
+      g_debug_uart = HSS_UART_GetInstance(HSS_HART_U54_1);
     }
     (void)setup_ddr_debug_port(g_debug_uart);
 #endif

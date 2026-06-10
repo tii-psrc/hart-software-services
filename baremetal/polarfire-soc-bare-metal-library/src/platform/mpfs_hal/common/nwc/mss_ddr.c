@@ -32,7 +32,7 @@
 #include "drivers/mss/mss_gpio/mss_gpio.h"
 #endif
 
-static int last_dqdqs_offset = 1, last_odt_dq = 2, last_odt_dqs = 8, can_increase_offset=0;  //lsat_odt = 4 => ODT 60.... next value 6, 8, 2, 3, 4 and so
+static int last_dqdqs_offset = 1, last_odt_dq = 2, last_odt_dqs = 4, can_increase_offset=0;  //lsat_odt = 4 => ODT 60.... next value 6, 8, 2, 3, 4 and so
 static int block_incr = 0;
 /*******************************************************************************
  * Local Defines
@@ -198,6 +198,9 @@ static void init_ddrc(void);
 static uint8_t write_calibration_using_mtc(uint8_t num_of_lanes_to_calibrate);
 /*static uint8_t mode_register_write(uint32_t MR_ADDR, uint32_t MR_DATA);*/
 static uint8_t MTC_test(uint8_t mask, uint64_t start_address, uint32_t size, MTC_PATTERN pattern, MTC_ADD_PATTERN add_pattern, uint32_t *error);
+
+//Sergio. Que pasa si habilito VREFDQ_CALIB?
+//#define VREFDQ_CALIB
 #ifdef VREFDQ_CALIB
 static uint8_t FPGA_VREFDQ_calibration_using_mtc(void);
 static uint8_t VREFDQ_calibration_using_mtc(void);
@@ -395,9 +398,9 @@ static uint32_t ddr_setup(void)
     switch(ddr_training_state)
     {
        case DDR_LOAD_PATTERN_TO_CACHE: mHSS_PRINTF("1");break;
-        case DDR_FULL_32BIT_WRC_CHECK:  mHSS_PRINTF("2");break;
+        case DDR_FULL_32BIT_WRC_CHECK:  mHSS_PRINTF("[wl=%d]", write_latency);break;
         case 37:                        mHSS_PRINTF("+");break;
-        default:                        break;//mHSS_PRINTF("[%02d]", ddr_training_state);break;
+        default:                        break;//uart_printf(U_DBG0, "[%02X]", ddr_training_state);break;
     }
  /* do anything useful. If the user wants to explicitly simulate the training,
  * then RENODE_SIM_DDR_TRAINING should be defined.
@@ -688,8 +691,10 @@ static uint32_t ddr_setup(void)
 
             if(can_increase_offset)
             {
-                last_dqdqs_offset++;
-                if(last_dqdqs_offset==11)
+//                last_dqdqs_offset++;
+//                if(last_dqdqs_offset==11)
+                last_dqdqs_offset+=2;
+                if(last_dqdqs_offset>10)
                 {
                     last_dqdqs_offset = 1;
 //Voy a barrer desacoplado

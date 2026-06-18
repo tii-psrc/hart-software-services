@@ -23,6 +23,7 @@
 #define ADCs_BASE_ADDRESS               (APB_BASE_ADDRESS+0x0600L)
 #if defined(DPU_BOARD)
 #define ADCs1_BASE_ADDRESS              (APB_BASE_ADDRESS+0x0300L)
+#define PF_TVS_BASE_ADDRESS             (APB_BASE_ADDRESS+0x0000L)
 #endif
 
 #define GPIOs_BASE_ADDRESS              (APB_BASE_ADDRESS+0x0100L) // only for DPU
@@ -31,10 +32,33 @@
 #define GPIOs2_BASE_ADDRESS             (GPIOs_BASE_ADDRESS + 32)
 #define GPIOs3_BASE_ADDRESS             (GPIOs_BASE_ADDRESS + 48)
 
+#define V_1V0_BASE_ADDRESS              (PF_TVS_BASE_ADDRESS + 0)
+#define V_1V8_BASE_ADDRESS              (PF_TVS_BASE_ADDRESS + 4)
+#define V_2V5_BASE_ADDRESS              (PF_TVS_BASE_ADDRESS + 8)
+#define TEMP_BASE_ADDRESS               (PF_TVS_BASE_ADDRESS + 12)
+
+
 #if defined(DPU_BOARD)
 #define H16_SVTT_ENA 0          // GPIO0, BIT(0) 
 #define E16_FVTT_ENA 1          // GPIO0, BIT(1)
 #define D18_CAMS_PWR_TEL_ENA 0  // GPIO1, BIT(0)
+
+
+#define F15_CTRL_PGOOD0 18      // GPIO0, BIT(18)
+#define G15_CTRL_nIFLT0 19      // GPIO0, BIT(19)
+#define J18_CTRL_PGOOD1 21      // GPIO0, BIT(21)
+#define H18_CTRL_nIFLT1 22      // GPIO0, BIT(22)
+#define E13_CTRL_PGOOD4 31      // GPIO0, BIT(31)
+
+#define F14_CTRL_nIFLT4 16      // GPIO1, BIT(16)
+#define F17_CTRL_PGOOD3 25      // GPIO0, BIT(25)
+#define F18_CTRL_nIFLT3 26      // GPIO0, BIT(26)
+
+#define H17_CTRL_PGOOD2 23      // GPIO0, BIT(23)
+#define G17_CTRL_nIFLT2 24      // GPIO0, BIT(24)
+
+#define C12_CTRL_PGOOD6 18      // GPIO1, BIT(18)
+#define C13_CTRL_PGOOD7 19      // GPIO1, BIT(19)
 #endif
 
 #define BIT(n) (1UL << (n))
@@ -396,3 +420,59 @@ int VTTs_are_ok(void)
 	return ret;
 }
 
+int pf_init(uint16_t *pf_tel)
+{
+	pf_tel[0] = 0xFFFF & HW_get_32bit_reg(V_1V0_BASE_ADDRESS);
+	pf_tel[1] = 0xFFFF & HW_get_32bit_reg(V_1V8_BASE_ADDRESS);
+	pf_tel[2] = 0xFFFF & HW_get_32bit_reg(V_2V5_BASE_ADDRESS);
+	pf_tel[3] = 0xFFFF & HW_get_32bit_reg(TEMP_BASE_ADDRESS);
+
+	return 0;
+}
+
+#if defined(DPU_BOARD)
+static void format_sanity(const char *format, unsigned int pgood_gpio,
+		unsigned int pgood, unsigned int imon_gpio, unsigned int imon)
+{
+	uint32_t pg, im;
+
+	pg = gpio_config(pgood_gpio, BIT(pgood) , 2);
+	im = gpio_config(imon_gpio, BIT(imon), 2);
+	custom_uart_printf(HSS_HART_E51, format, pg?"OK":"ERROR", im?"OK":"ERROR");
+}
+
+void do_format_sanity(void)
+{
+	format_sanity("\r\n    1.0V:          => PGOOD   : %s - IMON: %s",
+			0, F15_CTRL_PGOOD0, 0, G15_CTRL_nIFLT0);
+	format_sanity("\r\n    1.2V:          => PGOOD   : %s - IMON: %s",
+			0, J18_CTRL_PGOOD1, 0, H18_CTRL_nIFLT1);
+	format_sanity("\r\n    1.8V:          => PGOOD   : %s - IMON: %s",
+			0, E13_CTRL_PGOOD4, 1, F14_CTRL_nIFLT4);
+	format_sanity("\r\n    2.5V:          => PGOOD   : %s - IMON: %s",
+			0, F17_CTRL_PGOOD3, 0, F18_CTRL_nIFLT3);
+	format_sanity("\r\n    3.3V:          => PGOOD   : %s - IMON: %s",
+			0, H17_CTRL_PGOOD2, 0, G17_CTRL_nIFLT2);
+}
+
+static void format_sanity_vtt(const char *VTT, unsigned int ena_gpio,
+		unsigned int ena, unsigned int pgood_gpio, unsigned int pgood)
+{
+	uint32_t pg, en;
+
+	pg = gpio_config(pgood_gpio, BIT(pgood), 2);
+	en = gpio_config(ena_gpio, BIT(ena), 2);
+	if(en)
+	{
+		custom_uart_printf(HSS_HART_E51, "\r\n    %s ON : PGOOD: %s", VTT, pg?"OK":"ERROR");
+	}else{
+		custom_uart_printf(HSS_HART_E51, "\r\n    %s OFF", VTT);
+	}
+}
+
+void do_format_sanity_vtt(void)
+{
+	format_sanity_vtt("Sytem DDR VTT", 0, H16_SVTT_ENA, 1, C12_CTRL_PGOOD6);
+	format_sanity_vtt("Fabric DDR VTT", 0, E16_FVTT_ENA, 1, C13_CTRL_PGOOD7);
+}
+#endif

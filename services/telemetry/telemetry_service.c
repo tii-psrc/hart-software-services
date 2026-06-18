@@ -24,6 +24,7 @@ enum telemetry_status {
 
 static void tm_init_handler(struct StateMachine * const pMyMachine);
 static void tm_monitoring_handler(struct StateMachine * const pMyMachine);
+void format_thermistor(const char *format, uint32_t d1, uint32_t d2);
 
 static const struct StateDesc tm_state_descs[] = {
 	{ (const stateType_t)TM_INITIALIZATION, (const char *)"init",       NULL, NULL, &tm_init_handler       },
@@ -83,21 +84,56 @@ static void format_tel_line1(const char *format, uint32_t d1)
 	custom_uart_printf(HSS_HART_E51, format, ptr1);
 }
 
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+void format_thermistor(const char *format, uint32_t d1, uint32_t d2)
+{
+	char ptr1[16], ptr2[16];
+	format_telemetry(d1, ptr1);
+	format_telemetry(d2, ptr2);
+	custom_uart_printf(HSS_HART_E51, format, ptr1, ptr2);
+}
+#endif
+
 void tm_monitoring_print(void)
 {
 	uint32_t adc[24];
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	uint16_t pf_tel[4];
+	int16_t  in_celsius;
+#endif
 
 	custom_uart_printf(HSS_HART_E51, "\r\n");
 	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTelemetry\r\n");
 
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	pf_init(pf_tel);
+	in_celsius = (pf_tel[3]>>4) - 273;
+#endif
+
 	get_adc_telemetry(adc);
 	custom_uart_printf(HSS_HART_E51, "\r\n");
 
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	custom_uart_printf(HSS_HART_E51, "SOC Temp.       => Temp    : %d.%dK %dC\r\n", pf_tel[3]>>4, pf_tel[3]& 0xF, in_celsius);
+#endif
 	format_tel_line ("Input voltage     => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[6], adc[14]);
 	format_tel_line ("1.0V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[1], adc[0]);
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	custom_uart_printf(HSS_HART_E51, "1.0V rail from PF => Voltage : %d.%03dV\r\n", (pf_tel[0]>>3)/1000, (pf_tel[0]>>3)%1000);
+#endif
+
 	format_tel_line ("1.2V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[3], adc[2]);
+
 	format_tel_line ("1.8V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[5], adc[4]);
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	custom_uart_printf(HSS_HART_E51, "1.8V rail from PF => Voltage : %d.%03dV\r\n", (pf_tel[1]>>3)/1000, (pf_tel[1]>>3)%1000);
+#endif
+
 	format_tel_line ("2.5V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[9], adc[8]);
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	custom_uart_printf(HSS_HART_E51, "2.5V rail from PF => Voltage : %d.%03dV\r\n", (pf_tel[2]>>3)/1000, (pf_tel[2]>>3)%1000);
+#endif
+
 	format_tel_line ("3.3V rail         => Voltage : %sV  - Current: %sA - Power: %s\r\n", adc[11], adc[10]);
 	format_tel_line1("System DDR VTT    => Voltage : %sV\r\n", adc[13]);
 	format_tel_line1("Fabric DDR VTT    => Voltage : %sV\r\n", adc[12]);
@@ -105,7 +141,7 @@ void tm_monitoring_print(void)
 	format_tel_line1("Reference Voltage => ADC1    : %sV\r\n", adc[7]);
 	format_tel_line1("Reference Voltage => ADC2    : %sV\r\n", adc[15]);
 
-#if defined(DPU_BOARD)
+#if defined(CONFIG_BOARD_SCAI_DPU460)
 	format_thermistor ("Camera1 Thermistor=>From V+ : %sOhm - From V-: %sOhm \r\n", adc[16], adc[17]);
 	format_thermistor ("Camera2 Thermistor=>From V+ : %sOhm - From V-: %sOhm \r\n", adc[18], adc[19]);
 	format_tel_line1("Voltage Camera1   => Voltage : %sV\r\n", adc[22]);
@@ -114,13 +150,8 @@ void tm_monitoring_print(void)
 	format_tel_line1("Reference Voltage => ADC_TEL : %sV\r\n", adc[20]);
 
 	custom_uart_printf(HSS_HART_E51, "\r\nSanity check (Digital Status Signals):");
-	format_sanity("\r\n    1.0V:          => PGOOD   : %s - IMON: %s", F15_CTRL_PGOOD0, G15_CTRL_nIFLT0);
-	format_sanity("\r\n    1.2V:          => PGOOD   : %s - IMON: %s", J18_CTRL_PGOOD1, H18_CTRL_nIFLT1);
-	format_sanity("\r\n    1.8V:          => PGOOD   : %s - IMON: %s", E13_CTRL_PGOOD4, F14_CTRL_nIFLT4);
-	format_sanity("\r\n    2.5V:          => PGOOD   : %s - IMON: %s", F17_CTRL_PGOOD3, F18_CTRL_nIFLT3);
-	format_sanity("\r\n    3.3V:          => PGOOD   : %s - IMON: %s", H17_CTRL_PGOOD2, G17_CTRL_nIFLT2);
-	format_sanity_vtt("Sytem DDR VTT", H16_SVTT_ENA, C12_CTRL_PGOOD6);
-	format_sanity_vtt("Fabric DDR VTT", E16_FVTT_ENA, C13_CTRL_PGOOD7);
+	do_format_sanity();
+	do_format_sanity_vtt();
 #endif
 
 	custom_uart_printf(HSS_HART_E51, "\r\n");

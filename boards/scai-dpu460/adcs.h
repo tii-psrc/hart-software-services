@@ -134,7 +134,10 @@ int get_adc_telemetry(uint32_t *d);
 
 int VTTs_are_ok(void);
 
+int pf_init(uint16_t *pf_tel);
 
+void do_format_sanity(void);
+void do_format_sanity_vtt(void);
 #ifdef __cplusplus
 }
 #endif

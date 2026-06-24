@@ -81,6 +81,13 @@ int HSS_SBI_ECALL_Handler(long extid, long funcid,
             break;
 #endif
 
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+        case SBI_EXT_SCAI_RPROC_STATE:
+        case SBI_EXT_SCAI_RPROC_START:
+        case SBI_EXT_SCAI_RPROC_STOP:
+            sbi_printf("%s(): funcid(0x%X)\n", __func__, funcid);
+            break;
+#endif
         //
         // HSS functions
         case SBI_EXT_HSS_REBOOT:

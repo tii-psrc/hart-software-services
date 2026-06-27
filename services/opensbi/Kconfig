@@ -1,5 +1,6 @@
 config SERVICE_OPENSBI
-	def_bool y
+	bool "OpenSBI Service support"
+	default y
 	depends on OPENSBI
 	help
                 This feature enables support for OPENSBI.
@@ -32,6 +33,16 @@ config SERVICE_OPENSBI_CRYPTO
 	  This feature enables support for user crypto ecall service.
 
 	  If you do not know what to do here, say Y.
+
+config SERVICE_OPENSBI_TELEMETRY
+	bool "Remote Telemetry ecall service support"
+	default y
+	depends on  OPENSBI && SERVICE_TELEMETRY
+	help
+                This feature enables support for Remote telemetry ecall service.
+
+		If you do not know what to do here, say Y.
+
 
 config OPENSBI_SRC_DIR
 	string

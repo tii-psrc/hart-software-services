@@ -196,6 +196,11 @@ const struct IPI_Handler ipiRegistry[] = {
     { IPI_MSG_SCRUB,             HSS_Null_IPIHandler },
 #endif
     { IPI_MSG_DDR_TRAIN,         HSS_DDR_Train_IPIHandler },
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+    { IPI_MSG_TELEMETRY,         HSS_Telemetry_IPIHandler },
+#else
+    { IPI_MSG_TELEMETRY,         HSS_Null_IPIHandler },
+#endif
 };
 const size_t spanOfIpiRegistry = ARRAY_SIZE(ipiRegistry);
 

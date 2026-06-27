@@ -65,6 +65,9 @@ static const struct IntentsArray
     { IPI_MSG_SCRUB },
 #endif
     { IPI_MSG_DDR_TRAIN },
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+    { IPI_MSG_TELEMETRY },
+#endif
 };
 #endif
 
@@ -159,5 +162,5 @@ void HSS_U54_Banner(void)
 {
     // wait for E51 to setup BSS...
     HSS_U54_SetState(HSS_State_Idle);
-    mHSS_DEBUG_PRINTF(LOG_NORMAL, "u54_%d: Waiting for E51 instruction\n", current_hartid());
+    //mHSS_DEBUG_PRINTF(LOG_NORMAL, "u54_%d: Waiting for E51 instruction\n", current_hartid());
 }

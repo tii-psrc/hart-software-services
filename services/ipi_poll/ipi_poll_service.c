@@ -84,6 +84,8 @@ static void ipiPoll_init_handler(struct StateMachine * const pMyMachine)
 // --------------------------------------------------------------------------------------------------
 // Handlers for each state in the state machine
 //
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 static void ipiPoll_monitoring_handler(struct StateMachine * const pMyMachine)
 {
     (void) pMyMachine;
@@ -106,6 +108,7 @@ static void ipiPoll_monitoring_handler(struct StateMachine * const pMyMachine)
         }
     }
 }
+#pragma GCC pop_options
 
 
 /////////////////

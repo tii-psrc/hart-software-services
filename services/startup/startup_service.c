@@ -86,7 +86,7 @@ static void startup_init_handler(struct StateMachine * const pMyMachine)
 
     assert(globalInitFunctions[i].handler);
 
-    //mHSS_DEBUG_PRINTF(LOG_NORMAL, "Initializing %s\n", globalInitFunctions[i].pName);
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "Initializing %s\n", globalInitFunctions[i].pName);
 
     bool result = (globalInitFunctions[i].handler)();
 

@@ -4,10 +4,17 @@
  *  Created on: 1 May 2025
  *      Author: Sergio.Sirota
  */
+#if 0
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#else
+#include "hss_types.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
 
 #include "telemetry_service.h"
 #include "adcs.h"
@@ -93,7 +100,7 @@ static int gpio_config(unsigned int gpio_num, unsigned int mask, unsigned int mo
 	else if (mode == 2) //read bit
 		return (data &= mask);
 	else
-		printf("%s: unknown request (%d)...\n", __func__, mode);
+		mHSS_PRINTF("%s: unknown request (%d)...\n", __func__, mode);
 
 	*gpio_addr[gpio_num] = data;
 
@@ -232,77 +239,77 @@ static uint16_t get_all_adc_data(int instance, uint16_t *data)
 	return ret;
 }
 
-static void get_adc0_telemetry(uint16_t *adc, uint32_t *d)
+static void get_adc0_telemetry(int hartid, char *buf, uint16_t *adc, uint32_t *d)
 {
 	uint64_t aux = 0;
 
 	//Channel 0: P_1V0.IMON in micro Amperes
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 0 : %04d - %d", adc[0], aux);
+	format_log(hartid, buf, "\r\nTel 0 : %04d - %d", adc[0], aux);
 	aux = 2500000ULL *(uint64_t)adc[0] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
 	d[0] = (int32_t)aux;
 
 	//Channel 1: P_1V0.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[1] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 1 : %04d - %d", adc[1], aux);
+	format_log(hartid, buf, "\r\nTel 1 : %04d - %d", adc[1], aux);
 	d[1] = (int32_t)aux;
 
 	//Channel 2: P_1V2.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[2] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 2 : %04d - %d", adc[2], aux);
+	format_log(hartid, buf, "\r\nTel 2 : %04d - %d", adc[2], aux);
 	d[2] = (int32_t)aux;
 	//Channel 3: P_1V2.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[3] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 3 : %04d - %d", adc[3], aux);
+	format_log(hartid, buf, "\r\nTel 3 : %04d - %d", adc[3], aux);
 	d[3] = (int32_t)aux;
 	//Channel 4: P_1V8.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[4] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 4 : %04d - %d", adc[4], aux);
+	format_log(hartid, buf, "\r\nTel 4 : %04d - %d", adc[4], aux);
 	d[4] = (int32_t)aux;
 	//Channel 5: P_1V8.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[5] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 5 : %04d - %d", adc[5], aux);
+	format_log(hartid, buf, "\r\nTel 5 : %04d - %d", adc[5], aux);
 	d[5] = (int32_t)aux;
 	//Channel 6: PWR__5V.5V0 in micro Volts
 	aux = 5000000ULL *(uint64_t)adc[6] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 6 : %04d - %d", adc[6], aux);
+	format_log(hartid, buf, "\r\nTel 6 : %04d - %d", adc[6], aux);
 	d[6] = (int32_t)aux;
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 7 : %04d", adc[7]);
+	format_log(hartid, buf, "\r\nTel 7 : %04d", adc[7]);
 	//Channel 7: Vref in micro Volts
 	d[7] = (int32_t)2500000;
 }
 
-static void get_adc1_telemetry(uint16_t *adc, uint32_t *d)
+static void get_adc1_telemetry(int hartid, char *buf, uint16_t *adc, uint32_t *d)
 {
 	uint64_t aux;
 
 	//Channel 0: P_2V5.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[0] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 10 : %04d - %d", adc[0], aux);
+	format_log(hartid, buf, "\r\nTel 10 : %04d - %d", adc[0], aux);
 	d[0] = (int32_t)aux;
 
 	//Channel 1: P_2V5.Vout in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[1] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 11 : %04d - %d", adc[1], aux);
+	format_log(hartid, buf,"\r\nTel 11 : %04d - %d", adc[1], aux);
 	d[1] = (int32_t)aux;
 
 	//Channel 2: P_3V3.IMON in micro Amperes
 	aux = 2500000ULL *(uint64_t)adc[2] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 12 : %04d - %d", adc[2], aux);
+	format_log(hartid, buf,"\r\nTel 12 : %04d - %d", adc[2], aux);
 	d[2] = (int32_t)aux;
 
 	//Channel 3: P_3V3.Vout in micro Volts
 	aux = 5000000ULL *(uint64_t)adc[3] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 13 : %04d - %d", adc[3], aux);
+	format_log(hartid, buf,"\r\nTel 13 : %04d - %d", adc[3], aux);
 	d[3] = (int32_t)aux;
 
 	//Channel 4: FVTT.VTT in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[4] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 14 : %04d - %d", adc[4], aux);
+	format_log(hartid, buf, "\r\nTel 14 : %04d - %d", adc[4], aux);
 	d[4] = (int32_t)aux;
 
 	//Channel 5: SVTT.VTT in micro Volts
 	aux = 2500000ULL *(uint64_t)adc[5] / (uint64_t)adc[7]; //10mOhm sensor resistance and gain x100
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 15 : %04d - %d", adc[5], aux);
+	format_log(hartid, buf, "\r\nTel 15 : %04d - %d", adc[5], aux);
 	d[5] = (int32_t)aux;
 
 #if defined(DPU_BOARD)
@@ -311,9 +318,9 @@ static void get_adc1_telemetry(uint16_t *adc, uint32_t *d)
 	//Iout = ((2.5V * N6 * Gain) / (N7* Rmon))*1e6 = ((2.5*N6*41500)/(N7*43200))*1e6 = ((2.5*N6*415*)/(N7*432)) = 2401620*N6/N7 =
 
 	aux = (2401620ULL * (uint64_t)adc[6]) / (uint64_t)adc[7];
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 16 : %04d - %d", adc[6], aux);
+	format_log(hartid, buf, "\r\nTel 16 : %04d - %d", adc[6], aux);
 	d[6] = (int32_t)aux;
-	custom_uart_printf(HSS_HART_E51, "\r\nTel 17 : %04d", adc[7]);
+	format_log(hartid, buf, "\r\nTel 17 : %04d", adc[7]);
 #else
 	//Channel 6: PWR_5V.IMON in micro Amperte
 
@@ -381,15 +388,16 @@ static void get_adc2_telemetry(uint16_t *adc, uint32_t *d)
 #endif
 
 
-int get_adc_telemetry(uint32_t *d)
+int get_adc_telemetry(int hartid, char *buf, uint32_t *d)
 {
 	uint16_t adc[24];
 
 	get_all_adc_data(0, adc);
 	get_all_adc_data(1, &adc[16]);
-	get_adc0_telemetry(&adc[0], &d[0]);
-	get_adc1_telemetry(&adc[8], &d[8]);
+	get_adc0_telemetry(hartid, buf, &adc[0], &d[0]);
+	get_adc1_telemetry(hartid, buf, &adc[8], &d[8]);
 	get_adc2_telemetry(&adc[16], &d[16]);
+
 	return 1;
 }
 
@@ -431,31 +439,31 @@ int pf_init(uint16_t *pf_tel)
 }
 
 #if defined(DPU_BOARD)
-static void format_sanity(const char *format, unsigned int pgood_gpio,
+static void format_sanity(int hartid, char *buf, const char *format, unsigned int pgood_gpio,
 		unsigned int pgood, unsigned int imon_gpio, unsigned int imon)
 {
 	uint32_t pg, im;
 
 	pg = gpio_config(pgood_gpio, BIT(pgood) , 2);
 	im = gpio_config(imon_gpio, BIT(imon), 2);
-	custom_uart_printf(HSS_HART_E51, format, pg?"OK":"ERROR", im?"OK":"ERROR");
+	format_log(hartid, buf, format, pg?"OK":"ERROR", im?"OK":"ERROR");
 }
 
-void do_format_sanity(void)
+void do_format_sanity(int hartid, char *buf)
 {
-	format_sanity("\r\n    1.0V:          => PGOOD   : %s - IMON: %s",
+	format_sanity(hartid, buf, "\r\n    1.0V:          => PGOOD   : %s - IMON: %s",
 			0, F15_CTRL_PGOOD0, 0, G15_CTRL_nIFLT0);
-	format_sanity("\r\n    1.2V:          => PGOOD   : %s - IMON: %s",
+	format_sanity(hartid, buf, "\r\n    1.2V:          => PGOOD   : %s - IMON: %s",
 			0, J18_CTRL_PGOOD1, 0, H18_CTRL_nIFLT1);
-	format_sanity("\r\n    1.8V:          => PGOOD   : %s - IMON: %s",
+	format_sanity(hartid, buf, "\r\n    1.8V:          => PGOOD   : %s - IMON: %s",
 			0, E13_CTRL_PGOOD4, 1, F14_CTRL_nIFLT4);
-	format_sanity("\r\n    2.5V:          => PGOOD   : %s - IMON: %s",
+	format_sanity(hartid, buf, "\r\n    2.5V:          => PGOOD   : %s - IMON: %s",
 			0, F17_CTRL_PGOOD3, 0, F18_CTRL_nIFLT3);
-	format_sanity("\r\n    3.3V:          => PGOOD   : %s - IMON: %s",
+	format_sanity(hartid, buf, "\r\n    3.3V:          => PGOOD   : %s - IMON: %s",
 			0, H17_CTRL_PGOOD2, 0, G17_CTRL_nIFLT2);
 }
 
-static void format_sanity_vtt(const char *VTT, unsigned int ena_gpio,
+static void format_sanity_vtt(int hartid, char *buf, const char *VTT, unsigned int ena_gpio,
 		unsigned int ena, unsigned int pgood_gpio, unsigned int pgood)
 {
 	uint32_t pg, en;
@@ -464,15 +472,15 @@ static void format_sanity_vtt(const char *VTT, unsigned int ena_gpio,
 	en = gpio_config(ena_gpio, BIT(ena), 2);
 	if(en)
 	{
-		custom_uart_printf(HSS_HART_E51, "\r\n    %s ON : PGOOD: %s", VTT, pg?"OK":"ERROR");
+		format_log(hartid, buf, "\r\n    %s ON : PGOOD: %s", VTT, pg?"OK":"ERROR");
 	}else{
-		custom_uart_printf(HSS_HART_E51, "\r\n    %s OFF", VTT);
+		format_log(hartid, buf, "\r\n    %s OFF", VTT);
 	}
 }
 
-void do_format_sanity_vtt(void)
+void do_format_sanity_vtt(int hartid, char *buf)
 {
-	format_sanity_vtt("Sytem DDR VTT", 0, H16_SVTT_ENA, 1, C12_CTRL_PGOOD6);
-	format_sanity_vtt("Fabric DDR VTT", 0, E16_FVTT_ENA, 1, C13_CTRL_PGOOD7);
+	format_sanity_vtt(hartid, buf, "Sytem DDR VTT", 0, H16_SVTT_ENA, 1, C12_CTRL_PGOOD6);
+	format_sanity_vtt(hartid, buf, "Fabric DDR VTT", 0, E16_FVTT_ENA, 1, C13_CTRL_PGOOD7);
 }
 #endif

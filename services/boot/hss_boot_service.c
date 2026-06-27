@@ -851,8 +851,8 @@ static void boot_idle_onEntry(struct StateMachine * const pMyMachine)
 
 static void boot_idle_handler(struct StateMachine * const pMyMachine)
 {
-    struct HSS_Boot_LocalData const * const pInstanceData = pMyMachine->pInstanceData;
-    IPI_ConsumeIntent(pInstanceData->target, IPI_MSG_BOOT_REQUEST); // check for boot requests
+    //struct HSS_Boot_LocalData const * const pInstanceData = pMyMachine->pInstanceData;
+    //IPI_ConsumeIntent(pInstanceData->target, IPI_MSG_BOOT_REQUEST); // check for boot requests
 }
 
 

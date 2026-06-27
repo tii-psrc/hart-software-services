@@ -41,12 +41,45 @@ void uart_putc(int hartid, const char ch);
 
 void *HSS_UART_GetInstance(int hartid);
 
-
-#define custom_uart_printf(hartid, fmt, ...) do {  \
-  char buf[1024]; \
-  sbi_sprintf(buf, fmt, ##__VA_ARGS__); \
-  uart_putstring(hartid, buf); \
+#if 1
+#if 0
+#define format_log(hartid, buf, fmt, ...) do {        \
+    char *__p = (buf);                                \
+    if ((hartid) > HSS_HART_ALL)                      \
+        __p += strlen(__p);                           \
+    sbi_sprintf(__p, fmt, ##__VA_ARGS__);             \
+    if ((hartid) < HSS_HART_ALL)                      \
+        uart_putstring((hartid), (buf));              \
 } while (0)
+#else
+#define format_log(hartid, buf, fmt, ...) do {        \
+    char *__p = (buf);                                \
+    if ((hartid) > HSS_HART_ALL)                      \
+        __p += strlen(__p);                           \
+    sbi_sprintf(__p, fmt, ##__VA_ARGS__);             \
+    if ((hartid) < HSS_HART_ALL)                      \
+        uart_putstring((hartid), (buf));              \
+} while (0)
+#endif
+#else
+#if 0
+#define format_log(hartid, buf, fmt, ...) do {													\
+    size_t __size = sizeof(buf);																				\
+    size_t __used = ((hartid) > HSS_HART_ALL) ? strlen(buf) : 0;		     \
+    if (__used < __size)	                                               \
+        sbi_snprintf((buf) + __used,                                     \
+                     __size - __used,                                    \
+                     fmt, ##__VA_ARGS__);                                \
+    else                                                                 \
+        uart_putstring(0,	\
+						"WARNING: truncated, __used(%d) >= __size(%d)\r\n",	\
+                       __used, __size );                                 \
+                                                                         \
+    if ((hartid) < HSS_HART_ALL)                                         \
+        uart_putstring((hartid), (buf));                                 \
+} while (0)
+#endif
+#endif
 
 #ifdef __cplusplus
 }

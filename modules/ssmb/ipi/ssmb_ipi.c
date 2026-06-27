@@ -12,6 +12,9 @@
  * \brief SSMB Core Definitions
  */
 
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
 #include "config.h"
 #include "hss_types.h"
 
@@ -41,6 +44,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "uart_helper.h"
 /////////////////////////////////////////////////////////////////////////////
 
 // IPI queues - to be placed at well known address in memory and PMP protected
@@ -114,8 +118,9 @@ __extension__ static const char * const ipiName[] = { // IPI_MSG_NUM_MSG_TYPES
     [ IPI_MSG_CONTINUE ]          = "IPI_MSG_CONTINUE",
     [ IPI_MSG_GOTO ]              = "IPI_MSG_GOTO",
     [ IPI_MSG_OPENSBI_INIT ]      = "IPI_MSG_OPENSBI_INIT",
-    [ IPI_MSG_DDR_TRAIN ]         = "IPI_MSG_DDR_TRAIN",
     [ IPI_MSG_SCRUB ]             = "IPI_MSG_SCRUB",
+    [ IPI_MSG_DDR_TRAIN ]         = "IPI_MSG_DDR_TRAIN",
+    [ IPI_MSG_TELEMETRY ]         = "IPI_MSG_TELEMETRY",
 };
 #endif
 
@@ -202,7 +207,9 @@ static bool clint_set_MSIP(enum HSSHartId const target, uint32_t value)
 
 bool CLINT_Raise_MSIP(enum HSSHartId const target)
 {
+	char buf[1024];
     //mHSS_DEBUG_PRINTF(LOG_NORMAL, "sending IPI to %u\n", target);
+    format_log(HSS_HART_E51, buf, "sending IPI to %u\r\n", target);
     bool result = clint_set_MSIP(target, 1u);
 
     if (result) {
@@ -280,8 +287,11 @@ bool IPI_Send(enum HSSHartId target, enum IPIMessagesEnum message, TxId_t transa
         uint32_t immediate_arg, void const *p_extended_buffer_in_ddr,
         void const *p_ancilliary_buffer_in_ddr) {
     bool result = false;
+		char buf[1024];
 
-    //mHSS_DEBUG_PRINTF(LOG_NORMAL, "called with message type of %u to %d\n", message, target);
+    if (message == IPI_MSG_TELEMETRY)
+      format_log(HSS_HART_E51, buf, "called with message type of %u to %d\r\n",
+          message, target);
 
     // find where to put the message
     uint32_t index = IPI_CalculateQueueIndex(current_hartid(), target);
@@ -312,7 +322,8 @@ bool IPI_Send(enum HSSHartId target, enum IPIMessagesEnum message, TxId_t transa
 
 #if IS_ENABLED(CONFIG_DEBUG_MSCGEN_IPI)
     {
-        mHSS_DEBUG_PRINTF(LOG_NORMAL, "::mscgen: %s->%s %s %u %u %p %p\n",
+      format_log(HSS_HART_E51, buf,
+					"IPI_Send()::mscgen: %s->%s %s %u %u %p %p\r\n",
             hartName[current_hartid()], hartName[target],
             ipiName[message], transaction_id, immediate_arg,
             p_extended_buffer_in_ddr, p_ancilliary_buffer_in_ddr);
@@ -331,6 +342,8 @@ bool IPI_Send(enum HSSHartId target, enum IPIMessagesEnum message, TxId_t transa
 // @param p_extended_buffer_in_ddr [in] Optional pointer to extended buffer in memory
 // @return bool indicating queue messages have changed
 //
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
 bool IPI_PollReceive(union HSSHartBitmask hartMask)
 {
     bool result = false;
@@ -376,11 +389,13 @@ bool IPI_PollReceive(union HSSHartBitmask hartMask)
 
     return result;
 }
+#pragma GCC pop_options
 
 bool IPI_ConsumeIntent(enum HSSHartId source, enum IPIMessagesEnum msg_type)
 {
     bool intentFound = false;
     enum HSSHartId const myHartId = current_hartid();
+		char buf[1024];
 
     //uint32_t index = IPI_CalculateQueueIndex(source, myHartId);
     //if (IPI_GetQueuePendingCount(index)) {
@@ -418,13 +433,21 @@ bool IPI_ConsumeIntent(enum HSSHartId source, enum IPIMessagesEnum msg_type)
                         pMsg->p_extended_buffer_in_ddr, pMsg->p_ancilliary_buffer_in_ddr);
 #endif
                 if (!pHandler) { // ensure we don't fill up queue with unhandlable messages
-                    mHSS_DEBUG_PRINTF(LOG_ERROR, "no handler found for IPI of type %u, force clearing\n",
+                    mHSS_DEBUG_PRINTF(LOG_ERROR, 
+                        "no handler found for IPI of type %u, force clearing\n",
                         msg_type);
                     pMsg->msg_type = IPI_MSG_NO_MESSAGE;
                 } else {
                     intentFound = true;
                     break;
                 }
+            } else {
+#if 0//IS_ENABLED(CONFIG_DEBUG_MSCGEN_IPI)
+              mHSS_DEBUG_PRINTF(LOG_NORMAL, "::mscgen: %s->%s %s %u %u %p %p\n",
+                  hartName[source], hartName[current_hartid()],
+                  ipiName[msg_type], pMsg->transaction_id, pMsg->immediate_arg,
+                  pMsg->p_extended_buffer_in_ddr, pMsg->p_ancilliary_buffer_in_ddr);
+#endif
             }
             pMsg++;
         }
@@ -453,8 +476,9 @@ bool IPI_ConsumeIntent(enum HSSHartId source, enum IPIMessagesEnum msg_type)
             default:
                 switch (result) {
                 case IPI_SUCCESS:
-                    //mHSS_DEBUG_PRINTF(LOG_NORMAL, "sending ACK_COMPLETE on txId %u\n",
-                    //    pMsg->transaction_id);
+                    format_log(HSS_HART_E51, buf, 
+												"sending ACK_COMPLETE on txId %u\n",
+                        pMsg->transaction_id);
                     IPI_Send(source, IPI_MSG_ACK_COMPLETE, pMsg->transaction_id, IPI_SUCCESS, NULL, NULL);
                     break;
 
@@ -644,7 +668,7 @@ enum IPIStatusCode IPI_ACK_IPIHandler(TxId_t transaction_id, enum HSSHartId sour
     (void)p_extended_buffer_in_ddr;
     (void)p_ancilliary_buffer_in_ddr;
 
-    //mHSS_DEBUG_PRINTF(LOG_NORMAL, "freeing IPI\n");
+    mHSS_DEBUG_PRINTF(LOG_NORMAL, "freeing IPI\n");
 
     IPI_MessageUpdateStatus(transaction_id, IPI_IDLE); // free the IPI
 
@@ -695,3 +719,5 @@ void IPI_DebugDumpStats(void)
     }
 #endif
 }
+
+#pragma GCC pop_options

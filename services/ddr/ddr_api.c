@@ -139,6 +139,26 @@ void HSS_DDR_Train(void)
 #if IS_ENABLED(CONFIG_SERVICE_GPIO_UI)
     HSS_GPIO_UI_ReportDDRInitStart();
 #endif
+#if 0
+		volatile int waiting = 1;
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+    IPI_Send(HSS_HART_U54_1, IPI_MSG_TELEMETRY, 0u, 0u, NULL, NULL);
+		do {
+			asm("wfi");
+			asm("wfi");
+			asm("wfi");
+			waiting = 1;
+			waiting = 1;
+			waiting = 1;
+			asm("wfi");
+			asm("wfi");
+			asm("wfi");
+		} while (waiting);
+#endif
     IPI_Send(HSS_HART_U54_1, IPI_MSG_DDR_TRAIN, 0u, 0u, NULL, NULL);
 }
 

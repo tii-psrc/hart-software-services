@@ -104,8 +104,8 @@ void tm_monitoring_print(int hartid, char *buf)
 	int16_t  in_celsius;
 #endif
 
-	format_log(hartid, buf, "\r\n");
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "\r\nTelemetry\r\n");
+	//format_log(hartid, buf, "\r\n");
+	format_log(hartid, buf, "Telemetry\r\n");
 
 #if defined(CONFIG_BOARD_SCAI_DPU460)
 	pf_init(pf_tel);

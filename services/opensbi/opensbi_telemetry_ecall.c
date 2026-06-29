@@ -56,7 +56,9 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 		ipi_status = get_tm_ipi_status();
 	} while (ipi_status);
 
-	format_log(HSS_HART_E51, buf, "\r\nvvv %s(%d) vvv\r\n", __func__, strlen((char *)dma_addr));
+	*out_val = strlen((char *)dma_addr);
+
+	format_log(HSS_HART_E51, buf, "\r\nvvv %s(%d) vvv\r\n", __func__, *out_val);
 	format_log(HSS_HART_E51, (char *)dma_addr, NULL);
 	format_log(HSS_HART_E51, buf, "^^^ %s ^^^\r\n\r\n", __func__);
 

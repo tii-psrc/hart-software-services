@@ -623,10 +623,15 @@ static void tinyCLI_IPIDumpStats_(void)
 #if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
 static void tinyCLI_TM_(void)
 {
-    char buf[4096];
-    memset(buf, 0, sizeof(buf));
+	bool status = false;
 
-    tm_monitoring_print(HSS_HART_E51, buf);
+	status = is_request_from_cli();
+	if (status) {
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] Last request is still in tm work.\r\n", __func__);
+	} else {
+		status = set_request_from_cli();
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] TM requested : %d\r\n", __func__, status);
+	}
 }
 #endif
 

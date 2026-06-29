@@ -15,6 +15,10 @@
 #include "uart_helper.h"
 
 static HSSTicks_t tm_ticks = 0;
+static bool request_from_cli = false;
+static bool request_from_sbi_ecall = false;
+
+static volatile uint8_t *__sbi_ecall_reserved_ddr_buf = NULL;
 
 enum telemetry_status {
 	TM_INITIALIZATION,
@@ -44,6 +48,46 @@ struct StateMachine tm_service = {
     .priority          = 0u,
     .pInstanceData     = NULL
 };
+
+bool is_request_from_cli(void)
+{
+	return request_from_cli;
+}
+
+bool set_request_from_cli(void)
+{
+	request_from_cli = true;
+
+	return request_from_cli;
+}
+
+bool clear_request_from_cli(void)
+{
+	request_from_cli = false;
+
+	return request_from_cli;
+}
+
+bool is_request_from_sbi_ecall(void)
+{
+	return request_from_sbi_ecall;
+}
+
+bool set_request_from_sbi_ecall(volatile uint8_t *sbi_buf_addr)
+{
+	request_from_sbi_ecall = true;
+	__sbi_ecall_reserved_ddr_buf = sbi_buf_addr;
+
+	return request_from_sbi_ecall;
+}
+
+bool clear_request_from_sbi_ecall(void)
+{
+	request_from_sbi_ecall = false;
+	__sbi_ecall_reserved_ddr_buf = NULL;
+
+	return request_from_sbi_ecall;
+}
 
 static void tm_init_handler(struct StateMachine * const pMyMachine)
 {
@@ -94,7 +138,7 @@ void format_thermistor(int hartid, char *buf, const char *format, uint32_t d1, u
 }
 #endif
 
-void tm_monitoring_print(int hartid, char *buf)
+static void tm_monitoring_print(int hartid, char *buf)
 {
 	uint32_t adc[24];
 #if defined(CONFIG_BOARD_SCAI_DPU460)
@@ -171,9 +215,27 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 	HSSTicks_t ticks = HSS_GetTime();
 	size_t msecs = ((ticks - tm_ticks) + (TICKS_PER_MILLISEC / 2)) / TICKS_PER_MILLISEC;
 
-	if (CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC && msecs > CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC*1000) {
+	if (CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC && msecs >
+			CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC*1000)
+	{
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] Timer execution.\r\n", __func__);
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf);
 		tm_ticks = HSS_GetTime();
+	}
+
+	if (is_request_from_cli()) {
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] CLI execution.\r\n", __func__);
+		memset(buf, 0, sizeof(buf));
+		tm_monitoring_print(HSS_HART_E51, buf);
+		clear_request_from_cli();
+	}
+
+	if (is_request_from_sbi_ecall()) {
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] SBI ECALL execution.\r\n", __func__);
+		memset(buf, 0, sizeof(buf));
+		tm_monitoring_print(HSS_HART_ALL + 1, buf);
+		memcpy((void *)__sbi_ecall_reserved_ddr_buf, (void *)buf, strlen(buf) + 1);
+		clear_request_from_sbi_ecall();
 	}
 }

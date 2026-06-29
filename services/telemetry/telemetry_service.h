@@ -10,7 +10,7 @@ extern "C" {
 
 extern struct StateMachine tm_service;
 
-void tm_monitoring_print(void);
+void tm_monitoring_print(int hartid, char *buf);
 
 #ifdef __cplusplus
 }

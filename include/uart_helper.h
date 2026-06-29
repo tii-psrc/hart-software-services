@@ -41,12 +41,15 @@ void uart_putc(int hartid, const char ch);
 
 void *HSS_UART_GetInstance(int hartid);
 
-
-#define custom_uart_printf(hartid, fmt, ...) do {  \
-  char buf[1024]; \
-  sbi_sprintf(buf, fmt, ##__VA_ARGS__); \
-  uart_putstring(hartid, buf); \
+#define format_log(hartid, buf, fmt, ...) do {        \
+    char *__p = (buf);                                \
+    if ((hartid) > HSS_HART_ALL)                      \
+        __p += strlen(__p);                           \
+    sbi_sprintf(__p, fmt, ##__VA_ARGS__);             \
+    if ((hartid) < HSS_HART_ALL)                      \
+        uart_putstring((hartid), (buf));              \
 } while (0)
+
 
 #ifdef __cplusplus
 }

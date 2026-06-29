@@ -130,11 +130,14 @@ int stop_adc(ADCs_type *atr);
 
 void test_adcs(void);
 
-int get_adc_telemetry(uint32_t *d);
+int get_adc_telemetry(int hartid, char *buf, uint32_t *d);
 
 int VTTs_are_ok(void);
 
+int pf_init(uint16_t *pf_tel);
 
+void do_format_sanity(int hartid, char *buf);
+void do_format_sanity_vtt(int hartid, char *buf);
 #ifdef __cplusplus
 }
 #endif

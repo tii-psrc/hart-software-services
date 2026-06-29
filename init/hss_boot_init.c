@@ -353,53 +353,65 @@ static void printBootImageDetails_(struct HSS_BootImage const * const pBootImage
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_BOOT) && (IS_ENABLED(CONFIG_SERVICE_YMODEM) || IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI))
-#if 0
-#define custom_uart_printf(hartid, ...) do {  \
-  char buf[1024]; \
-  sbi_sprintf(buf, " " __VA_ARGS__); \
-  uart_putstring(hartid, buf); \
-} while (0)
-#endif
 static void __print_boot_img_info(int hartid, struct HSS_BootImage const * const pBootImage)
 {
   int i;
+  char buf[1024];
 
-  custom_uart_printf(hartid, "HSS Boot Image Header\r\n");
+  memset(buf, 0, sizeof(buf));
 
-  custom_uart_printf(hartid, "  - magic              : 0x%08X \r\n", pBootImage->magic);
-  custom_uart_printf(hartid, "  - version            : 0x%08X \r\n", pBootImage->version);
-  custom_uart_printf(hartid, "  - headerLength       : 0x%08X(%d) \r\n", pBootImage->headerLength, pBootImage->headerLength);
-  custom_uart_printf(hartid, "  - headerCrc          : 0x%08X \r\n", pBootImage->headerCrc);
-  custom_uart_printf(hartid, "  - chunkTableOffset   : 0x%08X \r\n", pBootImage->chunkTableOffset);
-  custom_uart_printf(hartid, "  - ziChunkTableOffset : 0x%08X \r\n", pBootImage->ziChunkTableOffset);
-  custom_uart_printf(hartid, "  - set name           : %s     \r\n", pBootImage->set_name);
-  custom_uart_printf(hartid, "  - bootImageLength    : 0x%08X(%d) \r\n", pBootImage->bootImageLength, pBootImage->bootImageLength);
+  format_log(hartid, buf, "HSS Boot Image Header\r\n");
+  format_log(hartid, buf, "  - magic              : 0x%08X \r\n",
+			pBootImage->magic);
+  format_log(hartid, buf, "  - version            : 0x%08X \r\n",
+			pBootImage->version);
+  format_log(hartid, buf, "  - headerLength       : 0x%08X(%d) \r\n",
+			pBootImage->headerLength, pBootImage->headerLength);
+  format_log(hartid, buf, "  - headerCrc          : 0x%08X \r\n",
+			pBootImage->headerCrc);
+  format_log(hartid, buf, "  - chunkTableOffset   : 0x%08X \r\n",
+			pBootImage->chunkTableOffset);
+  format_log(hartid, buf, "  - ziChunkTableOffset : 0x%08X \r\n",
+			pBootImage->ziChunkTableOffset);
+  format_log(hartid, buf, "  - set name           : %s     \r\n",
+			pBootImage->set_name);
+  format_log(hartid, buf, "  - bootImageLength    : 0x%08X(%d) \r\n",
+			pBootImage->bootImageLength, pBootImage->bootImageLength);
 
   for (i=0; i<MAX_NUM_HARTS-1; i++) {
-    custom_uart_printf(hartid, "    - U54 hart[%d].entryPoint    : 0x%08X \r\n", i+1, pBootImage->hart[i].entryPoint);
-    custom_uart_printf(hartid, "    - U54 hart[%d].privMode      : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].privMode);
-    custom_uart_printf(hartid, "    - U54 hart[%d].flags         : 0x%02X \r\n", i+1, (int)pBootImage->hart[i].flags);
-    custom_uart_printf(hartid, "    - U54 hart[%d].numChunks     : 0x%08X \r\n", i+1, pBootImage->hart[i].numChunks);
-    custom_uart_printf(hartid, "    - U54 hart[%d].firstChunk    : 0x%08X \r\n", i+1, pBootImage->hart[i].firstChunk);
-    custom_uart_printf(hartid, "    - U54 hart[%d].lastChunk     : 0x%08X \r\n", i+1, pBootImage->hart[i].lastChunk);
-    custom_uart_printf(hartid, "    - U54 hart[%d].name          : %s     \r\n", i+1, pBootImage->hart[i].name);
+    format_log(hartid, buf, "    - U54 hart[%d].entryPoint    : 0x%08X \r\n",
+				i+1, pBootImage->hart[i].entryPoint);
+    format_log(hartid, buf, "    - U54 hart[%d].privMode      : 0x%02X \r\n",
+				i+1, (int)pBootImage->hart[i].privMode);
+    format_log(hartid, buf, "    - U54 hart[%d].flags         : 0x%02X \r\n",
+				i+1, (int)pBootImage->hart[i].flags);
+    format_log(hartid, buf, "    - U54 hart[%d].numChunks     : 0x%08X \r\n",
+				i+1, pBootImage->hart[i].numChunks);
+    format_log(hartid, buf, "    - U54 hart[%d].firstChunk    : 0x%08X \r\n",
+				i+1, pBootImage->hart[i].firstChunk);
+    format_log(hartid, buf, "    - U54 hart[%d].lastChunk     : 0x%08X \r\n",
+				i+1, pBootImage->hart[i].lastChunk);
+    format_log(hartid, buf, "    - U54 hart[%d].name          : %s     \r\n",
+				i+1, pBootImage->hart[i].name);
   }
 
-  custom_uart_printf(hartid, "  - signature.digest   : ");
+  format_log(hartid, buf, "  - signature.digest   : ");
   for (i=0; i<sizeof(pBootImage->signature.digest); i++) {
     if (i % 0x10 == 0)
-      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
-    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.digest[i]);
+      format_log(hartid, buf, "\r\n     [0x%08X] ", i);
+    format_log(hartid, buf, " 0x%02X",
+				(int)pBootImage->signature.digest[i]);
   }
-  custom_uart_printf(hartid, "\r\n");
+  format_log(hartid, buf, "\r\n");
 
-  custom_uart_printf(hartid, "  - signature.ecdsaSig   : ");
+  format_log(hartid, buf, "  - signature.ecdsaSig   : ");
   for (i=0; i<sizeof(pBootImage->signature.ecdsaSig); i++) {
     if (i % 0x10 == 0)
-      custom_uart_printf(hartid, "\r\n     [0x%08X] ", i);
-    custom_uart_printf(hartid, " 0x%02X", (int)pBootImage->signature.ecdsaSig[i]);
+      format_log(hartid, buf, "\r\n     [0x%08X] ", i);
+    format_log(hartid, buf, " 0x%02X",
+				(int)pBootImage->signature.ecdsaSig[i]);
   }
-  custom_uart_printf(hartid, "\r\n");
+  format_log(hartid, buf, "\r\n");
 }
 #endif
 

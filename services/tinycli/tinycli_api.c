@@ -623,7 +623,10 @@ static void tinyCLI_IPIDumpStats_(void)
 #if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
 static void tinyCLI_TM_(void)
 {
-    tm_monitoring_print();
+    char buf[4096];
+    memset(buf, 0, sizeof(buf));
+
+    tm_monitoring_print(HSS_HART_E51, buf);
 }
 #endif
 

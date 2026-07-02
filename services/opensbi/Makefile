@@ -113,6 +113,11 @@ SRCS-$(CONFIG_SERVICE_OPENSBI_CRYPTO) += \
 	services/opensbi/opensbi_crypto_ecall.c
 endif
 
+ifdef CONFIG_SERVICE_TELEMETRY
+SRCS-$(CONFIG_SERVICE_OPENSBI_TELEMETRY) += \
+	services/opensbi/opensbi_telemetry_ecall.c
+endif
+
 ASM_SRCS-$(CONFIG_SERVICE_OPENSBI) += \
 	$(OPENSBI_SRC_DIR)/lib/sbi/riscv_hardfp.S \
 	$(OPENSBI_SRC_DIR)/lib/sbi/sbi_expected_trap.S \

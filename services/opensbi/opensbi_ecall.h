@@ -62,6 +62,8 @@ extern "C" {
 #define SBI_EXT_CRYPTO_SERVICES_PROBE   0x12
 #define SBI_EXT_CRYPTO_SERVICES         0x13
 
+#define SBI_EXT_TELEMETRY_RPROC_COMMAND 0x14
+
 #include <sbi/sbi_ecall.h>
 #include <sbi/sbi_ecall_interface.h>
 #include <sbi/sbi_error.h>

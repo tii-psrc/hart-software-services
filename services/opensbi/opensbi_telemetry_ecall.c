@@ -20,7 +20,9 @@
 #include "opensbi_telemetry_ecall.h"
 
 #include "uart_helper.h"
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
 #include "telemetry_service.h"
+#endif
 
 #define TIMEOUT_COUNT 0x01000000
 //#define TIMEOUT_COUNT 0x1
@@ -33,7 +35,7 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 {
   int result = SBI_EFAIL;
 	volatile uint8_t *__reversed_ddr_addr = (volatile uint8_t *)regs->a0;
-	bool status = false;
+	bool status = true;
 	char buf[1024];
 	uint32_t wait_count = 0;
 
@@ -42,12 +44,14 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 
 	start_time = HSS_GetTime();
 	wait_count = 0;
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
 	status = set_request_from_sbi_ecall(__reversed_ddr_addr);
 	while (status && wait_count < TIMEOUT_COUNT) {
 		wfi();
 		status = is_request_from_sbi_ecall();
 		++wait_count;
 	}
+#endif
 	end_time = HSS_GetTime();
 
 	if (status) {

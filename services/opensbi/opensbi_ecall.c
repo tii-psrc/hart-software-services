@@ -42,7 +42,7 @@
 
 #include "hss_boot_service.h"
 
-#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+#if IS_ENABLED(CONFIG_SERVICE_OPENSBI_TELEMETRY)
 #include "opensbi_telemetry_ecall.h"
 #endif
 
@@ -85,7 +85,7 @@ int HSS_SBI_ECALL_Handler(long extid, long funcid,
             break;
 #endif
 
-#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+#if IS_ENABLED(CONFIG_SERVICE_OPENSBI_TELEMETRY)
         case SBI_EXT_TELEMETRY_RPROC_COMMAND:
             result = sbi_ecall_telemetry_handler(extid, funcid, regs, out_val, out_trap);
             break;

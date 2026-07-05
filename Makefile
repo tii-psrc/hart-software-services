@@ -187,7 +187,6 @@ endef
 #
 # Build Targets
 #
-
 $(TARGET-envm): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT-envm) $(LIBS)
 	$(call main-build-target,envm)
 	$(ECHO) " BIN       `basename $@ .elf`.bin"
@@ -208,3 +207,19 @@ $(BINDIR)/$(TARGET-l2scratch): $(TARGET-l2scratch)
 
 $(TARGET-ddr): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT-ddr) $(LIBS)
 	$(call main-build-target,ddr)
+
+include snvm-wrapper/Makefile
+
+OBJS-snvm = $(OBJS)
+EXTRA_OBJS-snvm = $(EXTRA_OBJS)
+
+$(TARGET-snvm): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT-snvm) $(LIBS)
+	$(call main-build-target,snvm)
+	$(ECHO) " BIN       `basename $@ .elf`.bin"
+	$(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin
+	$(ECHO) " HEX       `basename $@ .elf`.hex";
+	$(OBJCOPY) -O ihex $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.hex
+	$(SIZE) $(BINDIR)/$(TARGET-snvm) 2>/dev/null
+
+$(BINDIR)/$(TARGET-snvm): $(TARGET-snvm)
+

@@ -35,7 +35,8 @@ endif
 
 TARGET-l2scratch=hss-l2scratch.elf
 TARGET-envm-wrapper=hss-envm-wrapper.elf
-RISCV_TARGET=$(TARGET-l2scratch) $(TARGET-envm-wrapper)
+TARGET-snvm-wrapper=hss-snvm-wrapper.elf
+RISCV_TARGET=$(TARGET-l2scratch) $(TARGET-envm-wrapper) $(TARGET-snvm-wrapper)
 TARGET:=$(RISCV_TARGET)
 
 LINKER_SCRIPT-l2scratch=boards/${BOARD}/hss-l2scratch.ld

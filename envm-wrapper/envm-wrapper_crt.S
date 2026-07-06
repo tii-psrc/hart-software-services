@@ -79,6 +79,7 @@ _start:
 	li	t5,	0
 	li	t6,	0
 	csrw	CSR_MSCRATCH, 0
+  call .wait_for_kwangsu
 
 .configure:
 	li	a0, 0
@@ -114,7 +115,7 @@ _start:
 
 .e51_decompress:
 	call	.clear_dtim
-	call	.clear_l2lim
+	call	.clear_l2lim // debug
 	li	a0, 1				// flush default way in case it has already been used
 	call    .flush_early_caching
 	call	config_l2_cache
@@ -267,6 +268,14 @@ _start:
 	j	.zero_section
 .zero_section_done:
 	ret
+
+  .globl  wait_for_kwangsu
+  .type wait_for_kwangsu, @function
+.wait_for_kwangsu:
+  wfi
+  li t3, 0
+  beqz t3, .wait_for_kwangsu
+  ret
 
         // copy_section helper function:
         //	a0 = load_addr

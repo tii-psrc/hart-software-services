@@ -79,6 +79,7 @@ _start:
 	li	t5,	0
 	li	t6,	0
 	csrw	CSR_MSCRATCH, 0
+  call .wait_for_kwangsu
 
 	li t0, 0x20220100
 	jr t0
@@ -86,5 +87,13 @@ _start:
 	.align	3
 .early_trap_handler:
 	j .early_trap_handler
+
+  .globl  wait_for_kwangsu
+  .type wait_for_kwangsu, @function
+.wait_for_kwangsu:
+  wfi
+  li t3, 0
+  beqz t3, .wait_for_kwangsu
+  ret
 
 

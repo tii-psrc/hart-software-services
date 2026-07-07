@@ -62,7 +62,7 @@ CORE_CFLAGS+=$(MCMODEL) -mstrict-align
 CORE_CFLAGS+=-mabi=$(PLATFORM_RISCV_ABI) -march=$(PLATFORM_RISCV_ISA)
 
 # Debug options
-CORE_CFLAGS+=-g3 -DDEBUG -pipe -grecord-gcc-switches
+CORE_CFLAGS+=-g3 -DDEBUG -pipe -grecord-gcc-switches -O0
 #CORE_CFLAGS+=-pipe
 
 VENDOR_STRING=$(shell git describe --tags 2> /dev/null || echo "unknown")
@@ -70,7 +70,7 @@ CORE_CFLAGS+=-DVENDOR_STRING="$(VENDOR_STRING)"
 
 # Warning / Code Quality
 CORE_CFLAGS+=-Wall -Werror -Wshadow -fno-builtin -fno-builtin-printf \
-   -fomit-frame-pointer -Wredundant-decls -Wall -Wundef -Wwrite-strings -fno-strict-aliasing \
+   -fno-omit-frame-pointer -Wredundant-decls -Wall -Wundef -Wwrite-strings -fno-strict-aliasing \
    -fno-common -Wendif-labels -Wmissing-include-dirs -Wempty-body -Wformat=2 -Wformat-security \
    -Wformat-y2k -Winit-self -Wignored-qualifiers -Wold-style-declaration -Wold-style-definition \
    -Wtype-limits -Wstrict-prototypes -Wimplicit-fallthrough=5
@@ -101,7 +101,8 @@ CFLAGS=-std=c11 $(CORE_CFLAGS) $(PLATFORM_CFLAGS) -Wmissing-prototypes
 CFLAGS_GCCEXT=$(CORE_CFLAGS) $(PLATFORM_CFLAGS)
 #OPT-y=-O2
 #OPT-y+=-Os -funroll-loops -fpeel-loops -fgcse-sm -fgcse-las
-OPT-y+=-Os -fno-strict-aliasing
+#OPT-y+=-Os -fno-strict-aliasing
+OPT-y+=-Os
 
 ifndef CONFIG_LD_RELAX
 OPT-y+=-Wl,--no-relax
@@ -117,8 +118,8 @@ ifdef CONFIG_CC_STACKPROTECTOR_STRONG
   # CORE_CFLAGS+=-fstack-clash-protection  # currently does nothing on RISC-V
 else
   $(info INFO: NOTICE: enabling -flto (which means stack protection is disabled))
-  OPT-y+=-flto=auto -ffat-lto-objects -fno-stack-protector
-  OPT-y+=-fwhole-program -Wno-lto-type-mismatch
+#  OPT-y+=-flto=auto -ffat-lto-objects -fno-stack-protector
+#  OPT-y+=-fwhole-program -Wno-lto-type-mismatch
 endif
 
 

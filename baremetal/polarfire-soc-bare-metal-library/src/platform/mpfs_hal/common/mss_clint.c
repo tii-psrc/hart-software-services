@@ -20,7 +20,7 @@ static uint64_t g_systick_increment[5] = {0ULL,0ULL,0ULL,0ULL,0ULL};
  */
 void reset_mtime(void)
 {
-#if ROLLOVER_TEST
+#if 0//ROLLOVER_TEST
     CLINT->MTIME = 0xFFFFFFFFFFFFF000ULL;
 #else
     CLINT->MTIME = 0ULL;

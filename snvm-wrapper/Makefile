@@ -27,14 +27,31 @@
 # eNVM Compression Wrapper
 
 OBJS-snvm-wrapper = \
-	$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o \
+	$(BINDIR)/snvm-wrapper/mss_entry.o \
+	$(BINDIR)/snvm-wrapper/snvm_main.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o \
+#$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o \
 
 EXTRA_OBJS-snvm-wrapper =
 
-LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/snvm-wrapper.ld
+#LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/snvm-wrapper.ld
+LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/mpfs-lim.ld
 
 
-$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o:
+#$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o:
+$(BINDIR)/snvm-wrapper/mss_entry.o:
+$(BINDIR)/snvm-wrapper/snvm_main.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/thirdparty/miniz/miniz.o: CFLAGS=$(CFLAGS_GCCEXT) -DMINIZ_NO_STDIO -DMINIZ_NO_TIME
 $(BINDIR)/snvm-wrapper/snvm-wrapper_validate_crc.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/$(BOARD_DIR)/uart_device_list.o: CFLAGS=$(CFLAGS_GCCEXT)
@@ -62,6 +79,7 @@ $(TARGET-snvm-wrapper): LIBS:=
 $(TARGET-snvm-wrapper): $(OBJS-snvm-wrapper)
 	$(call main-build-target,snvm-wrapper)
 	@$(ECHO) " BIN       `basename $@ .elf`.bin"
+	@$(ECHO) " $(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin"
 	$(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin
 	@$(ECHO) " HEX       `basename $@ .elf`.hex";
 	$(call common-boot-mode-programmer-snvm,--dryrun,`basename $@`)

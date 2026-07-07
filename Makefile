@@ -178,7 +178,7 @@ define main-build-target
 	$(ECHO) "$(CC) -T $(LINKER_SCRIPT-$(1)) $(CFLAGS_GCCEXT) $(OPT-y) -static -nostdlib -nostartfiles -nodefaultlibs -Wl,--build-id -Wl,-Map=$(BINDIR)/output-$(1).map -Wl,--gc-sections -o $(BINDIR)/$@ $(OBJS-$(1)) $(EXTRA_OBJS-$(1)) $(LIBS) $(LIBS-y)"
 	$(CC) -T $(LINKER_SCRIPT-$(1)) $(CFLAGS_GCCEXT) $(OPT-y) \
 		 -static -nostdlib -nostartfiles -nodefaultlibs \
-		 -Wl,--build-id -Wl,-Map=$(BINDIR)/output-$(1).map -Wl,--gc-sections \
+		 -Wl,--build-id=none -Wl,-Map=$(BINDIR)/output-$(1).map -Wl,--gc-sections \
 		 -o $(BINDIR)/$@ $(OBJS-$(1)) $(EXTRA_OBJS-$(1)) $(LIBS) $(LIBS-y)
 	$(ECHO) " NM        `basename $@ .elf`.sym";
 	$(NM) -n $(BINDIR)/$@ > $(BINDIR)/`basename $@ .elf`.sym

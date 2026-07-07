@@ -16,8 +16,8 @@ extern "C" {
 #endif
 
 void handle_local_interrupt(uint8_t interrupt_no);
-void handle_m_soft_interrupt(void);
-void handle_m_timer_interrupt(void);
+//void handle_m_soft_interrupt(void);
+//void handle_m_timer_interrupt(void);
 void illegal_insn_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void misaligned_store_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);
 void misaligned_load_trap(uintptr_t * regs, uintptr_t mcause, uintptr_t mepc);

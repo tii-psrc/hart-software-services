@@ -1,5 +1,7 @@
 #include "mpfs_hal/mss_hal.h"
+#include "mpfs_hal/common/nwc/mss_nwc_init.h"
 
+#include "snvm_log.h"
 
 typedef enum SNVM_WFI_SM_
 {
@@ -302,6 +304,9 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
 
 
   if (hartid == SNVM_MPFS_HAL_FIRST_HART) {
+    (void)mss_nwc_init();
+    (void)snvm_uart_init();
+
     hls_e51->my_hart_id = hartid;
     hls_e51->in_wfi_indicator = HLS_MAIN_HART_STARTED;
 
@@ -330,6 +335,8 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
               break;
           }
           hls_u54 = (HLS_DATA*)(stack_top - HLS_DEBUG_AREA_SIZE);
+          snvm_printf("[hart #%d] hsl(0x%08lx)\r\n",
+              u54_hart_id, (unsigned long)(uintptr_t)hls_u54);
           sm_check_thread = SNVM_CHECK_WFI;
           wait_count = 0U;
           break;

@@ -29,12 +29,20 @@
 OBJS-snvm-wrapper = \
 	$(BINDIR)/snvm-wrapper/mss_entry.o \
 	$(BINDIR)/snvm-wrapper/snvm_main.o \
+	$(BINDIR)/snvm-wrapper/snvm_log.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/drivers/mss/mss_mmuart/mss_uart.o \
+  $(BINDIR)/$(BOARD_DIR)/uart_device_list.o \
+  $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_nwc_init.o \
+  $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_io.o \
+  $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_sgmii.o \
+  $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_pll.o \
+  $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/startup_gcc/mss_utils.o \
 #$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o \
 
 EXTRA_OBJS-snvm-wrapper =
@@ -46,15 +54,20 @@ LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/mpfs-lim.ld
 #$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o:
 $(BINDIR)/snvm-wrapper/mss_entry.o:
 $(BINDIR)/snvm-wrapper/snvm_main.o: CFLAGS=$(CFLAGS_GCCEXT) -O0 -g3 -fno-omit-frame-pointer -fno-inline -fno-optimize-sibling-calls -fno-ipa-cp -fno-ipa-sra -fno-tree-dce
+$(BINDIR)/snvm-wrapper/snvm_log.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o: CFLAGS=$(CFLAGS_GCCEXT)
-$(BINDIR)/thirdparty/miniz/miniz.o: CFLAGS=$(CFLAGS_GCCEXT) -DMINIZ_NO_STDIO -DMINIZ_NO_TIME
-$(BINDIR)/snvm-wrapper/snvm-wrapper_validate_crc.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/drivers/mss/mss_mmuart/mss_uart.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/$(BOARD_DIR)/uart_device_list.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_nwc_init.o  : CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_io.o  : CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_sgmii.o  : CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_pll.o  : CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/startup_gcc/mss_utils.o  : CFLAGS=$(CFLAGS_GCCEXT)
 
 define common-boot-mode-programmer-snvm
 	-$(RM) -r $(BINDIR)/bootmode2

@@ -25,7 +25,8 @@
 #include "mpfs_hal_config/mss_sw_config.h"
 #endif
 
-#define MPFS_HAL_FIRST_HART  0
+//#include "mpfs_hal_config/mss_sw_config.h"
+#define SNVM_MPFS_HAL_FIRST_HART  0
 #define MPFS_HAL_CLEAR_MEMORY  1
 #define HLS_DEBUG_AREA_SIZE     64
 #define NUM_CACHEWAYS_AT_RESET 1
@@ -190,7 +191,7 @@ _start:
     mv tp, sp
     # get core id
     csrr a0, mhartid
-    li a1, MPFS_HAL_FIRST_HART
+    li a1, SNVM_MPFS_HAL_FIRST_HART
     bne a0, a1, .LOtherHartstoWFI
     #
     # clear DTIM - this is required to stop memory errors on initial access by
@@ -231,7 +232,7 @@ _start:
     sb   x0, 0(a4)
     la a4,0x01704020UL
     sb   x0, 0(a4)
-    # now core MPFS_HAL_FIRST_HART jumps to main_first_hart
+    # now core SNVM_MPFS_HAL_FIRST_HART jumps to main_first_hart
 .main_hart:
     # pass HLS address
     mv  a0, tp

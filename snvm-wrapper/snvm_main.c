@@ -15,11 +15,31 @@ typedef enum SNVM_WFI_SM_
 #define HLS_OTHER_HART_IN_WFI               0x12345678U
 #define HLS_OTHER_HART_PASSED_WFI           0x87654321U
 
+#define SNVM_MPFS_HAL_FIRST_HART  0
+
 void snvm_e51(void);
 void snvm_e51(void)
 {
 	/* Raise software interrupt to wake hart 1 */
 	raise_soft_interrupt(1U);
+
+  /* Clear pending software interrupt in case there was any.
+	 * Enable only the software interrupt so that the E51 core can bring this core
+	 * out of WFI by raising a software interrupt. */
+	clear_soft_interrupt();
+	set_csr(mie, MIP_MSIP);
+
+	/* put this hart into WFI. */
+	do
+	{
+		__asm("wfi");
+	} while(0 == (read_csr(mip) & MIP_MSIP));
+
+	/* The hart is out of WFI, clear the SW interrupt. Here onwards Application
+	 * can enable and use any interrupts as required */
+	clear_soft_interrupt();
+	__enable_irq();
+
 	for (;;)
 	{
 		static volatile uint64_t counter = 0U;
@@ -178,7 +198,8 @@ void snvm_u54_4(void)
 	__enable_irq();
 
 	/* Raise software interrupt to wake hart 4 */
-	//raise_soft_interrupt(5U);
+	raise_soft_interrupt(0U);
+
 	for (;;)
 	{
 		static volatile uint64_t counter = 0U;
@@ -196,8 +217,8 @@ void snvm_u54_4(void)
 	/* never return */
 }
 
-__attribute__((weak)) int snvm_other_main(HLS_DATA* hls);
-__attribute__((weak)) int snvm_other_main(HLS_DATA* hls)
+__attribute__((noinline)) int snvm_other_main(HLS_DATA* hls);
+__attribute__((noinline)) int snvm_other_main(HLS_DATA* hls)
 {
   extern char __app_stack_top_h0;
   extern char __app_stack_top_h1;
@@ -268,43 +289,44 @@ __attribute__((weak)) int snvm_other_main(HLS_DATA* hls)
   return 0;
 }
 
-__attribute__((weak)) int snvm_main(HLS_DATA* hls_e51);
-__attribute__((weak)) int snvm_main(HLS_DATA* hls_e51)
+__attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51);
+__attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
 {
-  uint32_t hartid = read_csr(mhartid);
+  volatile uint32_t hartid = read_csr(mhartid);
 
-  if (hartid == MPFS_HAL_FIRST_HART) {
-    uint8_t hart_id;
-    ptrdiff_t stack_top;
+  volatile uint32_t u54_hart_id;
+  uint8_t * volatile stack_top = 0U;
 
+  volatile uint32_t wait_count = 0U;
+  HLS_DATA * volatile hls_u54 = NULL;
+
+
+  if (hartid == SNVM_MPFS_HAL_FIRST_HART) {
     hls_e51->my_hart_id = hartid;
     hls_e51->in_wfi_indicator = HLS_MAIN_HART_STARTED;
 
     SNVM_WFI_SM sm_check_thread = SNVM_INIT_THREAD_PR;
-    hart_id = MPFS_HAL_FIRST_HART + 1U;
-    while( hart_id <= MPFS_HAL_LAST_HART)
+    u54_hart_id = SNVM_MPFS_HAL_FIRST_HART + 1U;
+    while(u54_hart_id <= MPFS_HAL_LAST_HART)
     {
-      uint32_t wait_count = 0U;
-      HLS_DATA* hls_u54 = NULL;
-
       switch (sm_check_thread)
       {
         default:
         case SNVM_INIT_THREAD_PR:
 
-          switch (hart_id)
+          switch (u54_hart_id)
           {
             case 1:
-              stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h1$);
+              stack_top = (uint8_t*)&__stack_top_h1$;
               break;
             case 2:
-              stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h2$);
+              stack_top = (uint8_t*)&__stack_top_h2$;
               break;
             case 3:
-              stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h3$);
+              stack_top = (uint8_t*)&__stack_top_h3$;
               break;
             case 4:
-              stack_top = (ptrdiff_t)((uint8_t*)&__stack_top_h4$);
+              stack_top = (uint8_t*)&__stack_top_h4$;
               break;
           }
           hls_u54 = (HLS_DATA*)(stack_top - HLS_DEBUG_AREA_SIZE);
@@ -321,8 +343,8 @@ __attribute__((weak)) int snvm_main(HLS_DATA* hls_e51)
           break;
 
         case SNVM_SEND_WFI:
-          hls_u54->my_hart_id = hart_id; /* record hartid locally */
-          raise_soft_interrupt(hart_id);
+          hls_u54->my_hart_id = u54_hart_id; /* record hartid locally */
+          raise_soft_interrupt(u54_hart_id);
           sm_check_thread = SNVM_CHECK_WAKE;
           wait_count = 0UL;
           break;
@@ -331,7 +353,7 @@ __attribute__((weak)) int snvm_main(HLS_DATA* hls_e51)
           if (hls_u54->in_wfi_indicator == HLS_OTHER_HART_PASSED_WFI)
           {
             sm_check_thread = SNVM_INIT_THREAD_PR;
-            hart_id++;
+            u54_hart_id++;
             wait_count = 0UL;
           }
           else
@@ -339,10 +361,10 @@ __attribute__((weak)) int snvm_main(HLS_DATA* hls_e51)
             wait_count++;
             if(wait_count > 0x10U)
             {
-              if( hls_u54->in_wfi_indicator == HLS_OTHER_HART_IN_WFI )
+              if(hls_u54->in_wfi_indicator == HLS_OTHER_HART_IN_WFI )
               {
-                hls_u54->my_hart_id = hart_id; /* record hartid locally */
-                raise_soft_interrupt(hart_id);
+                hls_u54->my_hart_id = u54_hart_id; /* record hartid locally */
+                raise_soft_interrupt(u54_hart_id);
                 wait_count = 0UL;
               }
             }
@@ -351,7 +373,7 @@ __attribute__((weak)) int snvm_main(HLS_DATA* hls_e51)
       }
     }
     hls_e51->in_wfi_indicator = HLS_MAIN_HART_FIN_INIT;
-    (void)main_other_hart(hls_e51);
+    (void)snvm_other_main(hls_e51);
   }
 
 

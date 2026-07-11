@@ -210,16 +210,20 @@ $(TARGET-ddr): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT
 
 include snvm-wrapper/Makefile
 
-OBJS-snvm = $(OBJS)
-EXTRA_OBJS-snvm = $(EXTRA_OBJS)
+define gen-hss-envm-manifest
+  @$(ECHO) "[gen-image-header] Checking $(BINDIR)/$(1) ..."
+  @if [ ! -f "$(BINDIR)/$(1)" ]; then \
+    echo "ERROR: $(BINDIR)/$(1) not found!"; \
+    exit 1; \
+  fi
+ @$(ECHO) "python3 tools/gen_image_header/gen_image_header.py $(BINDIR)/$(1) $(BINDIR)/$(1).manifest"
+ python3 tools/gen_image_header/gen_image_header.py $(BINDIR)/$(1) $(BINDIR)/$(1).manifest
+ hexdump -C --no-squeezing $(BINDIR)/$(1).manifest
+ @$(ECHO) "$(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv --rename-section .data=.hss_envm_manifest,alloc,load,readonly,data,contents $(BINDIR)/$(1).manifest $(BINDIR)/$(1).manifest.o"
+ $(OBJCOPY) -I binary -O elf64-littleriscv --binary-architecture riscv --rename-section .data=.hss_envm_manifest,alloc,load,readonly,data,contents $(BINDIR)/$(1).manifest $(BINDIR)/$(1).manifest.o
+ @$(ECHO) "$(NM) $(BINDIR)/$(1).manifest.o"
+ $(NM) $(BINDIR)/$(1).manifest.o
+endef
 
-$(TARGET-snvm): $(OBJS) $(EXTRA_OBJS) $(CONFIG_H) $(DEPENDENCIES) $(LINKER_SCRIPT-snvm) $(LIBS)
-	$(call main-build-target,snvm)
-	$(ECHO) " BIN       `basename $@ .elf`.bin"
-	$(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin
-	$(ECHO) " HEX       `basename $@ .elf`.hex";
-	$(OBJCOPY) -O ihex $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.hex
-	$(SIZE) $(BINDIR)/$(TARGET-snvm) 2>/dev/null
 
-$(BINDIR)/$(TARGET-snvm): $(TARGET-snvm)
 

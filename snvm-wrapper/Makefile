@@ -30,6 +30,7 @@ OBJS-snvm-wrapper = \
 	$(BINDIR)/snvm-wrapper/mss_entry.o \
 	$(BINDIR)/snvm-wrapper/snvm_main.o \
 	$(BINDIR)/snvm-wrapper/snvm_log.o \
+	$(BINDIR)/snvm-wrapper/crc32.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o \
@@ -45,7 +46,7 @@ OBJS-snvm-wrapper = \
   $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/startup_gcc/mss_utils.o \
 #$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o \
 
-EXTRA_OBJS-snvm-wrapper =
+EXTRA_OBJS-snvm-wrapper = $(BINDIR)/$(basename $(TARGET-envm-wrapper)).bin.manifest.o
 
 #LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/snvm-wrapper.ld
 LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/mpfs-lim.ld
@@ -55,6 +56,7 @@ LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/mpfs-lim.ld
 $(BINDIR)/snvm-wrapper/mss_entry.o:
 $(BINDIR)/snvm-wrapper/snvm_main.o: CFLAGS=$(CFLAGS_GCCEXT) -O0 -g3 -fno-omit-frame-pointer -fno-inline -fno-optimize-sibling-calls -fno-ipa-cp -fno-ipa-sra -fno-tree-dce
 $(BINDIR)/snvm-wrapper/snvm_log.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/snvm-wrapper/crc32.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o: CFLAGS=$(CFLAGS_GCCEXT)
@@ -90,6 +92,7 @@ endif
 
 $(TARGET-snvm-wrapper): LIBS:=
 $(TARGET-snvm-wrapper): $(OBJS-snvm-wrapper)
+	$(call gen-hss-envm-manifest,$(basename $(TARGET-envm-wrapper)).bin)
 	$(call main-build-target,snvm-wrapper)
 	@$(ECHO) " BIN       `basename $@ .elf`.bin"
 	@$(ECHO) " $(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin"

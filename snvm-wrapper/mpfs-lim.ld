@@ -181,6 +181,12 @@ SECTIONS
         __text_end = .;
     } > l2lim
  
+    .hss_envm_manifest : ALIGN(8) {
+			__hss_envm_manifest_start = .;
+			KEEP(*(.hss_envm_manifest))
+			__hss_envm_manifest_end = .;
+    } > l2lim
+
     .l2_scratchpad : ALIGN(0x10)
     { 
         __l2_scratchpad_load = LOADADDR(.l2_scratchpad);

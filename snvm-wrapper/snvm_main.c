@@ -2,6 +2,7 @@
 #include "mpfs_hal/common/nwc/mss_nwc_init.h"
 
 #include "snvm_log.h"
+#include "crc32.h"
 
 typedef enum SNVM_WFI_SM_
 {
@@ -19,9 +20,27 @@ typedef enum SNVM_WFI_SM_
 
 #define SNVM_MPFS_HAL_FIRST_HART  0
 
+struct  hss_envm_manifest {
+  uint32_t size;
+  uint32_t crc32;
+  uint8_t reserved[504];
+};
+
+extern const struct hss_envm_manifest __hss_envm_manifest_start;
+
 void snvm_e51(void);
 void snvm_e51(void)
 {
+  uint8_t * volatile p_hss_envm_manifest_addr = (uint8_t *)&__hss_envm_manifest_start;
+  struct hss_envm_manifest * volatile p_hss_envm_manifest = (struct hss_envm_manifest *)p_hss_envm_manifest_addr;
+  uint8_t * volatile buf = (uint8_t *)0x20220100;
+  uint32_t crc32_result = 0;
+
+  snvm_printf("p_hss_envm_manifest->size  : 0x%08X\r\n", p_hss_envm_manifest->size);
+  snvm_printf("p_hss_envm_manifest->crc32 : 0x%08X\r\n", p_hss_envm_manifest->crc32);
+  crc32_result = crc32(0, buf, p_hss_envm_manifest->size);
+  snvm_printf("crc32_result               : 0x%08X\r\n", crc32_result);
+
 	/* Raise software interrupt to wake hart 1 */
 	raise_soft_interrupt(1U);
 

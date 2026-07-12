@@ -5,6 +5,7 @@
 
 #include "snvm_log.h"
 #include "crc32.h"
+#include "snvm_cli.h"
 
 typedef enum SNVM_WFI_SM_
 {
@@ -55,11 +56,13 @@ void snvm_e51(HLS_DATA* hls)
   magic_string[3] = 0xEE;
 #endif
 
+  do_cli(10);
+
   snvm_printf("p_hss_envm_manifest->size  : 0x%08X\r\n", p_hss_envm_manifest->size);
   snvm_printf("p_hss_envm_manifest->crc32 : 0x%08X\r\n", p_hss_envm_manifest->crc32);
   crc32_result = crc32(0, buf, p_hss_envm_manifest->size);
   snvm_printf("crc32_result               : 0x%08X\r\n", crc32_result);
-  snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
+  //snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
 
   if (p_hss_envm_manifest->crc32 == crc32_result) {
 #if 0

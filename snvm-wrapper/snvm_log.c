@@ -355,7 +355,7 @@ void snvm_hexdump(const char *label, const void *buf, uint32_t len)
     label = "hexdump";
   }
 
-  snvm_printf("%s @ %p, len=%u\n", label, buf, len);
+  snvm_printf("%s @ %p, len=%u\r\n", label, buf, len);
 
   while (offset < len) {
     uint32_t i;

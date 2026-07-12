@@ -5,6 +5,7 @@
 
 #include "mpfs_hal/common/mss_sysreg.h"
 #include "drivers/mss/mss_mmuart/mss_uart.h"
+#include "mpfs_hal/common/mss_peripherals.h"
 
 void snvm_uart_init(void)
 {
@@ -12,6 +13,9 @@ void snvm_uart_init(void)
   SYSREG->SOFT_RESET_CR   &= (uint32_t)(~SUBBLK_CLOCK_CR_MMUART2_MASK);
   SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART1_MASK);
   SYSREG->SOFT_RESET_CR   &= (uint32_t)(~SUBBLK_CLOCK_CR_MMUART1_MASK);
+
+  (void) mss_config_clk_rst(MSS_PERIPH_MMUART2, (uint8_t) 0, PERIPHERAL_ON);
+  (void) mss_config_clk_rst(MSS_PERIPH_MMUART1, (uint8_t) 0, PERIPHERAL_ON);
 
   MSS_UART_init(&g_mss_uart2_lo,
       MSS_UART_921600_BAUD,

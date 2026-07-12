@@ -1,5 +1,7 @@
 #include "mpfs_hal/mss_hal.h"
 #include "mpfs_hal/common/nwc/mss_nwc_init.h"
+#include "mpfs_hal/common/mss_peripherals.h"
+//#include "mpfs_hal/common/mss_sysreg.h"
 
 #include "snvm_log.h"
 #include "crc32.h"
@@ -9,7 +11,7 @@ typedef enum SNVM_WFI_SM_
   SNVM_INIT_THREAD_PR = 0x00, /* !< 0 init pointer    */
   SNVM_CHECK_WFI      = 0x01, /* !< is hart in wfi?   */
   SNVM_SEND_WFI       = 0x02, /* !< separate state to
-                              add a little delay */
+                                 add a little delay */
   SNVM_CHECK_WAKE     = 0x03, /* !< has hart left wfi */
 } SNVM_WFI_SM;
 
@@ -27,215 +29,252 @@ struct  hss_envm_manifest {
 };
 
 extern const struct hss_envm_manifest __hss_envm_manifest_start;
+extern const uint8_t __envm_start;
 
-void snvm_e51(void);
-void snvm_e51(void)
+typedef void (*envm_entry_t)(void);
+envm_entry_t entry = (envm_entry_t)&__envm_start;
+
+void snvm_e51(HLS_DATA* hls);
+void snvm_e51(HLS_DATA* hls)
 {
   uint8_t * volatile p_hss_envm_manifest_addr = (uint8_t *)&__hss_envm_manifest_start;
   struct hss_envm_manifest * volatile p_hss_envm_manifest = (struct hss_envm_manifest *)p_hss_envm_manifest_addr;
-  uint8_t * volatile buf = (uint8_t *)0x20220100;
+  uint8_t * volatile buf = (uint8_t *)&__envm_start;
   uint32_t crc32_result = 0;
+#if 0
+  uint8_t *magic_string = (uint8_t *)hls->shared_mem;
+  uint8_t *done_string = (uint8_t *)hls->shared_mem+4;
+
+  __disable_all_irqs();
+
+  *magic_string = *done_string = 0;
+
+  magic_string[0] = 0x00;
+  magic_string[1] = 0xC0;
+  magic_string[2] = 0xFF;
+  magic_string[3] = 0xEE;
+#endif
 
   snvm_printf("p_hss_envm_manifest->size  : 0x%08X\r\n", p_hss_envm_manifest->size);
   snvm_printf("p_hss_envm_manifest->crc32 : 0x%08X\r\n", p_hss_envm_manifest->crc32);
   crc32_result = crc32(0, buf, p_hss_envm_manifest->size);
   snvm_printf("crc32_result               : 0x%08X\r\n", crc32_result);
+  snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
 
-	/* Raise software interrupt to wake hart 1 */
-	raise_soft_interrupt(1U);
+  if (p_hss_envm_manifest->crc32 == crc32_result) {
+#if 0
+    magic_string[0] = 0xC0;
+    magic_string[1] = 0xFF;
+    magic_string[2] = 0xEE;
+    magic_string[3] = 0x00;
+    do {
+      __asm("wfi");
+      if (done_string[0] == 0xBE && done_string[1] == 0xEF && done_string[2] == 0xBE && done_string[3] == 0xEF)
+        break;
+    } while (1);
 
+#else
+    /* Clear pending software interrupt in case there was any.
+     * Enable only the software interrupt so that the E51 core can bring this core
+     * out of WFI by raising a software interrupt. */
+    clear_soft_interrupt();
+    set_csr(mie, MIP_MSIP);
+
+    /* Raise software interrupt to wake hart 1 */
+    raise_soft_interrupt(1U);
+
+    /* put this hart into WFI. */
+    do
+    {
+      __asm("wfi");
+    } while(0 == (read_csr(mip) & MIP_MSIP));
+
+    /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
+     * can enable and use any interrupts as required */
+    clear_soft_interrupt();
+#endif
+
+    (void) mss_config_clk_rst(MSS_PERIPH_MMUART2, (uint8_t) 0, PERIPHERAL_OFF);
+    (void) mss_config_clk_rst(MSS_PERIPH_MMUART1, (uint8_t) 0, PERIPHERAL_OFF);
+    entry();
+  }
+
+  for (;;)
+  {
+    static volatile uint64_t counter = 0U;
+    /* Added some code as debugger hangs if in loop doing nothing */
+    asm ("nop");
+    asm ("nop");
+    asm ("nop");
+    asm ("nop");
+    counter = counter + 1U;
+    asm ("nop");
+    asm ("nop");
+    asm ("nop");
+
+  }
+  /* never return */
+}
+
+void snvm_u54_1(HLS_DATA* hls);
+void snvm_u54_1(HLS_DATA* hls)
+{
+#if 0
+  uint8_t *magic_string = (uint8_t *)hls->shared_mem;
+
+  __disable_all_irqs();
+
+  do {
+    __asm("wfi");
+    if (magic_string[0] == 0xC0 && magic_string[1] == 0xFF && magic_string[2] == 0xEE && magic_string[3] == 0x00)
+      break;
+  } while (1);
+#else
   /* Clear pending software interrupt in case there was any.
-	 * Enable only the software interrupt so that the E51 core can bring this core
-	 * out of WFI by raising a software interrupt. */
-	clear_soft_interrupt();
-	set_csr(mie, MIP_MSIP);
+     Enable only the software interrupt so that the E51 core can bring this
+     core out of WFI by raising a software interrupt. */
+  clear_soft_interrupt();
+  set_csr(mie, MIP_MSIP);
 
-	/* put this hart into WFI. */
-	do
-	{
-		__asm("wfi");
-	} while(0 == (read_csr(mip) & MIP_MSIP));
+  /*Put this hart into WFI.*/
+  do
+  {
+    __asm("wfi");
+  }while(0 == (read_csr(mip) & MIP_MSIP));
 
-	/* The hart is out of WFI, clear the SW interrupt. Here onwards Application
-	 * can enable and use any interrupts as required */
-	clear_soft_interrupt();
-	__enable_irq();
+  /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
+   * can enable and use any interrupts as required */
+  clear_soft_interrupt();
 
-	for (;;)
-	{
-		static volatile uint64_t counter = 0U;
-		/* Added some code as debugger hangs if in loop doing nothing */
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		counter = counter + 1U;
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
+  /* Raise software interrupt to wake hart 2 */
+  raise_soft_interrupt(2U);
 
-	}
-	/* never return */
+  /* crc32 for envm passed @e51 */
+#endif
+
+  entry();
 }
 
-void snvm_u54_1(void);
-void snvm_u54_1(void)
+void snvm_u54_2(HLS_DATA* hls);
+void snvm_u54_2(HLS_DATA* hls)
 {
-	/* Clear pending software interrupt in case there was any.
-		 Enable only the software interrupt so that the E51 core can bring this
-		 core out of WFI by raising a software interrupt. */
-	clear_soft_interrupt();
-	set_csr(mie, MIP_MSIP);
+#if 0
+  uint8_t *magic_string = (uint8_t *)hls->shared_mem;
 
-	/*Put this hart into WFI.*/
-	do
-	{
-		__asm("wfi");
-	}while(0 == (read_csr(mip) & MIP_MSIP));
+  __disable_all_irqs();
 
-	/* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
-	 * can enable and use any interrupts as required */
-	clear_soft_interrupt();
-	__enable_irq();
+  do {
+    __asm("wfi");
+    if (magic_string[0] == 0xC0 && magic_string[1] == 0xFF && magic_string[2] == 0xEE && magic_string[3] == 0x00)
+      break;
+  } while (1);
+#else
+  /* Clear pending software interrupt in case there was any.
+   * Enable only the software interrupt so that the E51 core can bring this core
+   * out of WFI by raising a software interrupt. */
+  clear_soft_interrupt();
+  set_csr(mie, MIP_MSIP);
 
-	/* Raise software interrupt to wake hart 2 */
-	raise_soft_interrupt(2U);
+  /* put this hart into WFI. */
+  do
+  {
+    __asm("wfi");
+  } while(0 == (read_csr(mip) & MIP_MSIP));
 
-	for (;;)
-	{
-		static volatile uint64_t counter = 0U;
-		/* Added some code as debugger hangs if in loop doing nothing */
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		counter = counter + 1U;
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
+  /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
+   * can enable and use any interrupts as required */
+  clear_soft_interrupt();
 
-	}
-	/* never return */
+  /* Raise software interrupt to wake hart 3 */
+  raise_soft_interrupt(3U);
+
+  /* crc32 for envm passed @e51 */
+#endif
+
+  entry();
 }
 
-void snvm_u54_2(void);
-void snvm_u54_2(void)
+void snvm_u54_3(HLS_DATA* hls);
+void snvm_u54_3(HLS_DATA* hls)
 {
-	/* Clear pending software interrupt in case there was any.
-	 * Enable only the software interrupt so that the E51 core can bring this core
-	 * out of WFI by raising a software interrupt. */
-	clear_soft_interrupt();
-	set_csr(mie, MIP_MSIP);
+#if 0
+  uint8_t *magic_string = (uint8_t *)hls->shared_mem;
 
-	/* put this hart into WFI. */
-	do
-	{
-		__asm("wfi");
-	} while(0 == (read_csr(mip) & MIP_MSIP));
+  __disable_all_irqs();
 
-	/* The hart is out of WFI, clear the SW interrupt. Here onwards Application
-	 * can enable and use any interrupts as required */
-	clear_soft_interrupt();
-	__enable_irq();
+  do {
+    __asm("wfi");
+    if (magic_string[0] == 0xC0 && magic_string[1] == 0xFF && magic_string[2] == 0xEE && magic_string[3] == 0x00)
+      break;
+  } while (1);
+#else
+  /* Clear pending software interrupt in case there was any.
+   * Enable only the software interrupt so that the E51 core can bring this core
+   * out of WFI by raising a software interrupt. */
+  clear_soft_interrupt();
+  set_csr(mie, MIP_MSIP);
 
-	/* Raise software interrupt to wake hart 3 */
-	raise_soft_interrupt(3U);
+  /* put this hart into WFI. */
+  do
+  {
+    __asm("wfi");
+  } while(0 == (read_csr(mip) & MIP_MSIP));
 
-	for (;;)
-	{
-		static volatile uint64_t counter = 0U;
-		/* Added some code as debugger hangs if in loop doing nothing */
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		counter = counter + 1U;
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
+  /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
+   * can enable and use any interrupts as required */
+  clear_soft_interrupt();
 
-	}
-	/* never return */
+  /* Raise software interrupt to wake hart 4 */
+  raise_soft_interrupt(4U);
+
+  /* crc32 for envm passed @e51 */
+#endif
+
+  entry();
 }
 
-void snvm_u54_3(void);
-void snvm_u54_3(void)
+void snvm_u54_4(HLS_DATA* hls);
+void snvm_u54_4(HLS_DATA* hls)
 {
-	/* Clear pending software interrupt in case there was any.
-	 * Enable only the software interrupt so that the E51 core can bring this core
-	 * out of WFI by raising a software interrupt. */
-	clear_soft_interrupt();
-	set_csr(mie, MIP_MSIP);
+#if 0
+  uint8_t *magic_string = (uint8_t *)hls->shared_mem;
+  uint8_t *done_string = (uint8_t *)hls->shared_mem+4;
 
-	/* put this hart into WFI. */
-	do
-	{
-		__asm("wfi");
-	} while(0 == (read_csr(mip) & MIP_MSIP));
+  __disable_all_irqs();
 
-	/* The hart is out of WFI, clear the SW interrupt. Here onwards Application
-	 * can enable and use any interrupts as required */
-	clear_soft_interrupt();
-	__enable_irq();
+  do {
+    __asm("wfi");
+    if (magic_string[0] == 0xC0 && magic_string[1] == 0xFF && magic_string[2] == 0xEE && magic_string[3] == 0x00)
+      break;
+  } while (1);
+  done_string[0] = 0xBE;
+  done_string[1] = 0xEF;
+  done_string[2] = 0xBE;
+  done_string[3] = 0xEF;
+#else
+  /* Clear pending software interrupt in case there was any.
+   * Enable only the software interrupt so that the E51 core can bring this core
+   * out of WFI by raising a software interrupt. */
+  clear_soft_interrupt();
+  set_csr(mie, MIP_MSIP);
 
-	/* Raise software interrupt to wake hart 4 */
-	raise_soft_interrupt(4U);
+  /* put this hart into WFI. */
+  do
+  {
+    __asm("wfi");
+  } while(0 == (read_csr(mip) & MIP_MSIP));
 
-	for (;;)
-	{
-		static volatile uint64_t counter = 0U;
-		/* Added some code as debugger hangs if in loop doing nothing */
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		counter = counter + 1U;
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
+  /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
+   * can enable and use any interrupts as required */
+  clear_soft_interrupt();
 
-	}
-	/* never return */
-}
+  /* Raise software interrupt to wake hart 0 */
+  raise_soft_interrupt(0U);
 
-void snvm_u54_4(void);
-void snvm_u54_4(void)
-{
-	/* Clear pending software interrupt in case there was any.
-	 * Enable only the software interrupt so that the E51 core can bring this core
-	 * out of WFI by raising a software interrupt. */
-	clear_soft_interrupt();
-	set_csr(mie, MIP_MSIP);
+  /* crc32 for envm passed @e51 */
+#endif
 
-	/* put this hart into WFI. */
-	do
-	{
-		__asm("wfi");
-	} while(0 == (read_csr(mip) & MIP_MSIP));
-
-	/* The hart is out of WFI, clear the SW interrupt. Here onwards Application
-	 * can enable and use any interrupts as required */
-	clear_soft_interrupt();
-	__enable_irq();
-
-	/* Raise software interrupt to wake hart 4 */
-	raise_soft_interrupt(0U);
-
-	for (;;)
-	{
-		static volatile uint64_t counter = 0U;
-		/* Added some code as debugger hangs if in loop doing nothing */
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-		counter = counter + 1U;
-		asm ("nop");
-		asm ("nop");
-		asm ("nop");
-
-	}
-	/* never return */
+  entry();
 }
 
 __attribute__((noinline)) int snvm_other_main(HLS_DATA* hls);
@@ -265,47 +304,37 @@ __attribute__((noinline)) int snvm_other_main(HLS_DATA* hls)
 
     case 0U:
       __asm volatile ("add sp, x0, %1" : "=r"(dummy) : "r"(app_stack_top_h0));
-      snvm_e51();
+      snvm_e51(hls);
       break;
 
     case 1U:
       //(void)init_pmp((uint8_t)1);
       __asm volatile ("add sp, x0, %1" : "=r"(dummy) : "r"(app_stack_top_h1));
-      snvm_u54_1();
+      snvm_u54_1(hls);
       break;
 
     case 2U:
       //(void)init_pmp((uint8_t)2);
       __asm volatile ("add sp, x0, %1" : "=r"(dummy) : "r"(app_stack_top_h2));
-      snvm_u54_2();
+      snvm_u54_2(hls);
       break;
 
     case 3U:
       //(void)init_pmp((uint8_t)3);
       __asm volatile ("add sp, x0, %1" : "=r"(dummy) : "r"(app_stack_top_h3));
-      snvm_u54_3();
+      snvm_u54_3(hls);
       break;
 
     case 4U:
       //(void)init_pmp((uint8_t)4);
       __asm volatile ("add sp, x0, %1" : "=r"(dummy) : "r"(app_stack_top_h4));
-      snvm_u54_4();
+      snvm_u54_4(hls);
       break;
 
     default:
       /* no more harts */
       break;
   }
-
-  /* should never get here */
-  while(true)
-  {
-    static volatile uint64_t counter = 0U;
-    /* Added some code as debugger hangs if in loop doing nothing */
-    counter = counter + 1U;
-  }
-
-
 
   return 0;
 }
@@ -354,8 +383,10 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
               break;
           }
           hls_u54 = (HLS_DATA*)(stack_top - HLS_DEBUG_AREA_SIZE);
+#if 1
           snvm_printf("[hart #%d] hsl(0x%08lx)\r\n",
               u54_hart_id, (unsigned long)(uintptr_t)hls_u54);
+#endif
           sm_check_thread = SNVM_CHECK_WFI;
           wait_count = 0U;
           break;
@@ -402,20 +433,5 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
     (void)snvm_other_main(hls_e51);
   }
 
-
-  while(true)
-    {
-       static volatile uint64_t counter = 0U;
-       /* Added some code as debugger hangs if in loop doing nothing */
-       asm ("nop");
-       asm ("nop");
-       asm ("nop");
-       asm ("nop");
-       counter = counter + 1U;
-       asm ("nop");
-       asm ("nop");
-       asm ("nop");
-    }
-
-    return (0);
+  return (0);
 }

@@ -37,6 +37,7 @@ OBJS-snvm-wrapper = \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o \
+	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_peripherals.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/drivers/mss/mss_mmuart/mss_uart.o \
   $(BINDIR)/$(BOARD_DIR)/uart_device_list.o \
   $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_nwc_init.o \
@@ -63,6 +64,7 @@ $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/commo
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_beu.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_clint.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_util.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_peripherals.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/drivers/mss/mss_mmuart/mss_uart.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/$(BOARD_DIR)/uart_device_list.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/nwc/mss_nwc_init.o  : CFLAGS=$(CFLAGS_GCCEXT)
@@ -93,7 +95,7 @@ endif
 $(TARGET-snvm-wrapper): LIBS:=
 $(TARGET-snvm-wrapper): $(OBJS-snvm-wrapper)
 	$(call gen-hss-envm-manifest,$(basename $(TARGET-envm-wrapper)).bin)
-	$(call main-build-target,snvm-wrapper)
+	$(call main-build-target-snvm,snvm-wrapper)
 	@$(ECHO) " BIN       `basename $@ .elf`.bin"
 	@$(ECHO) " $(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin"
 	$(OBJCOPY) -O binary $(BINDIR)/$@ $(BINDIR)/`basename $@ .elf`.bin

@@ -79,7 +79,7 @@ _start:
 	li	t5,	0
 	li	t6,	0
 	csrw	CSR_MSCRATCH, 0
-  call .wait_for_kwangsu
+  //call .wait_for_kwangsu
 
 .configure:
 	li	a0, 0
@@ -123,7 +123,7 @@ _start:
 	call	init_memory
 	call	HSS_Setup_Clocks
 
-	call	mss_nwc_init
+	//call	mss_nwc_init
 
 #define GET_HSS_UART \
 	la 	a0, 0; \

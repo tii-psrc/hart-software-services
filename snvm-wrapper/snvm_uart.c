@@ -4,6 +4,8 @@
 #include "drivers/mss/mss_mmuart/mss_uart.h"
 #include "mpfs_hal/common/mss_peripherals.h"
 
+#include "snvm_config.h"
+
 mss_uart_instance_t *uart_instance(enum SNVM_HSSHartId hartid)
 {
   mss_uart_instance_t *this_uart = NULL;

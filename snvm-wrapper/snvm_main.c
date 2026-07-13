@@ -1,12 +1,12 @@
 #include "mpfs_hal/mss_hal.h"
 #include "mpfs_hal/common/nwc/mss_nwc_init.h"
 #include "mpfs_hal/common/mss_peripherals.h"
-//#include "mpfs_hal/common/mss_sysreg.h"
 
 #include "snvm_config.h"
 #include "snvm_log.h"
 #include "snvm_utils.h"
 #include "snvm_cli.h"
+#include "snvm_uart.h"
 
 typedef enum SNVM_WFI_SM_
 {
@@ -44,7 +44,7 @@ void snvm_e51(HLS_DATA* hls)
   snvm_printf("p_hss_envm_manifest->crc32 : 0x%08X\r\n", p_hss_envm_manifest->crc32);
   crc32_result = snvm_crc32(0, buf, p_hss_envm_manifest->size);
   snvm_printf("crc32_result               : 0x%08X\r\n", crc32_result);
-#ifdef DEBUG
+#ifdef SNVM_DEBUG
   snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
 #endif
 

@@ -10,6 +10,8 @@
 
 #include "snvm_utils.h"
 
+#include "snvm_config.h"
+
 #define cpu_to_le32(x)     (x)
 #define le32_to_cpu(x)   (x)
 #define tole(x) cpu_to_le32(x)

@@ -4,6 +4,7 @@
 #include "mpfs_hal/common/mss_peripherals.h"
 #include "mpfs_hal/common/mss_util.h"
 
+#include "snvm_config.h"
 #include "snvm_log.h"
 #include "snvm_utils.h"
 #include "snvm_uart.h"

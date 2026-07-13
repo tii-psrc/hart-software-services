@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "snvm_config.h"
 #include "snvm_uart.h"
 
 void snvm_putc(char c)

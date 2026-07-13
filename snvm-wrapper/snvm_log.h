@@ -11,4 +11,6 @@ void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
     uint32_t len);
 void snvm_hexdump(const char *label, const void *buf, uint32_t len);
 
+void snvm_log_init(void);
+
 #endif

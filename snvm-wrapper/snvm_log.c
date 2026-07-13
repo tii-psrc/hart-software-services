@@ -7,27 +7,17 @@
 #include "snvm_uart.h"
 #include "snvm_spin_lock.h"
 
-static snvm_spinlock_t snvm_log_lock;
+static snvm_spinlock_t snvm_log_lock[SNVM_UART_NUM] = { 0 };
 
-static void snvm_putc_hart(int hartid, char c);
-static void snvm_putc_hart(int hartid, char c)
+static void snvm_putc_hart_unlocked(int hartid, char c);
+static void snvm_putc_hart_unlocked(int hartid, char c)
 {
   uint8_t ch = (uint8_t)c;
   snvm_uart_tx(uart_instance(hartid), &ch, 1u);
 }
 
-#if 0
-static void snvm_putc(char c);
-static void snvm_putc(char c)
-{
-  int hartid = SNVM_HSS_HART_E51;
-
-  snvm_putc_hart(hartid, c);
-}
-#endif
-
-static void snvm_puts_hart(int hartid, const char *s);
-static void snvm_puts_hart(int hartid, const char *s)
+static void snvm_puts_hart_unlocked(int hartid, const char *s);
+static void snvm_puts_hart_unlocked(int hartid, const char *s)
 {
   if (s == NULL) {
     s = "(null)";
@@ -35,31 +25,21 @@ static void snvm_puts_hart(int hartid, const char *s)
 
   while (*s != '\0') {
     if (*s == '\n') {
-      snvm_putc_hart(hartid, '\r');
+      snvm_putc_hart_unlocked(hartid, '\r');
     }
-    snvm_putc_hart(hartid, *s++);
+    snvm_putc_hart_unlocked(hartid, *s++);
   }
 }
-
-#if 0
-static void snvm_puts(const char *s);
-static void snvm_puts(const char *s)
-{
-  int hartid = SNVM_HSS_HART_E51;
-
-  snvm_puts_hart(hartid, s);
-}
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* Formatter internals                                                         */
 /* -------------------------------------------------------------------------- */
 
-static void snvm_putnchar_hart(int hartid, char ch, unsigned int count);
-static void snvm_putnchar_hart(int hartid, char ch, unsigned int count)
+static void snvm_putnchar_hart_unlocked(int hartid, char ch, unsigned int count);
+static void snvm_putnchar_hart_unlocked(int hartid, char ch, unsigned int count)
 {
   while (count-- > 0U) {
-    snvm_putc_hart(hartid, ch);
+    snvm_putc_hart_unlocked(hartid, ch);
   }
 }
 
@@ -131,12 +111,12 @@ static void snvm_print_u64_width(int hartid,
   unsigned int len = snvm_u64_to_str(value, base, uppercase, tmp, sizeof(tmp));
 
   if ((width > len) && zero_pad) {
-    snvm_putnchar_hart(hartid, '0', width - len);
+    snvm_putnchar_hart_unlocked(hartid, '0', width - len);
   } else if (width > len) {
-    snvm_putnchar_hart(hartid, ' ', width - len);
+    snvm_putnchar_hart_unlocked(hartid, ' ', width - len);
   }
 
-  snvm_puts_hart(hartid, tmp);
+  snvm_puts_hart_unlocked(hartid, tmp);
 }
 
 static void snvm_print_i64_width(int hartid,
@@ -153,7 +133,7 @@ static void snvm_print_i64_width(int hartid,
 
   if (value < 0) {
     /* handle sign first */
-    snvm_putc_hart(hartid, '-');
+    snvm_putc_hart_unlocked(hartid, '-');
     sign_len = 1U;
 
     /* avoid UB-ish direct -INT64_MIN handling */
@@ -177,7 +157,7 @@ static void snvm_print_ptr(int hartid, uintptr_t ptr, unsigned int width,
   /* If width omitted, default to full pointer width in hex digits */
   unsigned int hex_digits = (unsigned int)(sizeof(uintptr_t) * 2U);
 
-  snvm_puts_hart(hartid, "0x");
+  snvm_puts_hart_unlocked(hartid, "0x");
 
   if (width == 0U) {
     width = hex_digits;
@@ -191,14 +171,12 @@ static void snvm_print_ptr(int hartid, uintptr_t ptr, unsigned int width,
 /* tiny printf                                                                 */
 /* -------------------------------------------------------------------------- */
 
-static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap);
-static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
+static void snvm_vprintf_hart_unlocked(int hartid, const char *fmt, va_list ap);
+static void snvm_vprintf_hart_unlocked(int hartid, const char *fmt, va_list ap)
 {
-  snvm_spin_lock(&snvm_log_lock);
-
   while ((*fmt) != '\0') {
     if (*fmt != '%') {
-      snvm_putc_hart(hartid, *fmt++);
+      snvm_putc_hart_unlocked(hartid, *fmt++);
       continue;
     }
 
@@ -237,12 +215,12 @@ static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
 
     switch (*fmt) {
       case '%':
-        snvm_putc_hart(hartid, '%');
+        snvm_putc_hart_unlocked(hartid, '%');
         break;
 
       case 'c': {
                   int c = va_arg(ap, int);
-                  snvm_putc_hart(hartid, (char)c);
+                  snvm_putc_hart_unlocked(hartid, (char)c);
                   break;
                 }
 
@@ -256,12 +234,12 @@ static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
                   }
 
                   if ((width > len) && !zero_pad) {
-                    snvm_putnchar_hart(hartid, ' ', width - len);
+                    snvm_putnchar_hart_unlocked(hartid, ' ', width - len);
                   } else if ((width > len) && zero_pad) {
-                    snvm_putnchar_hart(hartid, '0', width - len);
+                    snvm_putnchar_hart_unlocked(hartid, '0', width - len);
                   }
 
-                  snvm_puts_hart(hartid, p);
+                  snvm_puts_hart_unlocked(hartid, p);
                   break;
                 }
 
@@ -326,54 +304,73 @@ static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
 
       default:
                 /* unsupported format: print it back literally */
-                snvm_putc_hart(hartid, '%');
+                snvm_putc_hart_unlocked(hartid, '%');
                 if (zero_pad) {
-                  snvm_putc_hart(hartid, '0');
+                  snvm_putc_hart_unlocked(hartid, '0');
                 }
                 if (width != 0U) {
                   /* width 숫자를 다시 찍어주기 */
                   snvm_print_u64_width(hartid, width, 10U, 0, 0U, 0);
                 }
                 if (long_flag) {
-                  snvm_putc_hart(hartid, 'l');
+                  snvm_putc_hart_unlocked(hartid, 'l');
                   if (long_long_flag) {
-                    snvm_putc_hart(hartid, 'l');
+                    snvm_putc_hart_unlocked(hartid, 'l');
                   }
                 }
-                snvm_putc_hart(hartid, *fmt);
+                snvm_putc_hart_unlocked(hartid, *fmt);
                 break;
     }
 
     fmt++;
   }
-
-  snvm_spin_unlock(&snvm_log_lock);
 }
 
 void snvm_printf_hart(int hartid, const char *fmt, ...)
 {
+  int uart_id = ((hartid == SNVM_HSS_HART_E51) ? 0 : 1);
   va_list ap;
 
+  snvm_spin_lock(&snvm_log_lock[uart_id]);
+
   va_start(ap, fmt);
-  snvm_vprintf_hart(hartid, fmt, ap);
+  snvm_vprintf_hart_unlocked(hartid, fmt, ap);
   va_end(ap);
+
+  snvm_spin_unlock(&snvm_log_lock[uart_id]);
 }
 
 void snvm_printf(const char *fmt, ...)
 {
   int hartid = SNVM_HSS_HART_E51;
+  int uart_id = ((hartid == SNVM_HSS_HART_E51) ? 0 : 1);
+
+  va_list ap;
+
+  snvm_spin_lock(&snvm_log_lock[uart_id]);
+
+  va_start(ap, fmt);
+  snvm_vprintf_hart_unlocked(hartid, fmt, ap);
+  va_end(ap);
+
+  snvm_spin_unlock(&snvm_log_lock[uart_id]);
+}
+
+static void snvm_printf_hart_nolock(int hartid, const char *fmt, ...);
+static void snvm_printf_hart_nolock(int hartid, const char *fmt, ...)
+{
   va_list ap;
 
   va_start(ap, fmt);
-  snvm_vprintf_hart(hartid, fmt, ap);
+  snvm_vprintf_hart_unlocked(hartid, fmt, ap);
   va_end(ap);
 }
 
-void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
-    uint32_t len)
+static void snvm_hexdump_hart_unlocked(int hartid, const char *label,
+    const void *buf, uint32_t len);
+static void snvm_hexdump_hart_unlocked(int hartid, const char *label,
+    const void *buf, uint32_t len)
 {
-  snvm_spin_lock(&snvm_log_lock);
-
   const uint8_t *p = (const uint8_t *)buf;
   uint32_t offset = 0U;
 
@@ -381,53 +378,63 @@ void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
     label = "hexdump";
   }
 
-  snvm_printf_hart(hartid, "%s @ %p, len=%u\r\n", label, buf, len);
+  snvm_printf_hart_nolock(hartid, "%s @ %p, len=%u\r\n", label, buf, len);
 
   while (offset < len) {
     uint32_t i;
     uint32_t line_len = ((len - offset) > 16U) ? 16U : (len - offset);
 
     /* line start address */
-    snvm_printf_hart(hartid, "%016lX: ",
+    snvm_printf_hart_nolock(hartid, "%016lX: ",
         (unsigned long)((uintptr_t)p + offset));
 
     /* hex bytes: 16 bytes per line */
     for (i = 0U; i < 16U; i++) {
       if (i < line_len) {
-        snvm_printf_hart(hartid, "%02X ", p[offset + i]);
+        snvm_printf_hart_nolock(hartid, "%02X ", p[offset + i]);
       } else {
-        snvm_puts_hart(hartid, "   ");
+        snvm_puts_hart_unlocked(hartid, "   ");
       }
 
       /* 8-byte boundary spacing */
       if (i == 7U) {
-        snvm_putc_hart(hartid, ' ');
+        snvm_putc_hart_unlocked(hartid, ' ');
       }
     }
 
-    snvm_puts_hart(hartid, " |");
+    snvm_puts_hart_unlocked(hartid, " |");
 
     /* ASCII view */
     for (i = 0U; i < line_len; i++) {
       uint8_t c = p[offset + i];
       if ((c >= 32U) && (c <= 126U)) {
-        snvm_putc_hart(hartid, (char)c);
+        snvm_putc_hart_unlocked(hartid, (char)c);
       } else {
-        snvm_putc_hart(hartid, '.');
+        snvm_putc_hart_unlocked(hartid, '.');
       }
     }
 
     /* pad ASCII area so short last line aligns nicely */
     for (; i < 16U; i++) {
-      snvm_putc_hart(hartid, ' ');
+      snvm_putc_hart_unlocked(hartid, ' ');
     }
 
-    snvm_puts_hart(hartid, "|\n");
+    snvm_puts_hart_unlocked(hartid, "|\n");
 
     offset += line_len;
   }
+}
 
-  snvm_spin_unlock(&snvm_log_lock);
+void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
+    uint32_t len)
+{
+  int uart_id = ((hartid == SNVM_HSS_HART_E51) ? 0 : 1);
+
+  snvm_spin_lock(&snvm_log_lock[uart_id]);
+
+  snvm_hexdump_hart_unlocked(hartid, label, buf, len);
+
+  snvm_spin_unlock(&snvm_log_lock[uart_id]);
 }
 
 void snvm_hexdump(const char *label, const void *buf, uint32_t len)
@@ -435,4 +442,12 @@ void snvm_hexdump(const char *label, const void *buf, uint32_t len)
   int hartid = SNVM_HSS_HART_E51;
 
   snvm_hexdump_hart(hartid, label, buf, len);
+}
+
+void snvm_log_init(void)
+{
+  int i;
+
+  for (i=0; i<SNVM_UART_NUM; i++)
+    snvm_log_lock[i] = 0;
 }

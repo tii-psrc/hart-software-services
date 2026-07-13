@@ -56,7 +56,8 @@ void snvm_e51(HLS_DATA* hls)
     clear_soft_interrupt();
     set_csr(mie, MIP_MSIP);
 
-    snvm_printf("[%s] Waking-up U54_1 hart, and then enter WFI mode ...\r\n", __func__);
+    snvm_printf("[%s] Waking-up U54_1 hart, and then enter WFI mode ...\r\n",
+        __func__);
     /* Raise software interrupt to wake hart 1 */
     raise_soft_interrupt(1U);
 
@@ -65,7 +66,7 @@ void snvm_e51(HLS_DATA* hls)
     {
       __asm("wfi");
     } while(0 == (read_csr(mip) & MIP_MSIP));
-    snvm_printf("[%s] Wakeup from WFI ...\r\n", __func__);
+    snvm_printf("[%s] Exited from WFI ...\r\n", __func__);
 
     /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
      * can enable and use any interrupts as required */
@@ -99,7 +100,7 @@ void snvm_u54_1(HLS_DATA* hls)
   }while(0 == (read_csr(mip) & MIP_MSIP));
   /* crc32 for envm passed @e51 */
   snvm_printf_hart(SNVM_HSS_HART_U54_1,
-      "[%s] Wakeup from WFI ...\r\n", __func__);
+      "[%s] Exited from WFI ...\r\n", __func__);
   snvm_printf_hart(SNVM_HSS_HART_U54_1,
       "[%s] Waking-up U54_2 hart ...\r\n", __func__);
 
@@ -132,7 +133,7 @@ void snvm_u54_2(HLS_DATA* hls)
   } while(0 == (read_csr(mip) & MIP_MSIP));
   /* crc32 for envm passed @e51 */
   snvm_printf_hart(SNVM_HSS_HART_U54_2,
-      "[%s] Wakeup from WFI ...\r\n", __func__);
+      "[%s] Exited from WFI ...\r\n", __func__);
   snvm_printf_hart(SNVM_HSS_HART_U54_2,
       "[%s] Waking-up U54_3 hart ...\r\n", __func__);
 
@@ -165,7 +166,7 @@ void snvm_u54_3(HLS_DATA* hls)
   } while(0 == (read_csr(mip) & MIP_MSIP));
   /* crc32 for envm passed @e51 */
   snvm_printf_hart(SNVM_HSS_HART_U54_3,
-      "[%s] Wakeup from WFI ...\r\n", __func__);
+      "[%s] Exited from WFI ...\r\n", __func__);
   snvm_printf_hart(SNVM_HSS_HART_U54_3,
       "[%s] Waking-up U54_4 hart ...\r\n", __func__);
 
@@ -198,7 +199,7 @@ void snvm_u54_4(HLS_DATA* hls)
   } while(0 == (read_csr(mip) & MIP_MSIP));
   /* crc32 for envm passed @e51 */
   snvm_printf_hart(SNVM_HSS_HART_U54_4,
-      "[%s] Wakeup from WFI ...\r\n", __func__);
+      "[%s] Exited from WFI ...\r\n", __func__);
   snvm_printf_hart(SNVM_HSS_HART_U54_4,
       "[%s] Waking-up E51 hart ...\r\n", __func__);
 
@@ -290,6 +291,7 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
   if (hartid == SNVM_MPFS_HAL_FIRST_HART) {
     (void)mss_nwc_init();
     (void)snvm_uart_init();
+    (void)snvm_log_init();
 
     snvm_printf("[hart #%d] hsl(0x%08lx)\r\n",
         hartid, (unsigned long)(uintptr_t)hls_e51);

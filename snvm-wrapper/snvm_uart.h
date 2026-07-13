@@ -4,6 +4,8 @@
 #include "snvm_config.h"
 #include "drivers/mss/mss_mmuart/mss_uart.h"
 
+#define SNVM_UART_NUM 2
+
 mss_uart_instance_t *uart_instance(enum SNVM_HSSHartId hartid);
 void snvm_uart_init(void);
 size_t snvm_uart_rx(mss_uart_instance_t *this_uart,

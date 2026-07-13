@@ -9,31 +9,13 @@
  *
  */
 
-#include "config.h"
+#include "snvm_config.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_encoding.h>
 #include <sbi/sbi_platform.h>
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_trap.h>
 #include "mpfs_hal/common/bits.h"
-
-#if 0
-#include "../common/bits.h"
-#include "../common/encoding.h"
-#include "../common/mss_mtrap.h"
-#include "system_startup_defs.h"
-#include "mpfs_hal_config/mss_sw_config.h"
-#endif
-
-//#include "mpfs_hal_config/mss_sw_config.h"
-#define SNVM_MPFS_HAL_FIRST_HART  0
-#define MPFS_HAL_CLEAR_MEMORY  1
-#define HLS_DEBUG_AREA_SIZE     64
-#define NUM_CACHEWAYS_AT_RESET 1
-#define HLS_MAIN_HART_STARTED               0x12344321U
-#define HLS_OTHER_HART_IN_WFI               0x12345678U
-#define HLS_OTHER_HART_PASSED_WFI           0x87654321U
-#define INTEGER_CONTEXT_SIZE (32 * REGBYTES)
 
   .option norvc
   .section .text.init,"ax", %progbits
@@ -186,7 +168,7 @@ _start:
     add a4, a4, __SIZEOF_POINTER__
     blt a4, a5, .init_stack
     # Allocate some space at top of stack for the HLS
-    addi sp, sp, -HLS_DEBUG_AREA_SIZE
+    addi sp, sp, -SNVM_HLS_DEBUG_AREA_SIZE
     # HLS grows up from new top of stack
     mv tp, sp
     # get core id
@@ -199,7 +181,7 @@ _start:
     # Also, stops x propagation in simulation, when cache/stack reads unused
     # area
     #
-    li a2, MPFS_HAL_CLEAR_MEMORY
+    li a2, SNVM_MPFS_HAL_CLEAR_MEMORY
     beq x0, a2, .skip_mem_clear
     call    .clear_dtim
     //call    .clear_l2lim
@@ -258,13 +240,13 @@ _start:
     #
     # Wait here until main hart is up and running
     #
-    li a3, HLS_MAIN_HART_STARTED
-    la a1, (__stack_top_h0$ - HLS_DEBUG_AREA_SIZE)
+    li a3, SNVM_HLS_MAIN_HART_STARTED
+    la a1, (__stack_top_h0$ - SNVM_HLS_DEBUG_AREA_SIZE)
 .wait_main_hart:
     LWU a2, 0(a1)
     bne a3, a2, .wait_main_hart
     # Flag we are here to the main hart
-    li a1, HLS_OTHER_HART_IN_WFI
+    li a1, SNVM_HLS_OTHER_HART_IN_WFI
     sw a1, 0(tp)
     /* flush the instruction cache */
     fence.i
@@ -285,7 +267,7 @@ _start:
     csrw mie, zero
     csrw mip, zero
     # set marker as to where we are
-    li a1, HLS_OTHER_HART_PASSED_WFI
+    li a1, SNVM_HLS_OTHER_HART_PASSED_WFI
     sw a1, 0(tp)
     # pass HLS address
     mv  a0, tp

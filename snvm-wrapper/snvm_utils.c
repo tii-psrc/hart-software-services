@@ -8,7 +8,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include "crc32.h"
+#include "snvm_utils.h"
 
 #define cpu_to_le32(x)     (x)
 #define le32_to_cpu(x)   (x)
@@ -135,7 +135,61 @@ static uint32_t crc32_no_comp(uint32_t crc, const uint8_t *buf, uint32_t len)
 }
 #undef DO_CRC
 
-uint32_t crc32(uint32_t crc, const uint8_t *p, uint32_t len)
+uint32_t snvm_crc32(uint32_t crc, const uint8_t *p, uint32_t len)
 {
   return crc32_no_comp(crc ^ 0xffffffffL, p, len) ^ 0xffffffffL;
 }
+
+bool snvm_parse_u64(const char *str, uint64_t *value)
+{
+  uint64_t result = 0;
+  uint32_t base = 10;
+
+  if (str == NULL || *str == '\0')
+    return false;
+
+  if ((str[0] == '0') &&
+      (str[1] == 'x' || str[1] == 'X'))
+  {
+    base = 16;
+    str += 2;
+  }
+
+  if (*str == '\0')
+    return false;
+
+  while (*str)
+  {
+    uint32_t digit;
+
+    if (*str >= '0' && *str <= '9')
+      digit = *str - '0';
+    else if (base == 16 && *str >= 'a' && *str <= 'f')
+      digit = *str - 'a' + 10;
+    else if (base == 16 && *str >= 'A' && *str <= 'F')
+      digit = *str - 'A' + 10;
+    else
+      return false;
+
+    if (digit >= base)
+      return false;
+
+    result = result * base + digit;
+    str++;
+  }
+
+  *value = result;
+  return true;
+}
+
+int snvm_strcmp(const char *a, const char *b)
+{
+  while (*a && (*a == *b))
+  {
+    a++;
+    b++;
+  }
+
+  return (unsigned char)*a - (unsigned char)*b;
+}
+

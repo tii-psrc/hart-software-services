@@ -75,8 +75,8 @@ SIZE_OF_COMMON_HART_MEM = 4k;
  * stack hart1                                                                   
  * HLS hart 1                                                                    
  * etc
- * Actual Stack size per hart = (STACK_SIZE_PER_HART - HLS_DEBUG_AREA_SIZE)                                                                 
- * note: HLS_DEBUG_AREA_SIZE is defined in mss_sw_config.h                       
+ * Actual Stack size per hart = (STACK_SIZE_PER_HART - SNVM_HLS_DEBUG_AREA_SIZE)                                                                 
+ * note: SNVM_HLS_DEBUG_AREA_SIZE is defined in mss_sw_config.h                       
  */
 
 /*

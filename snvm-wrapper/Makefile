@@ -27,11 +27,12 @@
 # eNVM Compression Wrapper
 
 OBJS-snvm-wrapper = \
-	$(BINDIR)/snvm-wrapper/mss_entry.o \
+	$(BINDIR)/snvm-wrapper/snvm_mss_entry.o \
 	$(BINDIR)/snvm-wrapper/snvm_main.o \
 	$(BINDIR)/snvm-wrapper/snvm_log.o \
-	$(BINDIR)/snvm-wrapper/crc32.o \
+	$(BINDIR)/snvm-wrapper/snvm_utils.o \
 	$(BINDIR)/snvm-wrapper/snvm_cli.o \
+	$(BINDIR)/snvm-wrapper/snvm_uart.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o \
 	$(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o \
@@ -55,11 +56,12 @@ LINKER_SCRIPT-snvm-wrapper = snvm-wrapper/mpfs-lim.ld
 
 
 #$(BINDIR)/snvm-wrapper/snvm-wrapper_crt.o:
-$(BINDIR)/snvm-wrapper/mss_entry.o:
+$(BINDIR)/snvm-wrapper/snvm_mss_entry.o:
 $(BINDIR)/snvm-wrapper/snvm_main.o: CFLAGS=$(CFLAGS_GCCEXT) -O0 -g3 -fno-omit-frame-pointer -fno-inline -fno-optimize-sibling-calls -fno-ipa-cp -fno-ipa-sra -fno-tree-dce
 $(BINDIR)/snvm-wrapper/snvm_log.o: CFLAGS=$(CFLAGS_GCCEXT)
-$(BINDIR)/snvm-wrapper/crc32.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/snvm-wrapper/snvm_utils.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/snvm-wrapper/snvm_cli.o: CFLAGS=$(CFLAGS_GCCEXT)
+$(BINDIR)/snvm-wrapper/snvm_uart.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_mtrap.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_irq_handler_stubs.o: CFLAGS=$(CFLAGS_GCCEXT)
 $(BINDIR)/baremetal/polarfire-soc-bare-metal-library/src/platform/mpfs_hal/common/mss_plic.o: CFLAGS=$(CFLAGS_GCCEXT)

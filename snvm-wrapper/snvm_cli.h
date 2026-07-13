@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void do_cli(uint32_t timeout);
+void snvm_cli(int32_t timeout);
 
 #endif

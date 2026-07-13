@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-void snvm_uart_init(void);
 void snvm_putc(char c);
 void snvm_puts(const char *s);
 void snvm_vprintf(const char *fmt, va_list ap);

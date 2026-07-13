@@ -3,39 +3,13 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "mpfs_hal/common/mss_sysreg.h"
-#include "drivers/mss/mss_mmuart/mss_uart.h"
-#include "mpfs_hal/common/mss_peripherals.h"
-
-void snvm_uart_init(void)
-{
-  SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART2_MASK);
-  SYSREG->SOFT_RESET_CR   &= (uint32_t)(~SUBBLK_CLOCK_CR_MMUART2_MASK);
-  SYSREG->SUBBLK_CLOCK_CR |= (SUBBLK_CLOCK_CR_MMUART1_MASK);
-  SYSREG->SOFT_RESET_CR   &= (uint32_t)(~SUBBLK_CLOCK_CR_MMUART1_MASK);
-
-  (void) mss_config_clk_rst(MSS_PERIPH_MMUART2, (uint8_t) 0, PERIPHERAL_ON);
-  (void) mss_config_clk_rst(MSS_PERIPH_MMUART1, (uint8_t) 0, PERIPHERAL_ON);
-
-  MSS_UART_init(&g_mss_uart2_lo,
-      MSS_UART_921600_BAUD,
-      MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-  MSS_UART_init(&g_mss_uart1_lo,
-      MSS_UART_921600_BAUD,
-      MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-   
-  MSS_UART_polled_tx_string(&g_mss_uart2_lo, 
-      (const uint8_t *)"\r\nMSS_UART #2 Test @snvm_main()\r\n");
-  MSS_UART_polled_tx_string(&g_mss_uart1_lo,
-      (const uint8_t *)"\r\nMSS_UART #1 Test @snvm_main()\r\n");
-}
+#include "snvm_uart.h"
 
 void snvm_putc(char c)
 {
   uint8_t ch = (uint8_t)c;
-  MSS_UART_polled_tx(&g_mss_uart2_lo, &ch, 1u);
-  MSS_UART_polled_tx(&g_mss_uart1_lo, &ch, 1u);
+  snvm_uart_tx(uart_instance(SNVM_HSS_HART_E51), &ch, 1u);
+  snvm_uart_tx(uart_instance(SNVM_HSS_HART_U54_1), &ch, 1u);
 }
 
 void snvm_puts(const char *s)

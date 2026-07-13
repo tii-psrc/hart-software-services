@@ -6,14 +6,20 @@
 #include "snvm_config.h"
 #include "snvm_uart.h"
 
-void snvm_putc(char c)
+void snvm_putc_hart(int hartid, char c)
 {
   uint8_t ch = (uint8_t)c;
-  snvm_uart_tx(uart_instance(SNVM_HSS_HART_E51), &ch, 1u);
-  snvm_uart_tx(uart_instance(SNVM_HSS_HART_U54_1), &ch, 1u);
+  snvm_uart_tx(uart_instance(hartid), &ch, 1u);
 }
 
-void snvm_puts(const char *s)
+void snvm_putc(char c)
+{
+  int hartid = SNVM_HSS_HART_E51;
+
+  snvm_putc_hart(hartid, c);
+}
+
+void snvm_puts_hart(int hartid, const char *s)
 {
   if (s == NULL) {
     s = "(null)";
@@ -21,21 +27,30 @@ void snvm_puts(const char *s)
 
   while (*s != '\0') {
     if (*s == '\n') {
-      snvm_putc('\r');
+      snvm_putc_hart(hartid, '\r');
     }
-    snvm_putc(*s++);
+    snvm_putc_hart(hartid, *s++);
   }
 }
+
+void snvm_puts(const char *s)
+{
+  int hartid = SNVM_HSS_HART_E51;
+
+  snvm_puts_hart(hartid, s);
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /* Formatter internals                                                         */
 /* -------------------------------------------------------------------------- */
 
-static void snvm_putnchar(char ch, unsigned int count);
-static void snvm_putnchar(char ch, unsigned int count)
+static void snvm_putnchar_hart(int hartid, char ch, unsigned int count);
+static void snvm_putnchar_hart(int hartid, char ch, unsigned int count)
 {
   while (count-- > 0U) {
-    snvm_putc(ch);
+    snvm_putc_hart(hartid, ch);
   }
 }
 
@@ -90,12 +105,14 @@ static unsigned int snvm_u64_to_str(uint64_t value,
   return i;
 }
 
-static void snvm_print_u64_width(uint64_t value,
+static void snvm_print_u64_width(int hartid,
+    uint64_t value,
     uint32_t base,
     int uppercase,
     unsigned int width,
     int zero_pad);
-static void snvm_print_u64_width(uint64_t value,
+static void snvm_print_u64_width(int hartid,
+    uint64_t value,
     uint32_t base,
     int uppercase,
     unsigned int width,
@@ -105,18 +122,20 @@ static void snvm_print_u64_width(uint64_t value,
   unsigned int len = snvm_u64_to_str(value, base, uppercase, tmp, sizeof(tmp));
 
   if ((width > len) && zero_pad) {
-    snvm_putnchar('0', width - len);
+    snvm_putnchar_hart(hartid, '0', width - len);
   } else if (width > len) {
-    snvm_putnchar(' ', width - len);
+    snvm_putnchar_hart(hartid, ' ', width - len);
   }
 
-  snvm_puts(tmp);
+  snvm_puts_hart(hartid, tmp);
 }
 
-static void snvm_print_i64_width(int64_t value,
+static void snvm_print_i64_width(int hartid,
+    int64_t value,
     unsigned int width,
     int zero_pad);
-static void snvm_print_i64_width(int64_t value,
+static void snvm_print_i64_width(int hartid,
+    int64_t value,
     unsigned int width,
     int zero_pad)
 {
@@ -125,7 +144,7 @@ static void snvm_print_i64_width(int64_t value,
 
   if (value < 0) {
     /* handle sign first */
-    snvm_putc('-');
+    snvm_putc_hart(hartid, '-');
     sign_len = 1U;
 
     /* avoid UB-ish direct -INT64_MIN handling */
@@ -135,37 +154,39 @@ static void snvm_print_i64_width(int64_t value,
   }
 
   if (width > sign_len) {
-    snvm_print_u64_width(mag, 10U, 0, width - sign_len, zero_pad);
+    snvm_print_u64_width(hartid, mag, 10U, 0, width - sign_len, zero_pad);
   } else {
-    snvm_print_u64_width(mag, 10U, 0, 0U, zero_pad);
+    snvm_print_u64_width(hartid, mag, 10U, 0, 0U, zero_pad);
   }
 }
 
-static void snvm_print_ptr(uintptr_t ptr, unsigned int width, int zero_pad);
-static void snvm_print_ptr(uintptr_t ptr, unsigned int width, int zero_pad)
+static void snvm_print_ptr(int hartid, uintptr_t ptr, unsigned int width,
+    int zero_pad);
+static void snvm_print_ptr(int hartid, uintptr_t ptr, unsigned int width,
+    int zero_pad)
 {
   /* If width omitted, default to full pointer width in hex digits */
   unsigned int hex_digits = (unsigned int)(sizeof(uintptr_t) * 2U);
 
-  snvm_puts("0x");
+  snvm_puts_hart(hartid, "0x");
 
   if (width == 0U) {
     width = hex_digits;
     zero_pad = 1;
   }
 
-  snvm_print_u64_width((uint64_t)ptr, 16U, 0, width, zero_pad);
+  snvm_print_u64_width(hartid, (uint64_t)ptr, 16U, 0, width, zero_pad);
 }
 
 /* -------------------------------------------------------------------------- */
 /* tiny printf                                                                 */
 /* -------------------------------------------------------------------------- */
 
-void snvm_vprintf(const char *fmt, va_list ap)
+void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
 {
   while ((*fmt) != '\0') {
     if (*fmt != '%') {
-      snvm_putc(*fmt++);
+      snvm_putc_hart(hartid, *fmt++);
       continue;
     }
 
@@ -204,12 +225,12 @@ void snvm_vprintf(const char *fmt, va_list ap)
 
     switch (*fmt) {
       case '%':
-        snvm_putc('%');
+        snvm_putc_hart(hartid, '%');
         break;
 
       case 'c': {
                   int c = va_arg(ap, int);
-                  snvm_putc((char)c);
+                  snvm_putc_hart(hartid, (char)c);
                   break;
                 }
 
@@ -223,88 +244,91 @@ void snvm_vprintf(const char *fmt, va_list ap)
                   }
 
                   if ((width > len) && !zero_pad) {
-                    snvm_putnchar(' ', width - len);
+                    snvm_putnchar_hart(hartid, ' ', width - len);
                   } else if ((width > len) && zero_pad) {
-                    snvm_putnchar('0', width - len);
+                    snvm_putnchar_hart(hartid, '0', width - len);
                   }
 
-                  snvm_puts(p);
+                  snvm_puts_hart(hartid, p);
                   break;
                 }
 
       case 'd':
       case 'i':
                 if (long_long_flag) {
-                  snvm_print_i64_width(va_arg(ap, long long), width, zero_pad);
+                  snvm_print_i64_width(hartid, va_arg(ap, long long), width,
+                      zero_pad);
                 } else if (long_flag) {
-                  snvm_print_i64_width(va_arg(ap, long), width, zero_pad);
+                  snvm_print_i64_width(hartid, va_arg(ap, long), width,
+                      zero_pad);
                 } else {
-                  snvm_print_i64_width(va_arg(ap, int), width, zero_pad);
+                  snvm_print_i64_width(hartid, va_arg(ap, int), width,
+                      zero_pad);
                 }
                 break;
 
       case 'u':
                 if (long_long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long long),
                       10U, 0, width, zero_pad);
                 } else if (long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long),
                       10U, 0, width, zero_pad);
                 } else {
-                  snvm_print_u64_width(va_arg(ap, unsigned int),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned int),
                       10U, 0, width, zero_pad);
                 }
                 break;
 
       case 'x':
                 if (long_long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long long),
                       16U, 0, width, zero_pad);
                 } else if (long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long),
                       16U, 0, width, zero_pad);
                 } else {
-                  snvm_print_u64_width(va_arg(ap, unsigned int),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned int),
                       16U, 0, width, zero_pad);
                 }
                 break;
 
       case 'X':
                 if (long_long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long long),
                       16U, 1, width, zero_pad);
                 } else if (long_flag) {
-                  snvm_print_u64_width(va_arg(ap, unsigned long),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned long),
                       16U, 1, width, zero_pad);
                 } else {
-                  snvm_print_u64_width(va_arg(ap, unsigned int),
+                  snvm_print_u64_width(hartid, va_arg(ap, unsigned int),
                       16U, 1, width, zero_pad);
                 }
                 break;
 
       case 'p': {
                   uintptr_t ptr = (uintptr_t)va_arg(ap, void *);
-                  snvm_print_ptr(ptr, width, zero_pad);
+                  snvm_print_ptr(hartid, ptr, width, zero_pad);
                   break;
                 }
 
       default:
                 /* unsupported format: print it back literally */
-                snvm_putc('%');
+                snvm_putc_hart(hartid, '%');
                 if (zero_pad) {
-                  snvm_putc('0');
+                  snvm_putc_hart(hartid, '0');
                 }
                 if (width != 0U) {
                   /* width 숫자를 다시 찍어주기 */
-                  snvm_print_u64_width(width, 10U, 0, 0U, 0);
+                  snvm_print_u64_width(hartid, width, 10U, 0, 0U, 0);
                 }
                 if (long_flag) {
-                  snvm_putc('l');
+                  snvm_putc_hart(hartid, 'l');
                   if (long_long_flag) {
-                    snvm_putc('l');
+                    snvm_putc_hart(hartid, 'l');
                   }
                 }
-                snvm_putc(*fmt);
+                snvm_putc_hart(hartid, *fmt);
                 break;
     }
 
@@ -312,16 +336,34 @@ void snvm_vprintf(const char *fmt, va_list ap)
   }
 }
 
-void snvm_printf(const char *fmt, ...)
+void snvm_vprintf(const char *fmt, va_list ap)
+{
+  int hartid = SNVM_HSS_HART_E51;
+
+  snvm_vprintf_hart(hartid, fmt, ap);
+}
+
+void snvm_printf_hart(int hartid, const char *fmt, ...)
 {
   va_list ap;
 
   va_start(ap, fmt);
-  snvm_vprintf(fmt, ap);
+  snvm_vprintf_hart(hartid, fmt, ap);
   va_end(ap);
 }
 
-void snvm_hexdump(const char *label, const void *buf, uint32_t len)
+void snvm_printf(const char *fmt, ...)
+{
+  int hartid = SNVM_HSS_HART_E51;
+  va_list ap;
+
+  va_start(ap, fmt);
+  snvm_vprintf_hart(hartid, fmt, ap);
+  va_end(ap);
+}
+
+void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
+    uint32_t len)
 {
   const uint8_t *p = (const uint8_t *)buf;
   uint32_t offset = 0U;
@@ -330,48 +372,55 @@ void snvm_hexdump(const char *label, const void *buf, uint32_t len)
     label = "hexdump";
   }
 
-  snvm_printf("%s @ %p, len=%u\r\n", label, buf, len);
+  snvm_printf_hart(hartid, "%s @ %p, len=%u\r\n", label, buf, len);
 
   while (offset < len) {
     uint32_t i;
     uint32_t line_len = ((len - offset) > 16U) ? 16U : (len - offset);
 
     /* line start address */
-    snvm_printf("%016lX: ", (unsigned long)((uintptr_t)p + offset));
+    snvm_printf_hart(hartid, "%016lX: ", (unsigned long)((uintptr_t)p + offset));
 
     /* hex bytes: 16 bytes per line */
     for (i = 0U; i < 16U; i++) {
       if (i < line_len) {
-        snvm_printf("%02X ", p[offset + i]);
+        snvm_printf_hart(hartid, "%02X ", p[offset + i]);
       } else {
-        snvm_puts("   ");
+        snvm_puts_hart(hartid, "   ");
       }
 
       /* 8-byte boundary spacing */
       if (i == 7U) {
-        snvm_putc(' ');
+        snvm_putc_hart(hartid, ' ');
       }
     }
 
-    snvm_puts(" |");
+    snvm_puts_hart(hartid, " |");
 
     /* ASCII view */
     for (i = 0U; i < line_len; i++) {
       uint8_t c = p[offset + i];
       if ((c >= 32U) && (c <= 126U)) {
-        snvm_putc((char)c);
+        snvm_putc_hart(hartid, (char)c);
       } else {
-        snvm_putc('.');
+        snvm_putc_hart(hartid, '.');
       }
     }
 
     /* pad ASCII area so short last line aligns nicely */
     for (; i < 16U; i++) {
-      snvm_putc(' ');
+      snvm_putc_hart(hartid, ' ');
     }
 
-    snvm_puts("|\n");
+    snvm_puts_hart(hartid, "|\n");
 
     offset += line_len;
   }
+}
+
+void snvm_hexdump(const char *label, const void *buf, uint32_t len)
+{
+  int hartid = SNVM_HSS_HART_E51;
+
+  snvm_hexdump_hart(hartid, label, buf, len);
 }

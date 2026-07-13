@@ -38,23 +38,25 @@ void snvm_e51(HLS_DATA* hls)
   uint8_t * volatile buf = (uint8_t *)&__envm_start;
   uint32_t crc32_result = 0;
 
-  snvm_cli(2);
+  snvm_cli(7);
 
-  snvm_printf("p_hss_envm_manifest->size  : 0x%08X\r\n", p_hss_envm_manifest->size);
-  snvm_printf("p_hss_envm_manifest->crc32 : 0x%08X\r\n", p_hss_envm_manifest->crc32);
+  snvm_printf("[%s] p_hss_envm_manifest->size  : 0x%08X\r\n", __func__, p_hss_envm_manifest->size);
+  snvm_printf("[%s] p_hss_envm_manifest->crc32 : 0x%08X\r\n", __func__, p_hss_envm_manifest->crc32);
   crc32_result = snvm_crc32(0, buf, p_hss_envm_manifest->size);
-  snvm_printf("crc32_result               : 0x%08X\r\n", crc32_result);
+  snvm_printf("[%s] crc32_result               : 0x%08X\r\n", __func__, crc32_result);
 #ifdef SNVM_DEBUG
   snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
 #endif
 
   if (p_hss_envm_manifest->crc32 == crc32_result) {
+    snvm_printf("[%s] Integrity check passed ...\r\n", __func__);
     /* Clear pending software interrupt in case there was any.
      * Enable only the software interrupt so that the E51 core can bring this core
      * out of WFI by raising a software interrupt. */
     clear_soft_interrupt();
     set_csr(mie, MIP_MSIP);
 
+    snvm_printf("[%s] Waking-up U54_1 hart, and then enter WFI mode ...\r\n", __func__);
     /* Raise software interrupt to wake hart 1 */
     raise_soft_interrupt(1U);
 
@@ -63,23 +65,27 @@ void snvm_e51(HLS_DATA* hls)
     {
       __asm("wfi");
     } while(0 == (read_csr(mip) & MIP_MSIP));
+    snvm_printf("[%s] Wakeup from WFI ...\r\n", __func__);
 
     /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
      * can enable and use any interrupts as required */
     clear_soft_interrupt();
 
-    (void) mss_config_clk_rst(MSS_PERIPH_MMUART2, (uint8_t) 0, PERIPHERAL_OFF);
-    (void) mss_config_clk_rst(MSS_PERIPH_MMUART1, (uint8_t) 0, PERIPHERAL_OFF);
+    snvm_printf("[%s] Jump to eNVM ...\r\n", __func__);
     entry();
   }
 
   /* CRC for eNVM failed ... */
+  snvm_printf("[%s] Integrity check failed ...\r\n", __func__);
+  snvm_printf("[%s] Enter sNVM CLI mode ...\r\n", __func__);
   snvm_cli(-1);
 }
 
 void snvm_u54_1(HLS_DATA* hls);
 void snvm_u54_1(HLS_DATA* hls)
 {
+  snvm_printf_hart(SNVM_HSS_HART_U54_1,
+      "[%s] Enter WFI mode ...\r\n", __func__);
   /* Clear pending software interrupt in case there was any.
      Enable only the software interrupt so that the E51 core can bring this
      core out of WFI by raising a software interrupt. */
@@ -91,6 +97,11 @@ void snvm_u54_1(HLS_DATA* hls)
   {
     __asm("wfi");
   }while(0 == (read_csr(mip) & MIP_MSIP));
+  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_1,
+      "[%s] Wakeup from WFI ...\r\n", __func__);
+  snvm_printf_hart(SNVM_HSS_HART_U54_1,
+      "[%s] Waking-up U54_2 hart ...\r\n", __func__);
 
   /* The hart is out of WFI, clear the SW interrupt. Hear onwards Application
    * can enable and use any interrupts as required */
@@ -99,13 +110,15 @@ void snvm_u54_1(HLS_DATA* hls)
   /* Raise software interrupt to wake hart 2 */
   raise_soft_interrupt(2U);
 
-  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_1, "[%s] Jump to eNVM ...\r\n", __func__);
   entry();
 }
 
 void snvm_u54_2(HLS_DATA* hls);
 void snvm_u54_2(HLS_DATA* hls)
 {
+  snvm_printf_hart(SNVM_HSS_HART_U54_2,
+      "[%s] Enter WFI mode ...\r\n", __func__);
   /* Clear pending software interrupt in case there was any.
    * Enable only the software interrupt so that the E51 core can bring this core
    * out of WFI by raising a software interrupt. */
@@ -117,6 +130,11 @@ void snvm_u54_2(HLS_DATA* hls)
   {
     __asm("wfi");
   } while(0 == (read_csr(mip) & MIP_MSIP));
+  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_2,
+      "[%s] Wakeup from WFI ...\r\n", __func__);
+  snvm_printf_hart(SNVM_HSS_HART_U54_2,
+      "[%s] Waking-up U54_3 hart ...\r\n", __func__);
 
   /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
    * can enable and use any interrupts as required */
@@ -125,13 +143,15 @@ void snvm_u54_2(HLS_DATA* hls)
   /* Raise software interrupt to wake hart 3 */
   raise_soft_interrupt(3U);
 
-  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_2, "[%s] Jump to eNVM ...\r\n", __func__);
   entry();
 }
 
 void snvm_u54_3(HLS_DATA* hls);
 void snvm_u54_3(HLS_DATA* hls)
 {
+  snvm_printf_hart(SNVM_HSS_HART_U54_3,
+      "[%s] Enter WFI mode ...\r\n", __func__);
   /* Clear pending software interrupt in case there was any.
    * Enable only the software interrupt so that the E51 core can bring this core
    * out of WFI by raising a software interrupt. */
@@ -143,6 +163,11 @@ void snvm_u54_3(HLS_DATA* hls)
   {
     __asm("wfi");
   } while(0 == (read_csr(mip) & MIP_MSIP));
+  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_3,
+      "[%s] Wakeup from WFI ...\r\n", __func__);
+  snvm_printf_hart(SNVM_HSS_HART_U54_3,
+      "[%s] Waking-up U54_4 hart ...\r\n", __func__);
 
   /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
    * can enable and use any interrupts as required */
@@ -151,13 +176,15 @@ void snvm_u54_3(HLS_DATA* hls)
   /* Raise software interrupt to wake hart 4 */
   raise_soft_interrupt(4U);
 
-  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_3, "[%s] Jump to eNVM ...\r\n", __func__);
   entry();
 }
 
 void snvm_u54_4(HLS_DATA* hls);
 void snvm_u54_4(HLS_DATA* hls)
 {
+  snvm_printf_hart(SNVM_HSS_HART_U54_4,
+      "[%s] Enter WFI mode ...\r\n", __func__);
   /* Clear pending software interrupt in case there was any.
    * Enable only the software interrupt so that the E51 core can bring this core
    * out of WFI by raising a software interrupt. */
@@ -169,6 +196,11 @@ void snvm_u54_4(HLS_DATA* hls)
   {
     __asm("wfi");
   } while(0 == (read_csr(mip) & MIP_MSIP));
+  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_4,
+      "[%s] Wakeup from WFI ...\r\n", __func__);
+  snvm_printf_hart(SNVM_HSS_HART_U54_4,
+      "[%s] Waking-up E51 hart ...\r\n", __func__);
 
   /* The hart is out of WFI, clear the SW interrupt. Here onwards Application
    * can enable and use any interrupts as required */
@@ -177,7 +209,7 @@ void snvm_u54_4(HLS_DATA* hls)
   /* Raise software interrupt to wake hart 0 */
   raise_soft_interrupt(0U);
 
-  /* crc32 for envm passed @e51 */
+  snvm_printf_hart(SNVM_HSS_HART_U54_4, "[%s] Jump to eNVM ...\r\n", __func__);
   entry();
 }
 
@@ -259,6 +291,9 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
     (void)mss_nwc_init();
     (void)snvm_uart_init();
 
+    snvm_printf("[hart #%d] hsl(0x%08lx)\r\n",
+        hartid, (unsigned long)(uintptr_t)hls_e51);
+
     hls_e51->my_hart_id = hartid;
     hls_e51->in_wfi_indicator = SNVM_HLS_MAIN_HART_STARTED;
 
@@ -287,10 +322,8 @@ __attribute__((noinline)) int snvm_main(HLS_DATA* hls_e51)
               break;
           }
           hls_u54 = (HLS_DATA*)(stack_top - SNVM_HLS_DEBUG_AREA_SIZE);
-#if 1
           snvm_printf("[hart #%d] hsl(0x%08lx)\r\n",
               u54_hart_id, (unsigned long)(uintptr_t)hls_u54);
-#endif
           sm_check_thread = SNVM_CHECK_WFI;
           wait_count = 0U;
           break;

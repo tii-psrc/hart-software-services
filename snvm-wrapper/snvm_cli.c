@@ -121,7 +121,7 @@ static void uart_getline(char *line, size_t size)
       case '\r':
       case '\n':
         /* Echo newline */
-        snvm_puts((const char *)"\r\n");
+        snvm_printf("%s", (const char *)"\r\n");
 
         line[idx] = '\0';
         return;
@@ -133,7 +133,7 @@ static void uart_getline(char *line, size_t size)
           idx--;
 
           /* Erase character on terminal */
-          snvm_puts((const char *)"\b \b");
+          snvm_printf("%s", (const char *)"\b \b");
         }
         break;
 
@@ -143,7 +143,7 @@ static void uart_getline(char *line, size_t size)
           line[idx++] = (char)ch;
 
           /* Echo */
-          snvm_putc(ch);
+          snvm_printf("%c", ch);
         }
         break;
     }

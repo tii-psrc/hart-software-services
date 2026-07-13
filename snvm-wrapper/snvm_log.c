@@ -5,21 +5,29 @@
 
 #include "snvm_config.h"
 #include "snvm_uart.h"
+#include "snvm_spin_lock.h"
 
-void snvm_putc_hart(int hartid, char c)
+static snvm_spinlock_t snvm_log_lock;
+
+static void snvm_putc_hart(int hartid, char c);
+static void snvm_putc_hart(int hartid, char c)
 {
   uint8_t ch = (uint8_t)c;
   snvm_uart_tx(uart_instance(hartid), &ch, 1u);
 }
 
-void snvm_putc(char c)
+#if 0
+static void snvm_putc(char c);
+static void snvm_putc(char c)
 {
   int hartid = SNVM_HSS_HART_E51;
 
   snvm_putc_hart(hartid, c);
 }
+#endif
 
-void snvm_puts_hart(int hartid, const char *s)
+static void snvm_puts_hart(int hartid, const char *s);
+static void snvm_puts_hart(int hartid, const char *s)
 {
   if (s == NULL) {
     s = "(null)";
@@ -33,14 +41,15 @@ void snvm_puts_hart(int hartid, const char *s)
   }
 }
 
-void snvm_puts(const char *s)
+#if 0
+static void snvm_puts(const char *s);
+static void snvm_puts(const char *s)
 {
   int hartid = SNVM_HSS_HART_E51;
 
   snvm_puts_hart(hartid, s);
 }
-
-
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Formatter internals                                                         */
@@ -182,8 +191,11 @@ static void snvm_print_ptr(int hartid, uintptr_t ptr, unsigned int width,
 /* tiny printf                                                                 */
 /* -------------------------------------------------------------------------- */
 
-void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
+static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap);
+static void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
 {
+  snvm_spin_lock(&snvm_log_lock);
+
   while ((*fmt) != '\0') {
     if (*fmt != '%') {
       snvm_putc_hart(hartid, *fmt++);
@@ -334,13 +346,8 @@ void snvm_vprintf_hart(int hartid, const char *fmt, va_list ap)
 
     fmt++;
   }
-}
 
-void snvm_vprintf(const char *fmt, va_list ap)
-{
-  int hartid = SNVM_HSS_HART_E51;
-
-  snvm_vprintf_hart(hartid, fmt, ap);
+  snvm_spin_unlock(&snvm_log_lock);
 }
 
 void snvm_printf_hart(int hartid, const char *fmt, ...)
@@ -365,6 +372,8 @@ void snvm_printf(const char *fmt, ...)
 void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
     uint32_t len)
 {
+  snvm_spin_lock(&snvm_log_lock);
+
   const uint8_t *p = (const uint8_t *)buf;
   uint32_t offset = 0U;
 
@@ -379,7 +388,8 @@ void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
     uint32_t line_len = ((len - offset) > 16U) ? 16U : (len - offset);
 
     /* line start address */
-    snvm_printf_hart(hartid, "%016lX: ", (unsigned long)((uintptr_t)p + offset));
+    snvm_printf_hart(hartid, "%016lX: ",
+        (unsigned long)((uintptr_t)p + offset));
 
     /* hex bytes: 16 bytes per line */
     for (i = 0U; i < 16U; i++) {
@@ -416,6 +426,8 @@ void snvm_hexdump_hart(int hartid, const char *label, const void *buf,
 
     offset += line_len;
   }
+
+  snvm_spin_unlock(&snvm_log_lock);
 }
 
 void snvm_hexdump(const char *label, const void *buf, uint32_t len)

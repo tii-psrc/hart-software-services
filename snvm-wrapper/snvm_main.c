@@ -38,15 +38,16 @@ void snvm_e51(HLS_DATA* hls)
   uint8_t * volatile buf = (uint8_t *)&__envm_start;
   uint32_t crc32_result = 0;
 
+#if 1//def SNVM_DEBUG
+  snvm_hexdump("eNVM@E51", buf, p_hss_envm_manifest->size);
+#endif
+
   snvm_cli(7);
 
   snvm_printf("[%s] p_hss_envm_manifest->size  : 0x%08X\r\n", __func__, p_hss_envm_manifest->size);
   snvm_printf("[%s] p_hss_envm_manifest->crc32 : 0x%08X\r\n", __func__, p_hss_envm_manifest->crc32);
   crc32_result = snvm_crc32(0, buf, p_hss_envm_manifest->size);
   snvm_printf("[%s] crc32_result               : 0x%08X\r\n", __func__, crc32_result);
-#ifdef SNVM_DEBUG
-  snvm_hexdump("eNVM", buf, p_hss_envm_manifest->size);
-#endif
 
   if (p_hss_envm_manifest->crc32 == crc32_result) {
     snvm_printf("[%s] Integrity check passed ...\r\n", __func__);
@@ -85,6 +86,13 @@ void snvm_e51(HLS_DATA* hls)
 void snvm_u54_1(HLS_DATA* hls);
 void snvm_u54_1(HLS_DATA* hls)
 {
+#if 1//def SNVM_DEBUG
+  uint8_t * volatile p_hss_envm_manifest_addr = (uint8_t *)&__hss_envm_manifest_start;
+  struct hss_envm_manifest * volatile p_hss_envm_manifest = (struct hss_envm_manifest *)p_hss_envm_manifest_addr;
+  uint8_t * volatile buf = (uint8_t *)&__envm_start;
+  snvm_hexdump_hart(SNVM_HSS_HART_U54_1, "eNVM@U54_1", buf, p_hss_envm_manifest->size);
+#endif
+
   snvm_printf_hart(SNVM_HSS_HART_U54_1,
       "[%s] Enter WFI mode ...\r\n", __func__);
   /* Clear pending software interrupt in case there was any.

@@ -35,6 +35,7 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 {
   int result = SBI_EFAIL;
 	volatile uint8_t *__reversed_ddr_addr = (volatile uint8_t *)regs->a0;
+	uint32_t sbi_verbose = (uint32_t)regs->a1;
 	bool status = true;
 	char buf[1024];
 	uint32_t wait_count = 0;
@@ -45,7 +46,7 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 	start_time = HSS_GetTime();
 	wait_count = 0;
 #if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
-	status = set_request_from_sbi_ecall(__reversed_ddr_addr);
+	status = set_request_from_sbi_ecall(__reversed_ddr_addr, sbi_verbose);
 	while (status && wait_count < TIMEOUT_COUNT) {
 		wfi();
 		status = is_request_from_sbi_ecall();
@@ -59,7 +60,13 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 		*out_val = 0;
 		return result;
 	}
-	*out_val = strlen((char *)__reversed_ddr_addr) + 1;
+	if (sbi_verbose) {
+		*out_val = strlen((char *)__reversed_ddr_addr) + 1;
+	} else {
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY)
+		*out_val = sizeof(struct telemetry_data);
+#endif
+	}
 
 
 #if 1
@@ -70,7 +77,10 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 	format_log(HSS_HART_E51, buf, "[%s] time(%llu ns, %llu ms, %llu ticks),  wait_count(0x%08X)\r\n",
 			__func__, nsecs, msecs, end_time - start_time, wait_count);
 	format_log(HSS_HART_E51, buf, "[%s] str length(%d)\r\n", __func__, *out_val);
-	format_log(HSS_HART_E51, (char *)__reversed_ddr_addr , NULL);
+#if 0
+	if (sbi_verbose)
+		format_log(HSS_HART_E51, (char *)__reversed_ddr_addr , NULL);
+#endif
 	format_log(HSS_HART_E51, buf, "[%s] done. \r\n", __func__);
 
 #endif

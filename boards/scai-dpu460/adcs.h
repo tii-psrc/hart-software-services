@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include "telemetry_service.h"
+
 struct ADC_st
 {
     uint32_t address;
@@ -136,8 +138,8 @@ int VTTs_are_ok(void);
 
 int pf_init(uint16_t *pf_tel);
 
-void do_format_sanity(int hartid, char *buf);
-void do_format_sanity_vtt(int hartid, char *buf);
+void do_format_sanity(int hartid, char *buf, struct telemetry_data *tm_data);
+void do_format_sanity_vtt(int hartid, char *buf, struct telemetry_data *tm_data);
 #ifdef __cplusplus
 }
 #endif

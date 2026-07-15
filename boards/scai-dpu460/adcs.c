@@ -433,31 +433,59 @@ int pf_init(uint16_t *pf_tel)
 }
 
 static void format_sanity(int hartid, char *buf, const char *format, unsigned int pgood_gpio,
-		unsigned int pgood, unsigned int imon_gpio, unsigned int imon)
+		unsigned int pgood, unsigned int imon_gpio, unsigned int imon, struct telemetry_data *tm_data)
 {
 	uint32_t pg, im;
 
 	pg = gpio_config(pgood_gpio, BIT(pgood) , 2);
 	im = gpio_config(imon_gpio, BIT(imon), 2);
 	format_log(hartid, buf, format, pg?"OK":"ERROR", im?"OK":"ERROR");
+
+	if (tm_data) {
+		switch (pgood) {
+			case F15_CTRL_PGOOD0:
+				tm_data->sanity_check_1_0_mV = pg ? 1 : 0;
+				tm_data->sanity_check_1_0_mA = im ? 1 : 0;
+				break;
+			case J18_CTRL_PGOOD1:
+				tm_data->sanity_check_1_2_mV = pg ? 1 : 0;
+				tm_data->sanity_check_1_2_mA = im ? 1 : 0;
+				break;
+			case E13_CTRL_PGOOD4:
+				tm_data->sanity_check_1_8_mV = pg ? 1 : 0;
+				tm_data->sanity_check_1_8_mA = im ? 1 : 0;
+				break;
+			case F17_CTRL_PGOOD3:
+				tm_data->sanity_check_2_5_mV = pg ? 1 : 0;
+				tm_data->sanity_check_2_5_mA = im ? 1 : 0;
+				break;
+			case H17_CTRL_PGOOD2:
+				tm_data->sanity_check_3_3_mV = pg ? 1 : 0;
+				tm_data->sanity_check_3_3_mA = im ? 1 : 0;
+				break;
+
+			default:
+				break;
+		}
+	}
 }
 
-void do_format_sanity(int hartid, char *buf)
+void do_format_sanity(int hartid, char *buf, struct telemetry_data *tm_data)
 {
 	format_sanity(hartid, buf, "\r\n    1.0V:          => PGOOD   : %s - IMON: %s",
-			0, F15_CTRL_PGOOD0, 0, G15_CTRL_nIFLT0);
+			0, F15_CTRL_PGOOD0, 0, G15_CTRL_nIFLT0, tm_data);
 	format_sanity(hartid, buf, "\r\n    1.2V:          => PGOOD   : %s - IMON: %s",
-			0, J18_CTRL_PGOOD1, 0, H18_CTRL_nIFLT1);
+			0, J18_CTRL_PGOOD1, 0, H18_CTRL_nIFLT1, tm_data);
 	format_sanity(hartid, buf, "\r\n    1.8V:          => PGOOD   : %s - IMON: %s",
-			0, E13_CTRL_PGOOD4, 1, F14_CTRL_nIFLT4);
+			0, E13_CTRL_PGOOD4, 1, F14_CTRL_nIFLT4, tm_data);
 	format_sanity(hartid, buf, "\r\n    2.5V:          => PGOOD   : %s - IMON: %s",
-			0, F17_CTRL_PGOOD3, 0, F18_CTRL_nIFLT3);
+			0, F17_CTRL_PGOOD3, 0, F18_CTRL_nIFLT3, tm_data);
 	format_sanity(hartid, buf, "\r\n    3.3V:          => PGOOD   : %s - IMON: %s",
-			0, H17_CTRL_PGOOD2, 0, G17_CTRL_nIFLT2);
+			0, H17_CTRL_PGOOD2, 0, G17_CTRL_nIFLT2, tm_data);
 }
 
 static void format_sanity_vtt(int hartid, char *buf, const char *VTT, unsigned int ena_gpio,
-		unsigned int ena, unsigned int pgood_gpio, unsigned int pgood)
+		unsigned int ena, unsigned int pgood_gpio, unsigned int pgood, struct telemetry_data *tm_data)
 {
 	uint32_t pg, en;
 
@@ -466,14 +494,40 @@ static void format_sanity_vtt(int hartid, char *buf, const char *VTT, unsigned i
 	if(en)
 	{
 		format_log(hartid, buf, "\r\n    %s ON : PGOOD: %s", VTT, pg?"OK":"ERROR");
+		if (tm_data) {
+			switch (ena) {
+				case H16_SVTT_ENA:
+					tm_data->sanity_check_sddr_vtt = pg ? 1 : 0;
+					break;
+				case E16_FVTT_ENA:
+					tm_data->sanity_check_fddr_vtt = pg ? 1 : 0;
+					break;
+
+				default:
+					break;
+			}
+		}
 	}else{
 		format_log(hartid, buf, "\r\n    %s OFF", VTT);
+		if (tm_data) {
+			switch (ena) {
+				case H16_SVTT_ENA:
+					tm_data->sanity_check_sddr_vtt = 0;
+					break;
+				case E16_FVTT_ENA:
+					tm_data->sanity_check_fddr_vtt = 0;
+					break;
+
+				default:
+					break;
+			}
+		}
 	}
 }
 
-void do_format_sanity_vtt(int hartid, char *buf)
+void do_format_sanity_vtt(int hartid, char *buf, struct telemetry_data *tm_data)
 {
-	format_sanity_vtt(hartid, buf, "Sytem DDR VTT", 0, H16_SVTT_ENA, 1, C12_CTRL_PGOOD6);
-	format_sanity_vtt(hartid, buf, "Fabric DDR VTT", 0, E16_FVTT_ENA, 1, C13_CTRL_PGOOD7);
+	format_sanity_vtt(hartid, buf, "Sytem DDR VTT", 0, H16_SVTT_ENA, 1, C12_CTRL_PGOOD6, tm_data);
+	format_sanity_vtt(hartid, buf, "Fabric DDR VTT", 0, E16_FVTT_ENA, 1, C13_CTRL_PGOOD7, tm_data);
 }
 #endif

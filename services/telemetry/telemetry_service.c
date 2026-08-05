@@ -9,6 +9,7 @@
 
 #include "telemetry_service.h"
 #include "adcs.h"
+#include "telemetry_publish.h"
 
 #include "hss_state_machine.h"
 #include "hss_clock.h"
@@ -95,6 +96,16 @@ bool clear_request_from_sbi_ecall(void)
 static void tm_init_handler(struct StateMachine * const pMyMachine)
 {
 	init_adcs();
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	/*
+	 * MMUART Controller #0 : LVDS1
+	 * MMUART Controller #1 : U54_1 Hart(U-Boot/Linux)
+	 * MMUART Controller #2 : E51 Hart(HSS Bootloader)
+	 * MMUART Controller #3 : LVDS2
+	 */
+	do_tm_publish_init(HSS_UART_GetInstance(HSS_HART_U54_2)); // MMUART Controller #0
+	do_tm_publish_init(HSS_UART_GetInstance(HSS_HART_U54_3)); // MMUART Controller #3
+#endif
 
 	tm_ticks = HSS_GetTime();
 
@@ -371,6 +382,9 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] Timer execution.\r\n", __func__);
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
+
+		//do_tm_publish();
+
 		tm_ticks = HSS_GetTime();
 	}
 
@@ -381,6 +395,8 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 		tm_monitoring_print(HSS_HART_E51, buf, &tm_data);
 		print_tm_data(HSS_HART_E51, buf, &tm_data);
+
+		do_tm_publish();
 
 		clear_request_from_cli();
 	}

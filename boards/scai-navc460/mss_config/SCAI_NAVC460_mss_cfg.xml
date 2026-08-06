@@ -4,7 +4,7 @@
       <design_name>SCAI_NAVC460</design_name>
       <mpfs_part_no>MPFS460T</mpfs_part_no>
       <mpfs_package>FCG1152</mpfs_package>
-      <creation_date_time>02-28-2026_13:21:56</creation_date_time>
+      <creation_date_time>08-05-2026_16:05:57</creation_date_time>
       <xml_format_version>0.6.8</xml_format_version>
     </design_information>
     <mss_memory_map>
@@ -1250,16 +1250,16 @@
           </register>
           <register address="0x00000204" description="Configures the IO Mux structure for each IO pad.  0  implies  SD/SDIO, 1 implies  EMMC, 2 implies QSPI, 3 implies SPI,4 implies USB,5 implies MMUART,6 implies I2C,7 implies CAN,8 implies MDIO,9 implies Miscellaneous,0xA implies Reserved (Equivalent to Tristate),0xB implies GPIO ,0xC implies Fabric-test,0xD implies Logic 0,0xE implies Logic 1, 0xF implies Tristate" name="IOMUX1_CR">
             <field Type="RW" name="PAD0" offset="0" width="4">0xB</field>
-            <field Type="RW" name="PAD1" offset="4" width="4">0xF</field>
-            <field Type="RW" name="PAD2" offset="8" width="4">0xF</field>
+            <field Type="RW" name="PAD1" offset="4" width="4">0x6</field>
+            <field Type="RW" name="PAD2" offset="8" width="4">0x6</field>
             <field Type="RW" name="PAD3" offset="12" width="4">0x7</field>
             <field Type="RW" name="PAD4" offset="16" width="4">0x7</field>
             <field Type="RW" name="PAD5" offset="20" width="4">0x7</field>
             <field Type="RW" name="PAD6" offset="24" width="4">0xB</field>
-            <field Type="RW" name="PAD7" offset="28" width="4">0xF</field>
+            <field Type="RW" name="PAD7" offset="28" width="4">0x6</field>
           </register>
           <register address="0x00000208" description="Configures the IO Mux structure for each IO pad.  0  implies  SD/SDIO, 1 implies  EMMC, 2 implies QSPI, 3 implies SPI,4 implies USB,5 implies MMUART,6 implies I2C,7 implies CAN,8 implies MDIO,9 implies Miscellaneous,0xA implies Reserved (Equivalent to Tristate),0xB implies GPIO ,0xC implies Fabric-test,0xD implies Logic 0,0xE implies Logic 1, 0xF implies Tristate" name="IOMUX2_CR">
-            <field Type="RW" name="PAD8" offset="0" width="4">0xF</field>
+            <field Type="RW" name="PAD8" offset="0" width="4">0x6</field>
             <field Type="RW" name="PAD9" offset="4" width="4">0x5</field>
             <field Type="RW" name="PAD10" offset="8" width="4">0x5</field>
             <field Type="RW" name="PAD11" offset="12" width="4">0xF</field>
@@ -4313,8 +4313,8 @@
             <field Type="RW" name="MMUART2" offset="10" width="1">0x1</field>
             <field Type="RW" name="MMUART3" offset="11" width="1">0x1</field>
             <field Type="RW" name="MMUART4" offset="12" width="1">0x0</field>
-            <field Type="RW" name="I2C0" offset="13" width="1">0x0</field>
-            <field Type="RW" name="I2C1" offset="14" width="1">0x0</field>
+            <field Type="RW" name="I2C0" offset="13" width="1">0x1</field>
+            <field Type="RW" name="I2C1" offset="14" width="1">0x1</field>
             <field Type="RW" name="CAN0" offset="15" width="1">0x1</field>
             <field Type="RW" name="CAN1" offset="16" width="1">0x0</field>
             <field Type="RW" name="GPIO0" offset="17" width="1">0x1</field>

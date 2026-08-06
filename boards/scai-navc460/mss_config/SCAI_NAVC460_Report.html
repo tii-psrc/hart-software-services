@@ -54,7 +54,7 @@
 </tr>
 <tr>
  <td>Date</td>
- <td>Sat Feb 28 13:21:57 2026
+ <td>Wed Aug  5 16:05:57 2026
 </td>
 </tr>
 </table>
@@ -87,7 +87,7 @@
 </tr>
 <tr>
  <td>FIC_1 AXI4 Target Interface</td>
- <td>false</td>
+ <td>true</td>
 </tr>
 <tr>
  <td>FIC_2 AXI4 Target Interface</td>
@@ -159,11 +159,11 @@
 </tr>
 <tr>
  <td>I2C_0</td>
- <td>UNUSED</td>
+ <td>MSSIO_B4</td>
 </tr>
 <tr>
  <td>I2C_1</td>
- <td>UNUSED</td>
+ <td>MSSIO_B4</td>
 </tr>
 <tr>
  <td>CAN_0</td>
@@ -522,6 +522,114 @@
  <td>INPUT</td>
 </tr>
 <tr>
+ <td>FIC_1_ACLK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWID[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWADDR[37:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWLEN[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWSIZE[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWBURST[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWLOCK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWCACHE[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWQOS[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWPROT[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_AWVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_WDATA[63:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_WSTRB[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_WLAST</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_WVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_BREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARID[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARADDR[37:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARLEN[7:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARSIZE[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARBURST[1:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARQOS[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARLOCK</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARCACHE[3:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARPROT[2:0]</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARVALID</td>
+ <td>INPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RREADY</td>
+ <td>INPUT</td>
+</tr>
+<tr>
  <td>FIC_3_PCLK</td>
  <td>INPUT</td>
 </tr>
@@ -551,6 +659,10 @@
 </tr>
 <tr>
  <td>FIC_0_DLL_LOCK_M2F</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_DLL_LOCK_M2F</td>
  <td>OUTPUT</td>
 </tr>
 <tr>
@@ -662,6 +774,50 @@
  <td>OUTPUT</td>
 </tr>
 <tr>
+ <td>FIC_1_AXI4_S_AWREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_WREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_BID[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_BRESP[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_BVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_ARREADY</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RID[3:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RDATA[63:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RRESP[1:0]</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RLAST</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
+ <td>FIC_1_AXI4_S_RVALID</td>
+ <td>OUTPUT</td>
+</tr>
+<tr>
  <td>FIC_3_APB_M_PSEL</td>
  <td>OUTPUT</td>
 </tr>
@@ -726,6 +882,22 @@
  <td>OUTPUT</td>
 </tr>
 <tr>
+ <td>I2C_0_SCL</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>I2C_0_SDA</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>I2C_1_SCL</td>
+ <td>INOUT</td>
+</tr>
+<tr>
+ <td>I2C_1_SDA</td>
+ <td>INOUT</td>
+</tr>
+<tr>
  <td>CAN_0_TXBUS</td>
  <td>OUTPUT</td>
 </tr>
@@ -750,24 +922,24 @@
  <td>OUTPUT</td>
 </tr>
 <tr>
- <td>GPIO_1_11_OUT</td>
- <td>OUTPUT</td>
+ <td>GPIO_1_11_IN</td>
+ <td>INPUT</td>
 </tr>
 <tr>
- <td>GPIO_1_12_OUT</td>
- <td>OUTPUT</td>
+ <td>GPIO_1_12_IN</td>
+ <td>INPUT</td>
 </tr>
 <tr>
- <td>GPIO_1_13_OUT</td>
- <td>OUTPUT</td>
+ <td>GPIO_1_13_IN</td>
+ <td>INPUT</td>
 </tr>
 <tr>
- <td>GPIO_1_14_OUT</td>
- <td>OUTPUT</td>
+ <td>GPIO_1_14_IN</td>
+ <td>INPUT</td>
 </tr>
 <tr>
- <td>GPIO_1_15_OUT</td>
- <td>OUTPUT</td>
+ <td>GPIO_1_15_IN</td>
+ <td>INPUT</td>
 </tr>
 <tr>
  <td>GPIO_1_22_OUT</td>
@@ -950,6 +1122,32 @@
  <td>OFF</td>
 </tr>
 <tr>
+ <td>I2C_0_SCL</td>
+ <td>MSSIO1</td>
+ <td>AA9</td>
+ <td>INOUT</td>
+ <td>UP</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>8</td>
+ <td>OFF</td>
+</tr>
+<tr>
+ <td>I2C_0_SDA</td>
+ <td>MSSIO2</td>
+ <td>AA7</td>
+ <td>INOUT</td>
+ <td>UP</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>8</td>
+ <td>OFF</td>
+</tr>
+<tr>
  <td>CAN_0_TXBUS</td>
  <td>MSSIO3</td>
  <td>Y6</td>
@@ -1000,6 +1198,32 @@
  <td>OFF</td>
  <td>--</td>
  <td>--</td>
+</tr>
+<tr>
+ <td>I2C_1_SCL</td>
+ <td>MSSIO7</td>
+ <td>Y7</td>
+ <td>INOUT</td>
+ <td>UP</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>8</td>
+ <td>OFF</td>
+</tr>
+<tr>
+ <td>I2C_1_SDA</td>
+ <td>MSSIO8</td>
+ <td>Y14</td>
+ <td>INOUT</td>
+ <td>UP</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>OFF</td>
+ <td>8</td>
+ <td>OFF</td>
 </tr>
 <tr>
  <td>MMUART_0_RXD</td>
@@ -1067,69 +1291,69 @@
  <td>OFF</td>
 </tr>
 <tr>
- <td>GPIO_1_11_OUT</td>
+ <td>GPIO_1_11_IN</td>
  <td>MSSIO25</td>
  <td>U9</td>
- <td>OUTPUT</td>
+ <td>INPUT</td>
  <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
  <td>OFF</td>
+ <td>OFF</td>
+ <td>--</td>
+ <td>--</td>
 </tr>
 <tr>
- <td>GPIO_1_12_OUT</td>
+ <td>GPIO_1_12_IN</td>
  <td>MSSIO26</td>
  <td>V14</td>
- <td>OUTPUT</td>
+ <td>INPUT</td>
  <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
  <td>OFF</td>
+ <td>OFF</td>
+ <td>--</td>
+ <td>--</td>
 </tr>
 <tr>
- <td>GPIO_1_13_OUT</td>
+ <td>GPIO_1_13_IN</td>
  <td>MSSIO27</td>
  <td>V13</td>
- <td>OUTPUT</td>
+ <td>INPUT</td>
  <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
  <td>OFF</td>
+ <td>OFF</td>
+ <td>--</td>
+ <td>--</td>
 </tr>
 <tr>
- <td>GPIO_1_14_OUT</td>
+ <td>GPIO_1_14_IN</td>
  <td>MSSIO28</td>
  <td>W10</td>
- <td>OUTPUT</td>
+ <td>INPUT</td>
  <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
  <td>OFF</td>
+ <td>OFF</td>
+ <td>--</td>
+ <td>--</td>
 </tr>
 <tr>
- <td>GPIO_1_15_OUT</td>
+ <td>GPIO_1_15_IN</td>
  <td>MSSIO29</td>
  <td>W11</td>
- <td>OUTPUT</td>
+ <td>INPUT</td>
  <td>UP</td>
  <td>OFF</td>
  <td>OFF</td>
- <td>--</td>
- <td>--</td>
- <td>8</td>
  <td>OFF</td>
+ <td>OFF</td>
+ <td>--</td>
+ <td>--</td>
 </tr>
 <tr>
  <td>QSPI_CLK</td>

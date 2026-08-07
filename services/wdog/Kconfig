@@ -37,4 +37,11 @@ config SERVICE_WDOG_ENABLE_E51
 		Coreplex to restart if, for some reason, the E51 becomes unable to periodically update
 		its watchdog.
 
+config SERVICE_WDOG_ENABLE_EXTERNAL
+	bool "Enable external watchdog"
+	default n
+	depends on SERVICE_WDOG
+	help
+		This feature enables the external watchdog
+
 endmenu

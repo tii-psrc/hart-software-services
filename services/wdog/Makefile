@@ -29,6 +29,9 @@
 SRCS-$(CONFIG_SERVICE_WDOG) += \
 	services/wdog/wdog_service.c \
 
+SRCS-$(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL) += \
+	services/wdog/wdog_external.c \
+
 INCLUDES +=\
 	-I./services/wdog \
 

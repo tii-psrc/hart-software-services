@@ -33,6 +33,10 @@
 
 #include "mpfs_reg_map.h"
 
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+#include "wdog_external.h"
+#endif
+
 static void wdog_init_handler(struct StateMachine * const pMyMachine);
 static void wdog_idle_handler(struct StateMachine * const pMyMachine);
 
@@ -85,6 +89,9 @@ static HSSTicks_t wdogInitTime[MAX_NUM_HARTS] = { 0u };
 
 static void wdog_init_handler(struct StateMachine * const pMyMachine)
 {
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+    wdog_external_init();
+#endif
     HSS_Wdog_E51_Tickle();
 
     pMyMachine->state = WDOG_IDLE;
@@ -122,6 +129,10 @@ static void wdog_idle_handler(struct StateMachine * const pMyMachine)
         pMyMachine->state = WDOG_MONITORING;
     }
 
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+    wdog_external_idle();
+#endif
+
     // nothing to do in this state
 }
 
@@ -149,6 +160,10 @@ static void wdog_monitoring_handler(struct StateMachine * const pMyMachine)
             (HSSTicks_t)CONFIG_SERVICE_WDOG_DEBUG_TIMEOUT_SEC * TICKS_PER_SEC))) {
         HSS_Wdog_DumpStats();
     }
+#endif
+
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+    wdog_external_monitoring();
 #endif
 
     uint32_t wdog_status = mHSS_ReadRegU32(SYSREGSCB, MSS_STATUS);

@@ -248,6 +248,9 @@ void HSS_Wdog_DumpStats(void)
         mHSS_DEBUG_PRINTF(LOG_NORMAL, "U54_4: %lu sec uptime\n",
             (lastEntryTime - wdogInitTime[HSS_HART_U54_4]) / TICKS_PER_SEC);
     }
+#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+    wdog_external_status();
+#endif
 
     mHSS_DEBUG_PRINTF_EX("\n");
 #endif

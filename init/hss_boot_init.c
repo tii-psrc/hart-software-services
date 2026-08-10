@@ -98,7 +98,22 @@ static bool getBootImageFromYModemPayload_(struct HSS_Storage *pStorage, struct 
 
 
 #if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
-unsigned long __active_slot = 0;
+struct boot_info {
+	uint8_t __boot_device[4];
+	uint32_t __active_slot;
+
+	uint8_t reserved[504];
+};
+
+struct boot_info boot_info = {
+	.__boot_device = CONFIG_SERVICE_BOOT_DEVICE_NAME,
+	.__active_slot = 0,
+	.reserved = { 0 },
+};
+
+_Static_assert(sizeof(CONFIG_SERVICE_BOOT_DEVICE_NAME) <=
+               sizeof(((struct boot_info *)0)->__boot_device),
+               "BOOT_DEVICE_NAME is too long");
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)
@@ -325,11 +340,11 @@ bool tryBootFunction_(struct HSS_Storage *pStorage, HSS_GetBootImageFnPtr_t cons
 
 #if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI) || IS_ENABLED(CONFIG_SERVICE_QSPI)
         if (!strncmp(pStorage->name, "FPGA_QSPI", 9)) {
-          __active_slot = (unsigned long)'b';
+          boot_info.__active_slot = (unsigned long)'b';
         } else if (!strncmp(pStorage->name, "QSPI", 4)) {
-          __active_slot = (unsigned long)'a';
+          boot_info.__active_slot = (unsigned long)'a';
         } else {
-          __active_slot = 0;
+          boot_info.__active_slot = 0;
         }
 #endif
 

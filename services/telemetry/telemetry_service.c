@@ -383,7 +383,7 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
 
-		//do_tm_publish();
+		do_tm_publish();
 
 		tm_ticks = HSS_GetTime();
 	}

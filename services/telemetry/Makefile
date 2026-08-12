@@ -3,6 +3,8 @@
 
 SRCS-$(CONFIG_SERVICE_TELEMETRY) += \
 	services/telemetry/telemetry_service.c  \
+
+SRCS-$(CONFIG_SERVICE_TELEMETRY_PUBLISH) += \
 	services/telemetry/telemetry_publish.c  \
 	services/telemetry/packet/CcsdsUtils.c  \
 	services/telemetry/packet/Endian.c  \

@@ -15,4 +15,11 @@ config SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC
 	help
 		Timeout for periodic monitoring of telemetry.
 
+config SERVICE_TELEMETRY_PUBLISH
+	bool "Telemetry packet publish via UART"
+	default n
+	depends on SERVICE_TELEMETRY
+	help
+		Telemetry packet publish via UART
+
 endmenu

@@ -9,7 +9,9 @@
 
 #include "telemetry_service.h"
 #include "adcs.h"
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 #include "telemetry_publish.h"
+#endif
 
 #include "hss_state_machine.h"
 #include "hss_clock.h"
@@ -96,7 +98,7 @@ bool clear_request_from_sbi_ecall(void)
 static void tm_init_handler(struct StateMachine * const pMyMachine)
 {
 	init_adcs();
-#if defined(CONFIG_BOARD_SCAI_DPU460)
+#if defined(CONFIG_BOARD_SCAI_DPU460) && defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 	/*
 	 * MMUART Controller #0 : LVDS1
 	 * MMUART Controller #1 : U54_1 Hart(U-Boot/Linux)
@@ -383,7 +385,9 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 		do_tm_publish();
+#endif
 
 		tm_ticks = HSS_GetTime();
 	}
@@ -396,7 +400,9 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		tm_monitoring_print(HSS_HART_E51, buf, &tm_data);
 		print_tm_data(HSS_HART_E51, buf, &tm_data);
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 		do_tm_publish();
+#endif
 
 		clear_request_from_cli();
 	}

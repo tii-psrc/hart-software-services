@@ -18,6 +18,9 @@ bool is_request_from_sbi_ecall(void);
 bool set_request_from_sbi_ecall(volatile uint8_t *sbi_buf_addr, uint32_t sbi_verbose);
 bool clear_request_from_sbi_ecall(void);
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+int tm_set_stop_publish(void);
+#endif
 
 struct telemetry_data {
   int32_t temp_K;

@@ -24,6 +24,10 @@ static bool request_from_sbi_ecall = false;
 static volatile uint8_t *__sbi_ecall_reserved_ddr_buf = NULL;
 static uint32_t __sbi_ecall_verbose = 0;
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+static int stop_publish = 0;
+#endif
+
 enum telemetry_status {
 	TM_INITIALIZATION,
 	TM_MONITORING,
@@ -52,6 +56,15 @@ struct StateMachine tm_service = {
     .priority          = 0u,
     .pInstanceData     = NULL
 };
+
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+int tm_set_stop_publish(void)
+{
+	stop_publish = 1;
+
+	return stop_publish;
+}
+#endif
 
 bool is_request_from_cli(void)
 {
@@ -99,6 +112,7 @@ static void tm_init_handler(struct StateMachine * const pMyMachine)
 {
 	init_adcs();
 #if defined(CONFIG_BOARD_SCAI_DPU460) && defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+	stop_publish = 0;
 	/*
 	 * MMUART Controller #0 : LVDS1
 	 * MMUART Controller #1 : U54_1 Hart(U-Boot/Linux)
@@ -386,7 +400,8 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
-		do_tm_publish();
+		if (!stop_publish)
+			do_tm_publish();
 #endif
 
 		tm_ticks = HSS_GetTime();
@@ -401,7 +416,8 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		print_tm_data(HSS_HART_E51, buf, &tm_data);
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
-		do_tm_publish();
+		if (!stop_publish)
+			do_tm_publish();
 #endif
 
 		clear_request_from_cli();

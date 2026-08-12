@@ -31,8 +31,15 @@
 enum sbi_tm_ext_cmd {
 	SBI_TM_EXT_CONCISE = 0x0,
 	SBI_TM_EXT_VERBOSE = 0x1,
-	SBI_TM_EXT_STOP_PUBLISHING = 0x2,
+	SBI_TM_EXT_STOP_SERVICE = 0x2,
 };
+
+enum sbi_tm_ext_services {
+	SBI_TM_EXT_STOP_NO_SERVICE = 0x0,
+	SBI_TM_EXT_STOP_PUBLISHING = 0x1,
+	SBI_TM_EXT_STOP_EXTERNAL_WDOG = 0x2,
+};
+
 
 static int __get_tm_data(uint32_t ext_args, volatile uint8_t *mem, unsigned long *out);
 static int __get_tm_data(uint32_t ext_args, volatile uint8_t *mem, unsigned long *out)
@@ -94,15 +101,38 @@ static int __get_tm_data(uint32_t ext_args, volatile uint8_t *mem, unsigned long
 	return result;
 }
 
-static int __stop_services(void);
-static int __stop_services(void)
+static int __stop_services(uint32_t service_id);
+static int __stop_services(uint32_t service_id)
 {
   int result = SBI_EFAIL;
+	char buf[1024];
 
-#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
-	if (wdog_external_stop())
-		result = SBI_OK;
+	switch (service_id) {
+		case SBI_TM_EXT_STOP_NO_SERVICE:
+			format_log(HSS_HART_E51, buf, "[%s] Unknown args(%d)\r\n", __func__,
+					service_id);
+			break;
+		case SBI_TM_EXT_STOP_PUBLISHING:
+#if IS_ENABLED(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+			format_log(HSS_HART_E51, buf, "[%s] args(%d)\r\n", __func__, service_id);
+			if (tm_set_stop_publish()) {
+				result = SBI_OK;
+			}
 #endif
+			break;
+		case SBI_TM_EXT_STOP_EXTERNAL_WDOG:
+#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+			format_log(HSS_HART_E51, buf, "[%s] args(%d)\r\n", __func__, service_id);
+			if (wdog_external_stop()) {
+				result = SBI_OK;
+			}
+#endif
+			break;
+		default:
+			format_log(HSS_HART_E51, buf, "[%s] Unknown args(%d)\r\n", __func__,
+					service_id);
+			break;
+	}
 
 	return result;
 }
@@ -115,7 +145,6 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 {
   int result = SBI_EFAIL;
 	uint32_t sbi_tm_ext_args = (uint32_t)regs->a0;
-	volatile uint8_t *__reversed_ddr_addr = (volatile uint8_t *)regs->a1;
 	char buf[1024];
 
 	format_log(HSS_HART_E51, buf, "[%s] args(%d)\r\n", __func__,
@@ -123,11 +152,12 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 	switch (sbi_tm_ext_args) {
 		case SBI_TM_EXT_CONCISE:
 		case SBI_TM_EXT_VERBOSE:
-			result = __get_tm_data(sbi_tm_ext_args, __reversed_ddr_addr, out_val);
+			result = __get_tm_data(sbi_tm_ext_args, (volatile uint8_t *)regs->a1,
+					out_val);
 			break;
 
-		case SBI_TM_EXT_STOP_PUBLISHING:
-			result = __stop_services();
+		case SBI_TM_EXT_STOP_SERVICE:
+			result = __stop_services((uint32_t)regs->a1);
 			*out_val = 0;
 			break;
 

@@ -68,7 +68,7 @@ typedef enum _BOOT_EnumBootStatus_t
 typedef enum _BOOT_EnumHkReportId_t
 {
   BOOT_HKID_ALL=0,
-  BOOT_HKID_BOOT_HK=1,
+  BOOT_HKID_BOOT_HK=255,
   BOOT_HKID_NB=2
 } BOOT_EnumHkReportId_t;
 

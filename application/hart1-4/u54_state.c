@@ -23,6 +23,10 @@
 #include "wdog_service.h"
 #include "reboot_service.h"
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
+
 static enum HSSHartState_t hartStates[HSS_HART_NUM_PEERS] = { 0u, };
 
 void HSS_U54_SetState(int state)
@@ -121,13 +125,27 @@ void HSS_U54_SetState_Ex(int hartId, int state)
 void HSS_U54_DumpStatesIfChanged(void)
 {
     long retval = 0u;
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		uint32_t running_hart_count = 0;
+#endif
+
     __atomic_load(&reportingFlag, &retval, __ATOMIC_RELAXED);
     if (retval) {
         mHSS_DEBUG_PRINTF(LOG_STATE_TRANSITION, "u54 State Change: ");
         HSS_Debug_Highlight(HSS_DEBUG_LOG_STATE_TRANSITION); \
         for (int i = HSS_HART_U54_1; i < HSS_HART_NUM_PEERS; i++) {
             mHSS_DEBUG_PRINTF_EX(" [%s]", HSS_U54_GetStateName(HSS_U54_GetState_Ex(i)));
+						if (HSS_U54_GetState_Ex(i) == HSS_State_Running)
+							running_hart_count++;
         }
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+				if (running_hart_count == 1) {
+					do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_STARTED);
+				} else if (running_hart_count == 4) {
+					do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_STARTED);
+				}
+#endif
+
         HSS_Debug_Highlight(HSS_DEBUG_LOG_NORMAL);
         mHSS_DEBUG_PRINTF_EX("\n");
 

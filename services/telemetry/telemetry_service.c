@@ -30,6 +30,10 @@ static uint32_t publish_count_timer = 0;
 static uint32_t publish_count_console = 0;
 #endif
 
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+#include "wdog_external.h"
+#endif
+
 enum telemetry_status {
 	TM_INITIALIZATION,
 	TM_MONITORING,
@@ -406,8 +410,10 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#if 0
 		if (!stop_publish)
-			do_tm_publish(publish_count_timer++);
+			do_tm_publish((uint8_t)255);
+#endif
 #endif
 
 		tm_ticks = HSS_GetTime();
@@ -423,7 +429,7 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 		if (!stop_publish)
-			do_tm_publish(publish_count_console++);
+			do_tm_publish((uint8_t)255);
 #endif
 
 		clear_request_from_cli();

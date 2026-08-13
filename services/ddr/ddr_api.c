@@ -29,6 +29,10 @@
 #include "csr_helper.h"
 #include <assert.h>
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
+
 #if 1
 extern const uint64_t __ddr_start;
 extern const uint64_t __ddr_end;
@@ -136,6 +140,10 @@ uintptr_t HSS_ncDDRHi_GetStart(void)
 
 void HSS_DDR_Train(void)
 {
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		do_tm_publish(HSS_BOOT_BS_DDR_TRAINING_STARTED);
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_GPIO_UI)
     HSS_GPIO_UI_ReportDDRInitStart();
 #endif
@@ -151,7 +159,7 @@ enum IPIStatusCode HSS_DDR_Train_IPIHandler(TxId_t transaction_id, enum HSSHartI
     (void)p_extended_buffer_in_ddr;
     (void)p_ancilliary_buffer_in_ddr;
 
-    HSS_DDRInit();
+		HSS_DDRInit();
     HSS_ZeroDDR();
 #if IS_ENABLED(CONFIG_MEMTEST)
     HSS_MemTestDDRFast();

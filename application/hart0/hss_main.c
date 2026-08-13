@@ -52,6 +52,9 @@
 
 #include <string.h>
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
 
 /******************************************************************************************/
 
@@ -64,6 +67,9 @@ void hss_main(void)
     HSS_Wdog_MonitorHart(HSS_HART_ALL);
 #endif
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		do_tm_publish(HSS_BOOT_BS_BOOTLOADER1_STARTED);
+#endif
     while (true) {
         RunStateMachines(spanOfPGlobalStateMachines, pGlobalStateMachines);
     }

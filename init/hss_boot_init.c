@@ -23,6 +23,10 @@
 #include "hss_trigger.h"
 #include "u54_state.h"
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_SPI)
 #  include <mss_sys_services.h>
 #  define SPI_FLASH_BOOT_ENABLED (CONFIG_SERVICE_BOOT_SPI_FLASH_OFFSET != 0xFFFFFFFF)
@@ -590,6 +594,10 @@ static bool getBootImageFromQSPI_(struct HSS_Storage *pStorage, struct HSS_BootI
     // need to do an initial copy of the boot header into our structure, for subsequent use
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Preparing to copy from QSPI to DDR ...\n");
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		update_boot_w25(MSS_W25);
+#endif
+
     size_t srcLBAOffset = 0u;
     assert(pStorage);
 
@@ -602,11 +610,17 @@ static bool getBootImageFromQSPI_(struct HSS_Storage *pStorage, struct HSS_BootI
         sizeof(struct HSS_BootImage));
     if (!result) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_QSPI_ReadBlock() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+				do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
     } else {
         result = HSS_Boot_VerifyMagic(&bootImage);
 
         if (!result) {
             mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_Boot_VerifyMagic() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+						do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
         } else {
             int perf_ctr_index = PERF_CTR_UNINITIALIZED;
             HSS_PerfCtr_Allocate(&perf_ctr_index, "Boot Image QSPI Copy");
@@ -620,6 +634,9 @@ static bool getBootImageFromQSPI_(struct HSS_Storage *pStorage, struct HSS_BootI
 
             if (!result) {
                  mHSS_DEBUG_PRINTF(LOG_ERROR, "copyBootImageToDDR_() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+								 do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
             }
         }
     }
@@ -657,16 +674,26 @@ static bool getBootImageFromFPGAQSPI_(struct HSS_Storage *pStorage, struct HSS_B
   mHSS_DEBUG_PRINTF(LOG_NORMAL, "Attempting to read image header (%d bytes) ...\n",
       sizeof(struct HSS_BootImage));
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+	update_boot_w25(FPGA_W25);
+#endif
+
   off = 0;
   len = sizeof(struct HSS_BootImage);
   result = HSS_FPGA_QSPIRead((uintptr_t)&bootImage, off, len);
   if (!result) {
     mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_FPGA_QSPIRead() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
   } else {
     //memcpy((void *)&bootImage, (void *)dest, sizeof(struct HSS_BootImage));
     result = HSS_Boot_VerifyMagic(&bootImage);
     if (!result) {
       mHSS_DEBUG_PRINTF(LOG_ERROR, "HSS_Boot_VerifyMagic() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+			do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
     } else {
       __print_boot_img_info(HSS_HART_E51, &bootImage);
       __print_boot_img_info(HSS_HART_U54_1, &bootImage);
@@ -679,13 +706,15 @@ static bool getBootImageFromFPGAQSPI_(struct HSS_Storage *pStorage, struct HSS_B
       result = HSS_FPGA_QSPIRead(dest, off, len);
       if (!result) {
         mHSS_DEBUG_PRINTF(LOG_ERROR, "copyBootImageToDDR_() failed\n");
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+			do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+#endif
 				return result;
       }
 
       *ppBootImage = (struct HSS_BootImage *)dest;
 
       HSS_PerfCtr_Lap(perf_ctr_index);
-
     }
   }
 

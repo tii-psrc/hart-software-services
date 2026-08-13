@@ -16,35 +16,39 @@
 #include "hss_types.h"
 #include "hss_debug.h"
 #include "assert.h"
+#include "uart_helper.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #define STEP_SIZE 16
 void HSS_TinyCLI_HexDump(uint8_t *pStart, ptrdiff_t count);
 void HSS_TinyCLI_HexDump(uint8_t *pStart, ptrdiff_t count)
 {
+		char buf[1024];
+
     if ((!pStart) || (count == 0u)) { return; }
 
     for (ptrdiff_t i = 0u; i < count; i+=STEP_SIZE) {
-        mHSS_PRINTF("%08x:%08x  ",
+        format_log(HSS_HART_E51, buf, "%08x:%08x  ",
             (uint32_t)(((ptrdiff_t)pStart + i) >> 32),  // upper 32-bits of address
             (uint32_t)(((ptrdiff_t)pStart + i) & ((1lu<<32)-1u))); // lower 32-bits of address
 
         for (ptrdiff_t j = 0u; j < STEP_SIZE; j++) {
             if ((i + j) >= count) {
-                mHSS_PRINTF("   ");
+                format_log(HSS_HART_E51, buf, "   ");
             } else {
-                mHSS_PRINTF("%02x ", *(pStart + i + j));
+                format_log(HSS_HART_E51, buf, "%02x ", *(pStart + i + j));
 		if ((j % 4) == 3) {
-                    mHSS_PRINTF(" ");
+                    format_log(HSS_HART_E51, buf, " ");
 		}
             }
         }
 
-        mHSS_PRINTF(" ");
+        format_log(HSS_HART_E51, buf, " ");
         for (ptrdiff_t j = 0u; j < STEP_SIZE; j++) {
             if ((i + j) >= count) {
-                mHSS_PRINTF(" ");
+                format_log(HSS_HART_E51, buf, " ");
             } else {
                 uint8_t octet = *(pStart + i + j);
                 if ((octet > 31u) && (octet < 128u)) {
@@ -52,10 +56,10 @@ void HSS_TinyCLI_HexDump(uint8_t *pStart, ptrdiff_t count)
                 } else {
                     octet = '.';
                 }
-                mHSS_PRINTF("%c", (char)octet);
+                format_log(HSS_HART_E51, buf, "%c", (char)octet);
             }
         }
-        mHSS_PRINTF("\n");
+        format_log(HSS_HART_E51, buf, "\r\n");
     }
 }
 

@@ -61,9 +61,26 @@ void ConvertToHex20Format(uint8_t *dataOut,uint16_t *totalDataSize)
 	*totalDataSize=dataOutNb;
 }
 
-void do_tm_publish(uint32_t publish_count)
+
+static uint8_t boot_device = 255;
+uint8_t update_boot_w25(uint8_t boot_w25)
 {
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "Hello World, publish_count(%d)\r\n", publish_count);
+	if (!memcmp(CONFIG_SERVICE_BOOT_DEVICE_NAME, "red", 4)
+			&& boot_w25 != 255) {
+		boot_device = BOOT_BD_MSSW25_RED + boot_w25;
+	} else if (!memcmp(CONFIG_SERVICE_BOOT_DEVICE_NAME, "nom", 4) &&
+			boot_w25 != 255) {
+		boot_device = boot_w25;
+	}
+
+	return boot_device;
+}
+
+void do_tm_publish(uint8_t boot_status)
+{
+	char buf[1024];
+	format_log(HSS_HART_E51, buf, "\r\nHello World, dev(%d), boot_status(%d)\r\n",
+			(uint32_t)boot_device, (uint32_t)boot_status);
 
 	CCSDS_PrimaryHeader_t ccsdsHeader;
 	PUS_TmSecondaryHeader_t pusTmHeader;
@@ -72,10 +89,10 @@ void do_tm_publish(uint32_t publish_count)
 	uint8_t sendPacketRaw[SBRO_PACKET_MAX_NB];
 	uint16_t totalDataSize=0;
 
-	CCSDS_FillPrimaryHeader(&ccsdsHeader, M_FALSE, M_TRUE, BOOT_APID_BOOTSW, sequenceCounter++);
-	PUS_CreateTmHeader(&pusTmHeader, BOOT_HKREPORT_SERVICE, BOOT_HKREPORT_SUBSERVICE, sequenceCounterHighSeverity++, BOOT_APID_OBC);
-	hkInfo.bootStatus=BOOT_BS_BOOTLOADER1_STARTED;
-	hkInfo.bootDevice=BOOT_BD_MSSW25_NOM;
+	CCSDS_FillPrimaryHeader(&ccsdsHeader, M_FALSE, M_TRUE, BOOT_APID_BOOTSW, sequenceCounter);
+	PUS_CreateTmHeader(&pusTmHeader, BOOT_HKREPORT_SERVICE, BOOT_HKREPORT_SUBSERVICE, sequenceCounterHighSeverity, BOOT_APID_OBC);
+	hkInfo.bootStatus=boot_status;
+	hkInfo.bootDevice=boot_device;
 	BOOTF_FillHkReport(&sendTotalPacketStructureData,&ccsdsHeader,&pusTmHeader,BOOT_HKID_BOOT_HK,(void*)&hkInfo,sizeof(hkInfo));
 
 	//serialize
@@ -86,7 +103,7 @@ void do_tm_publish(uint32_t publish_count)
 	ConvertToHex20Format(sendPacketRaw,&totalDataSize);
 
 	//send
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "info: sending %d bytes\r\n",totalDataSize);
+	format_log(HSS_HART_E51, buf, "info: sending %d bytes\r\n",totalDataSize);
 	//print buffer
 	HSS_TinyCLI_HexDump(sendPacketRaw, totalDataSize);
 #if defined(CONFIG_BOARD_SCAI_DPU460)

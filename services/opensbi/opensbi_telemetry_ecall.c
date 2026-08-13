@@ -24,6 +24,10 @@
 #include "telemetry_service.h"
 #endif
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
+
 #if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
 #include "wdog_external.h"
 #endif
@@ -115,6 +119,7 @@ static int __stop_services(uint32_t service_id)
 		case SBI_TM_EXT_STOP_PUBLISHING:
 #if IS_ENABLED(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 			format_log(HSS_HART_E51, buf, "[%s] args(%d)\r\n", __func__, service_id);
+			do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_SUCEEDED);
 			if (tm_set_stop_publish()) {
 				result = SBI_OK;
 			}

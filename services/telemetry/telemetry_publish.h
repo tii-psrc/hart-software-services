@@ -5,7 +5,29 @@
 extern "C" {
 #endif
 
-void do_tm_publish(uint32_t publish_count);
+enum boot_w25
+{
+	MSS_W25 = 0,
+	FPGA_W25 = 1,
+};
+
+#if 1
+typedef enum _HSS_BOOT_EnumBootStatus_t
+{
+  HSS_BOOT_BS_BOOTLOADER1_STARTED=0,
+  HSS_BOOT_BS_DDR_TRAINING_STARTED=1,
+  HSS_BOOT_BS_DDR_TRAINING_FAILED_REBOOT=2,
+  HSS_BOOT_BS_BOOTLOADER2_STARTED=3,
+  HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT=4,
+  HSS_BOOT_BS_LINUX_BOOT_STARTED=5,
+  HSS_BOOT_BS_LINUX_BOOT_FAILED_REBOOT=6,
+  HSS_BOOT_BS_LINUX_BOOT_SUCEEDED=7,
+  HSS_BOOT_BS_NB=8
+} HSS_BOOT_EnumBootStatus_t;
+#endif
+
+uint8_t update_boot_w25(uint8_t boot_w25);
+void do_tm_publish(uint8_t boot_status);
 void do_tm_publish_init(void *this_uart);
 
 #ifdef __cplusplus

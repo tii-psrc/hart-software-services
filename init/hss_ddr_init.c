@@ -30,6 +30,10 @@
 
 #include "hss_init.h"
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
+
 /*!
  * \brief DDR Training
  *
@@ -191,6 +195,9 @@ bool HSS_DDRInit(void)
         if (retval != 0) {
             mHSS_DEBUG_PRINTF_EX(CURSOR_UP "%s Failed\n", ddr_training_prefix);
             result = false;
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+            do_tm_publish(HSS_BOOT_BS_DDR_TRAINING_FAILED_REBOOT);
+#endif
         } else {
             HSS_PerfCtr_Lap(perf_ctr_index);
             mHSS_DEBUG_PRINTF_EX(CURSOR_UP "%s Passed", ddr_training_prefix);

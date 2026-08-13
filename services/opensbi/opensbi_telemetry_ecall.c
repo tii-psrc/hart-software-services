@@ -152,6 +152,10 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 	switch (sbi_tm_ext_args) {
 		case SBI_TM_EXT_CONCISE:
 		case SBI_TM_EXT_VERBOSE:
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+		wdog_external_stop();
+		wdog_external_monitoring();
+#endif
 			result = __get_tm_data(sbi_tm_ext_args, (volatile uint8_t *)regs->a1,
 					out_val);
 			break;

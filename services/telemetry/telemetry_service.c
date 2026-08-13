@@ -30,6 +30,10 @@ static uint32_t publish_count_timer = 0;
 static uint32_t publish_count_console = 0;
 #endif
 
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+#include "wdog_external.h"
+#endif
+
 enum telemetry_status {
 	TM_INITIALIZATION,
 	TM_MONITORING,
@@ -430,6 +434,11 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 	}
 
 	if (is_request_from_sbi_ecall()) {
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+		wdog_external_stop();
+		wdog_external_monitoring();
+#endif
+
 		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] SBI ECALL execution.\r\n", __func__);
 		memset(buf, 0, sizeof(buf));
 		memset((void *)&tm_data, 0, sizeof(struct telemetry_data));

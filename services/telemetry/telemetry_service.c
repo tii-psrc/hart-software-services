@@ -26,6 +26,8 @@ static uint32_t __sbi_ecall_verbose = 0;
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 static int stop_publish = 0;
+static uint32_t publish_count_timer = 0;
+static uint32_t publish_count_console = 0;
 #endif
 
 enum telemetry_status {
@@ -61,6 +63,8 @@ struct StateMachine tm_service = {
 int tm_set_stop_publish(void)
 {
 	stop_publish = 1;
+	publish_count_timer = 0;
+	publish_count_console = 0;
 
 	return stop_publish;
 }
@@ -113,6 +117,8 @@ static void tm_init_handler(struct StateMachine * const pMyMachine)
 	init_adcs();
 #if defined(CONFIG_BOARD_SCAI_DPU460) && defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 	stop_publish = 0;
+	publish_count_timer = 0;
+	publish_count_console = 0;
 	/*
 	 * MMUART Controller #0 : LVDS1
 	 * MMUART Controller #1 : U54_1 Hart(U-Boot/Linux)
@@ -401,7 +407,7 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 		if (!stop_publish)
-			do_tm_publish();
+			do_tm_publish(publish_count_timer++);
 #endif
 
 		tm_ticks = HSS_GetTime();
@@ -417,7 +423,7 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 		if (!stop_publish)
-			do_tm_publish();
+			do_tm_publish(publish_count_console++);
 #endif
 
 		clear_request_from_cli();

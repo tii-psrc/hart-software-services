@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void do_tm_publish(void);
+void do_tm_publish(uint32_t publish_count);
 void do_tm_publish_init(void *this_uart);
 
 #ifdef __cplusplus

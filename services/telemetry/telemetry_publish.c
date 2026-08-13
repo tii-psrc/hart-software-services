@@ -61,9 +61,9 @@ void ConvertToHex20Format(uint8_t *dataOut,uint16_t *totalDataSize)
 	*totalDataSize=dataOutNb;
 }
 
-void do_tm_publish(void)
+void do_tm_publish(uint32_t publish_count)
 {
-	mHSS_DEBUG_PRINTF(LOG_NORMAL, "Hello World\r\n");
+	mHSS_DEBUG_PRINTF(LOG_NORMAL, "Hello World, publish_count(%d)\r\n", publish_count);
 
 	CCSDS_PrimaryHeader_t ccsdsHeader;
 	PUS_TmSecondaryHeader_t pusTmHeader;

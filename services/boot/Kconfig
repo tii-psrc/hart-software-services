@@ -53,6 +53,14 @@ config SERVICE_BOOT_DDR_TARGET_ADDR
 	help
                 This feature specifies a scratch address for EMMC/QSPI decompression
 
+config SERVICE_BOOT_DEVICE_NAME
+	string "Boot Device Name"
+	default ""
+	depends on SERVICE_BOOT && SERVICE_FPGA_QSPI
+	help
+                This feature specifies a booting device's name
+
+
 config SERVICE_BOOT_MMC_USE_GPT
     bool "Use GPT with MMC"
     default SERVICE_BOOT && SERVICE_MMC && y

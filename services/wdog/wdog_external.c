@@ -6,16 +6,26 @@
 
 #include "mss_gpio.h"
 
+static int stop_external_watchdog = 0;
+static int external_watchdog_status_changed = 0;
+
 static HSSTicks_t wdog_external_last_time = 0u;
 static HSSTicks_t wdog_external_current_time = 0u;
 
-static void __wdog_external_handler(void);
-static void __wdog_external_handler(void)
+static int __wdog_external_handler(void)
 {
 	HSSTicks_t duration_time = (HSSTicks_t)(1 * TICKS_PER_SEC);
 	wdog_external_current_time = HSS_GetTime();
     
 	HSSTicks_t delayTick;
+
+	if (stop_external_watchdog) {
+		if (external_watchdog_status_changed) {
+			mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG stopped ...\r\n");
+			external_watchdog_status_changed = 0;
+		}
+		return stop_external_watchdog;
+	}
 
 	if (wdog_external_current_time > (wdog_external_last_time + duration_time)) {
 		mHSS_DEBUG_PRINTF(LOG_WARN, "External WDOG: %lu msec elapsed ... \n",
@@ -70,11 +80,14 @@ static void __wdog_external_handler(void)
 #endif
 
 	wdog_external_last_time = HSS_GetTime();
+
+	return 0;
 }
 
 void wdog_external_init(void)
 {
 	mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG started ...\r\n");
+	stop_external_watchdog = 0;
 
 	wdog_external_last_time = HSS_GetTime();
 	MSS_GPIO_init(GPIO2_LO);
@@ -91,4 +104,27 @@ void wdog_external_idle(void)
 void wdog_external_monitoring(void)
 {
 	__wdog_external_handler();
+}
+
+int wdog_external_stop(void)
+{
+	stop_external_watchdog = 1;
+	external_watchdog_status_changed = 1;
+
+	return stop_external_watchdog;
+}
+
+int wdog_external_status(void)
+{
+	HSSTicks_t current_time = HSS_GetTime();
+
+	if (stop_external_watchdog) {
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG stopped %llu sec ago ... \n",
+				(current_time - wdog_external_last_time) / TICKS_PER_SEC);
+	} else {
+		mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG: last ping was %llu usec ago ... \n",
+				(current_time - wdog_external_last_time) / (TICKS_PER_MILLISEC/1000llu));
+	}
+
+	return 0;
 }

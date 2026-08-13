@@ -9,6 +9,9 @@
 
 #include "telemetry_service.h"
 #include "adcs.h"
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+#include "telemetry_publish.h"
+#endif
 
 #include "hss_state_machine.h"
 #include "hss_clock.h"
@@ -20,6 +23,16 @@ static bool request_from_sbi_ecall = false;
 
 static volatile uint8_t *__sbi_ecall_reserved_ddr_buf = NULL;
 static uint32_t __sbi_ecall_verbose = 0;
+
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+static int stop_publish = 0;
+static uint32_t publish_count_timer = 0;
+static uint32_t publish_count_console = 0;
+#endif
+
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+#include "wdog_external.h"
+#endif
 
 enum telemetry_status {
 	TM_INITIALIZATION,
@@ -49,6 +62,17 @@ struct StateMachine tm_service = {
     .priority          = 0u,
     .pInstanceData     = NULL
 };
+
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+int tm_set_stop_publish(void)
+{
+	stop_publish = 1;
+	publish_count_timer = 0;
+	publish_count_console = 0;
+
+	return stop_publish;
+}
+#endif
 
 bool is_request_from_cli(void)
 {
@@ -95,6 +119,19 @@ bool clear_request_from_sbi_ecall(void)
 static void tm_init_handler(struct StateMachine * const pMyMachine)
 {
 	init_adcs();
+#if defined(CONFIG_BOARD_SCAI_DPU460) && defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+	stop_publish = 0;
+	publish_count_timer = 0;
+	publish_count_console = 0;
+	/*
+	 * MMUART Controller #0 : LVDS1
+	 * MMUART Controller #1 : U54_1 Hart(U-Boot/Linux)
+	 * MMUART Controller #2 : E51 Hart(HSS Bootloader)
+	 * MMUART Controller #3 : LVDS2
+	 */
+	do_tm_publish_init(HSS_UART_GetInstance(HSS_HART_U54_2)); // MMUART Controller #0
+	do_tm_publish_init(HSS_UART_GetInstance(HSS_HART_U54_3)); // MMUART Controller #3
+#endif
 
 	tm_ticks = HSS_GetTime();
 
@@ -371,6 +408,12 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] Timer execution.\r\n", __func__);
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
+
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		if (!stop_publish)
+			do_tm_publish(publish_count_timer++);
+#endif
+
 		tm_ticks = HSS_GetTime();
 	}
 
@@ -382,10 +425,20 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		tm_monitoring_print(HSS_HART_E51, buf, &tm_data);
 		print_tm_data(HSS_HART_E51, buf, &tm_data);
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+		if (!stop_publish)
+			do_tm_publish(publish_count_console++);
+#endif
+
 		clear_request_from_cli();
 	}
 
 	if (is_request_from_sbi_ecall()) {
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+		wdog_external_stop();
+		wdog_external_monitoring();
+#endif
+
 		mHSS_DEBUG_PRINTF(LOG_NORMAL, "[%s] SBI ECALL execution.\r\n", __func__);
 		memset(buf, 0, sizeof(buf));
 		memset((void *)&tm_data, 0, sizeof(struct telemetry_data));

@@ -21,7 +21,7 @@
 #include "tinycli_hexdump.h"
 
 static struct scai_fpgaqspi_priv w25_priv = {
-#if defined(CONFIG_BOARD_SCAI_DPU460)
+#if defined(CONFIG_BOARD_SCAI_DPU460) || defined(CONFIG_BOARD_SCAI_DPU250)
     .regs          = 0x40000510,
     .gpio1_regs    = 0x0,
     .gpio2_regs    = 0x0,

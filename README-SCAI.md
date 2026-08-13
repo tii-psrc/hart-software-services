@@ -1,134 +1,106 @@
-## How to apply SCAI_NAVC250 configuration file to HSS bootloader
+# SCAI Notes: Building and Flashing HSS for NAVC/DPU
 
-- - - -
+This is the SpacecraftAI (SCAI) clone of Microchip's Hart Software Services (HSS), the first-stage bootloader for PolarFire SoC. The main branch is `psrc2025`. For the overall boot architecture and board bring-up sequence see the top-level [scai_obc_bootloader](https://github.com/tii-psrc/scai_obc_bootloader) repository.
 
-1. Set configuration for definition
+SCAI-specific changes on top of upstream HSS include:
 
-        $ cd $(HSS source)
-        $ cp boards/scai-navc250/def_config .config # When navc250 firmware should be compiled
+* Board ports under `boards/`: `scai-navc250`, `scai-navc460`, `scai-dpu250`, `scai-dpu460` (one per computer and FPGA part), each with its MSS configuration
+* Boot delay increased to 5 seconds so the Tiny CLI can be entered on the console
+* Image upload/flashing support in the Tiny CLI (`ymodem` menu: ymodem and JTAG receive, compressed image support)
+* Compressed-image tooling in `tools/compression`
 
-2. Choose build options if some features are needed to be changed
+## Building HSS for a SCAI Board
 
-        $ make BOARD=scai-navc250 menuconfig
+The supported `BOARD` values are `scai-navc250`, `scai-navc460`, `scai-dpu250`, `scai-dpu460`. Using `scai-dpu460` as the example:
 
-3. Build
+1. Apply the board's default configuration:
 
-        $ make BOARD=scai-navc250 -j 1
+   ```bash
+   cd <hss-source>
+   cp boards/scai-dpu460/def_config .config
+   ```
 
-- - - -
+2. (Optional) Adjust build options:
 
-## MSS Configuration Files
-To modify hardware configuration, open SCAI_NAVC250.cfg file with MSS configuration tool.
-And, save changed values, and click generate button. 
-As a result, new below files are updated automatically.
+   ```bash
+   make BOARD=scai-dpu460 menuconfig
+   ```
 
-<pre>
-scai-navc250/mss_config/
-├── SCAI_NAVC250.cfg
-├── SCAI_NAVC250.cxz
-├── SCAI_NAVC250_Report.html
-└── SCAI_NAVC250_mss_cfg.xml
-</pre>
+3. Build:
 
-- - - -
+   ```bash
+   make BOARD=scai-dpu460 -j 1
+   ```
 
-## How to apply SCAI_NAVC460 configuration file to HSS bootloader
+The eNVM images are produced in `build/`, notably `hss-envm-wrapper.elf` and `build/bootmode1/hss-envm-wrapper-bm1-p0.hex`.
 
-- - - -
+## Flashing HSS to eNVM
 
-1. Set configuration for definition
+HSS lives in the 128 KB eNVM of the SoC and is flashed via FlashPro. It must match the FPGA design on the board (same MSS configuration, and the design must provide the expected fabric peripherals/'SergioAPI'). There are two ways to install it:
 
-        $ cd $(HSS source)
-        $ cp boards/scai-navc460/def_config .config # When navc460 firmware should be compiled
+* **Option 1 — `make program`:** with the board connected over FlashPro and powered, and a compatible FPGA design already flashed:
 
-2. Choose build options if some features are needed to be changed
+  ```bash
+  make BOARD=scai-dpu460 program
+  ```
 
-        $ make BOARD=scai-navc460 menuconfig
+  NB: this does not work on the first batch of DPUs — they require setting I/O states in Libero before flashing due to power issues; use option 2 instead.
 
-3. Build
-
-        $ make BOARD=scai-navc460 -j 1
-
-- - - -
+* **Option 2 — via Libero:** open the FPGA design in Libero (`Project > Open > *.prjx`), add `hss-envm-wrapper.elf` (or the `.hex`) to the design's eNVM client, and program the whole design. FPGA designs are stored [here](https://tiiuae.sharepoint.com/:f:/s/psrc/EujuoiqfStpEtTN7aN5ZcJgBUMPHLRPyu6vBJBRqt0Ckag?e=sQ44KT).
 
 ## MSS Configuration Files
-To modify hardware configuration, open SCAI_NAVC460.cfg file with MSS configuration tool.
-And, save changed values, and click generate button. 
-As a result, new below files are updated automatically.
 
-<pre>
-scai-navc460/mss_config/
-├── SCAI_NAVC460.cfg
-├── SCAI_NAVC460.cxz
-├── SCAI_NAVC460_Report.html
-└── SCAI_NAVC460_mss_cfg.xml
-</pre>
+Each board directory carries the master copy of its MSS configuration, e.g.:
 
-- - - -
-
-## How to apply SCAI_DPU250 configuration file to HSS bootloader
-
-- - - -
-
-1. Set configuration for definition
-
-        $ cd $(HSS source)
-        $ cp boards/scai-dpu250/def_config .config # When dpu250 firmware should be compiled
-
-2. Choose build options if some features are needed to be changed
-
-        $ make BOARD=scai-dpu250 menuconfig
-
-3. Build
-
-        $ make BOARD=scai-dpu250 -j 1
-
-- - - -
-
-## MSS Configuration Files
-To modify hardware configuration, open SCAI_DPU250.cfg file with MSS configuration tool.
-And, save changed values, and click generate button. 
-As a result, new below files are updated automatically.
-
-<pre>
-scai-dpu250/mss_config/
-├── SCAI_DPU250.cfg
-├── SCAI_DPU250.cxz
-├── SCAI_DPU250_Report.html
-└── SCAI_DPU250_mss_cfg.xml
-</pre>
-
-- - - -
-
-## How to apply SCAI_DPU460 configuration file to HSS bootloader
-- - - -
-
-1. Set configuration for definition
-
-        $ cd $(HSS source)
-        $ cp boards/scai-dpu460/def_config .config # When dpu460 firmware should be compiled
-
-2. Choose build options if some features are needed to be changed
-
-        $ make BOARD=scai-dpu460 menuconfig
-
-3. Build
-
-        $ make BOARD=scai-dpu460 -j 1
-
-- - - -
-
-## MSS Configuration Files
-To modify hardware configuration, open SCAI_DPU460.cfg file with MSS configuration tool.
-And, save changed values, and click generate button. 
-As a result, new below files are updated automatically.
-
-<pre>
-scai-dpu460/mss_config/
+```
+boards/scai-dpu460/mss_config/
 ├── SCAI_DPU460.cfg
 ├── SCAI_DPU460.cxz
 ├── SCAI_DPU460_Report.html
 └── SCAI_DPU460_mss_cfg.xml
-</pre>
+```
 
-- - - -
+(similarly `SCAI_NAVC250`, `SCAI_NAVC460`, `SCAI_DPU250` in their board directories).
+
+To modify the hardware configuration, open the `.cfg` file in the Microchip MSS Configuration tool, change the values, save, and click **Generate** — the other files in the directory are regenerated automatically. The same configuration must be imported into the FPGA design; HSS and the FPGA design must never diverge in MSS configuration.
+
+## Payload Generator
+
+The payload generator packages bootloader 2 (U-Boot) into the `payload.bin` that HSS loads from the boot storage.
+
+Build it:
+
+```bash
+sudo apt-get install libyaml-dev libelf-dev libssl-dev
+cd tools/hss-payload-generator
+make clean
+make
+```
+
+Use it (see `tools/hss-payload-generator/README.md` for details of the YAML config):
+
+```bash
+cp u-boot-<version>.bin ./u-boot.bin
+./hss-payload-generator -v -c ./uboot-linux.yaml ./payload.bin
+```
+
+Note: in the normal SCAI flow the payload is built and packaged into the NAND image by the [Yocto build](https://github.com/tii-psrc/scai-build-workspace); the manual steps above are for development/debugging.
+
+## Compression Tool
+
+`tools/compression` holds the miniz-based tool used to compress full NAND images before uploading them to the board over slow links (HSS decompresses on the fly when flashing):
+
+```bash
+cd tools/compression
+./hss-deflate.py --verbose <image>.nand.mtdimg <image>.nand.mtdimg.miniz
+```
+
+Optionally validate a compressed file:
+
+```bash
+cd miniz
+gcc -g -o validate validate.c miniz.c
+./validate <file>.miniz
+```
+
+How to use the compressed image to flash a board (ymodem and JTAG procedures) is described in the [deployment guide](https://github.com/tii-psrc/scai-build-workspace/blob/main/README-deploy-scai-boards.md).

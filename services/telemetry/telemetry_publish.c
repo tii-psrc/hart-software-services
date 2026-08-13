@@ -15,10 +15,51 @@
 #include <BOOT_Fillers.h>
 #include <BOOT_Serializers.h>
 
+#include <LIB_Crc.h>
+
+#include <string.h>
+
 #define SBRO_PACKET_MAX_NB (200)
 
 static uint16_t sequenceCounter = 0;
 static uint16_t sequenceCounterHighSeverity = 0;
+
+void ConvertToHex20Format(uint8_t *dataOut,uint16_t *totalDataSize);
+void ConvertToHex20Format(uint8_t *dataOut,uint16_t *totalDataSize)
+{
+	uint8_t dataOut2[SBRO_PACKET_MAX_NB];
+	uint16_t walkingIx=0;
+	uint16_t dataOutNb=*totalDataSize;
+	//add start sync 0x1A CF FC 1D
+	dataOut2[walkingIx++]=0x1A;
+	dataOut2[walkingIx++]=0xCF;
+	dataOut2[walkingIx++]=0xFC;
+	dataOut2[walkingIx++]=0x1D;
+	//copy headers
+	uint16_t headersSize=sizeof(CCSDS_PrimaryHeader_t)+sizeof(PUS_TmSecondaryHeader_t);
+	memcpy(&dataOut2[walkingIx],&dataOut[0],headersSize);
+	walkingIx+=headersSize;
+	//add Headers CRC
+	uint16_t headersCrc=CRC_CcsdsCrc16Get(PUS_DEFAULT_CRC_SEED, PUS_DEFAULT_CRC_OFFSET, &dataOut[0], headersSize);
+	dataOut2[walkingIx++]=(headersCrc & 0xFF00) >> 8;
+	dataOut2[walkingIx++]=(headersCrc & 0x00FF);
+	//copy data
+	uint16_t dataSize=dataOutNb-headersSize-2;
+	memcpy(&dataOut2[walkingIx],&dataOut[headersSize],dataSize);
+	walkingIx+=dataSize;
+	//add Data CRC (replace end CRC)
+	uint16_t dataCrc=CRC_CcsdsCrc16Get(PUS_DEFAULT_CRC_SEED, PUS_DEFAULT_CRC_OFFSET, &dataOut[headersSize], dataSize);
+	dataOut2[walkingIx++]=(dataCrc & 0xFF00) >> 8;
+	dataOut2[walkingIx++]=(dataCrc & 0x00FF);
+	//add end sync 0x1D FC CF 1A
+	dataOut2[walkingIx++]=0x1D;
+	dataOut2[walkingIx++]=0xFC;
+	dataOut2[walkingIx++]=0xCF;
+	dataOut2[walkingIx++]=0x1A;
+	dataOutNb=walkingIx;
+	memcpy(dataOut,dataOut2,dataOutNb);
+	*totalDataSize=dataOutNb;
+}
 
 void do_tm_publish(void)
 {
@@ -41,18 +82,16 @@ void do_tm_publish(void)
 	BOOTS_SerializeHkReport(sendPacketRaw,sizeof(sendPacketRaw),&totalDataSize,&sendTotalPacketStructureData);
 	PUS_FinalizePacket(sendPacketRaw,&totalDataSize);//puts crc and fills data length
 
+	//convert to hex20 format
+	ConvertToHex20Format(sendPacketRaw,&totalDataSize);
+
 	//send
 	mHSS_DEBUG_PRINTF(LOG_NORMAL, "info: sending %d bytes\r\n",totalDataSize);
 	//print buffer
-#if 1
 	HSS_TinyCLI_HexDump(sendPacketRaw, totalDataSize);
-	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_2), sendPacketRaw, totalDataSize);
-	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_3), sendPacketRaw, totalDataSize);
-#else
-	for (uint16_t bIx=0;bIx<totalDataSize;bIx++)
-	{
-		mHSS_DEBUG_PRINTF(LOG_NORMAL, "%02X ",sendPacketRaw[bIx]);
-	}
+#if defined(CONFIG_BOARD_SCAI_DPU460)
+	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_2), sendPacketRaw, totalDataSize); // Real send packet via UART
+	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_3), sendPacketRaw, totalDataSize); // Real send packet via UART
 #endif
 }
 

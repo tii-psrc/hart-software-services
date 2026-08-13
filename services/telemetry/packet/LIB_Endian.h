@@ -11,7 +11,7 @@
 /* none */
 
 /* application includes--------------------------------------------------------*/
-#include "myTypes.h"
+#include <myTypes.h>
 
 /* component includes----------------------------------------------------------*/
 /* none */

@@ -5,14 +5,14 @@
 /*******************************************************************************/
 
 /* system includes-------------------------------------------------------------*/
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /* application includes--------------------------------------------------------*/
-#include "LIB_Endian.h"
+#include <LIB_Endian.h>
 
 /* component includes----------------------------------------------------------*/
-#include "SBCC_CcsdsUtils.h"
+#include <SBCC_CcsdsUtils.h>
 
 /* local macros ---------------------------------------------------------------*/
 /* none */

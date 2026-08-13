@@ -13,10 +13,10 @@
 /* none */
 
 /* component includes----------------------------------------------------------*/
-#include "LIB_Endian.h"
-#include "LIB_Crc.h"
-#include "SBCC_CcsdsUtils.h"
-#include "LIB_PusUtils.h"
+#include <LIB_Endian.h>
+#include <LIB_Crc.h>
+#include <SBCC_CcsdsUtils.h>
+#include <LIB_PusUtils.h>
 
 /* local macros ---------------------------------------------------------------*/
 /* none */

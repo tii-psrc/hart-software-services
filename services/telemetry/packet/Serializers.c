@@ -10,10 +10,10 @@
 #include <string.h>
 
 /* application includes includes-------------------------------------------------------------*/
-#include "LIB_Endian.h"
+#include <LIB_Endian.h>
 
 /* component includes-------------------------------------------------------------*/
-#include "BOOT_Serializers.h"
+#include <BOOT_Serializers.h>
 
 /* local macros-------------------------------------------------------------*/
 /* none */

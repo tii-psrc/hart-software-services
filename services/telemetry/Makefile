@@ -17,3 +17,4 @@ SRCS-$(CONFIG_SERVICE_TELEMETRY_PUBLISH) += \
 
 INCLUDES +=\
 	-I./services/telemetry \
+	-I./services/telemetry/packet \

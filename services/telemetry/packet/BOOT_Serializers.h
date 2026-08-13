@@ -10,10 +10,10 @@
 /* system includes-------------------------------------------------------------*/
 /* none */
 /* application includes-------------------------------------------------------------*/
-#include "myTypes.h"
+#include <myTypes.h>
 /* component includes-------------------------------------------------------------*/
-#include "BOOT_Fillers.h"
-#include "BOOT_SerializersUser.h"
+#include <BOOT_Fillers.h>
+#include <BOOT_SerializersUser.h>
 
 /* macros-------------------------------------------------------------*/
 /* none */

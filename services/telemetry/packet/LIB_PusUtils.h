@@ -11,10 +11,10 @@
 /* none */
 
 /* application includes--------------------------------------------------------*/
-#include "myTypes.h"
+#include <myTypes.h>
 
 /* component includes----------------------------------------------------------*/
-#include "SBCC_CcsdsUtils.h"
+#include <SBCC_CcsdsUtils.h>
 
 /* macros-----------------------------------------------------------------------*/
 #define PUS_VERSION_NO (2)

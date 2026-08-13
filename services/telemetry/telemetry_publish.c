@@ -7,13 +7,13 @@
 #include "drivers/mss/mss_mmuart/mss_uart.h"
 #include "uart_helper.h"
 
-#include "packet/myTypes.h"
+#include <myTypes.h>
 
-#include "packet/SBCC_CcsdsUtils.h"
-#include "packet/LIB_PusUtils.h"
+#include <SBCC_CcsdsUtils.h>
+#include <LIB_PusUtils.h>
 
-#include "packet/BOOT_Fillers.h"
-#include "packet/BOOT_Serializers.h"
+#include <BOOT_Fillers.h>
+#include <BOOT_Serializers.h>
 
 #define SBRO_PACKET_MAX_NB (200)
 

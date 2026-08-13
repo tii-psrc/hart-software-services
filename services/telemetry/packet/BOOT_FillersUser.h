@@ -11,9 +11,9 @@
 /* none */
 
 /* application includes--------------------------------------------------------*/
-#include "myTypes.h"
-#include "SBCC_CcsdsUtils.h"
-#include "LIB_PusUtils.h"
+#include <myTypes.h>
+#include <SBCC_CcsdsUtils.h>
+#include <LIB_PusUtils.h>
 
 /* component includes----------------------------------------------------------*/
 /* none */

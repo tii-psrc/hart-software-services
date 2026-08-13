@@ -10,7 +10,7 @@
 #include <string.h>
 
 /* application includes--------------------------------------------------------*/
-#include "LIB_Crc.h"
+#include <LIB_Crc.h>
 
 /* component includes----------------------------------------------------------*/
 /* none */

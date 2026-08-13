@@ -34,6 +34,7 @@ The supported `BOARD` values are `scai-navc250`, `scai-navc460`, `scai-dpu250`, 
 
 The eNVM images are produced in `build/`, notably `hss-envm-wrapper.elf` and `build/bootmode1/hss-envm-wrapper-bm1-p0.hex`.
 
+
 ## Flashing HSS to eNVM
 
 HSS lives in the 128 KB eNVM of the SoC and is flashed via FlashPro. It must match the FPGA design on the board (same MSS configuration, and the design must provide the expected fabric peripherals/'SergioAPI'). There are two ways to install it:
@@ -46,7 +47,7 @@ HSS lives in the 128 KB eNVM of the SoC and is flashed via FlashPro. It must mat
 
   NB: this does not work on the first batch of DPUs — they require setting I/O states in Libero before flashing due to power issues; use option 2 instead.
 
-* **Option 2 — via Libero:** open the FPGA design in Libero (`Project > Open > *.prjx`), add `hss-envm-wrapper.elf` (or the `.hex`) to the design's eNVM client, and program the whole design. FPGA designs are stored [here](https://tiiuae.sharepoint.com/:f:/s/psrc/EujuoiqfStpEtTN7aN5ZcJgBUMPHLRPyu6vBJBRqt0Ckag?e=sQ44KT).
+* **Option 2 — via Libero:** open the FPGA design in Libero (`Project > Open > *.prjx`), add `build/bootmode1/hss-envm-wrapper-bm1-p0.hex` to the design's eNVM client, and program the whole design. FPGA designs are stored [here](https://tiiuae.sharepoint.com/:f:/r/sites/psrc/psrcteam/40-SPACE_EXPLORATION/01-Spacecraft%20AI/30_Software_and_FPGA_Artifacts?d=w5cc89f80bfda44bdab1dafaa29a59474&csf=1&web=1&e=HdxNJ8).
 
 ## MSS Configuration Files
 

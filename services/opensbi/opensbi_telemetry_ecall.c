@@ -159,7 +159,7 @@ int sbi_ecall_telemetry_handler(unsigned long extid,
 		case SBI_TM_EXT_VERBOSE:
 #if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
 		wdog_external_stop();
-		wdog_external_monitoring();
+		__wdog_external_ping();
 #endif
 			result = __get_tm_data(sbi_tm_ext_args, (volatile uint8_t *)regs->a1,
 					out_val);

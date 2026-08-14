@@ -12,27 +12,8 @@ static int external_watchdog_status_changed = 0;
 static HSSTicks_t wdog_external_last_time = 0u;
 static HSSTicks_t wdog_external_current_time = 0u;
 
-static int __wdog_external_handler(void)
+void __wdog_external_ping()
 {
-	HSSTicks_t duration_time = (HSSTicks_t)(1 * TICKS_PER_SEC);
-	wdog_external_current_time = HSS_GetTime();
-    
-	HSSTicks_t delayTick;
-
-	if (stop_external_watchdog) {
-		if (external_watchdog_status_changed) {
-			mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG stopped ...\r\n");
-			external_watchdog_status_changed = 0;
-		}
-		return stop_external_watchdog;
-	}
-
-	if (wdog_external_current_time > (wdog_external_last_time + duration_time)) {
-		mHSS_DEBUG_PRINTF(LOG_WARN, "External WDOG: %lu msec elapsed ... \n",
-				(wdog_external_current_time - wdog_external_last_time) / TICKS_PER_MILLISEC);
-	}
-
-
 #if 1
 	/*
 	 *
@@ -80,6 +61,29 @@ static int __wdog_external_handler(void)
 #endif
 
 	wdog_external_last_time = HSS_GetTime();
+}
+
+static int __wdog_external_handler(void)
+{
+	HSSTicks_t duration_time = (HSSTicks_t)(1 * TICKS_PER_SEC);
+	wdog_external_current_time = HSS_GetTime();
+
+	HSSTicks_t delayTick;
+
+	if (stop_external_watchdog) {
+		if (external_watchdog_status_changed) {
+			mHSS_DEBUG_PRINTF(LOG_NORMAL, "External WDOG stopped ...\r\n");
+			external_watchdog_status_changed = 0;
+		}
+		return stop_external_watchdog;
+	}
+
+	if (wdog_external_current_time > (wdog_external_last_time + duration_time)) {
+		mHSS_DEBUG_PRINTF(LOG_WARN, "External WDOG: %lu msec elapsed ... \n",
+				(wdog_external_current_time - wdog_external_last_time) / TICKS_PER_MILLISEC);
+	}
+
+	__wdog_external_ping();
 
 	return 0;
 }

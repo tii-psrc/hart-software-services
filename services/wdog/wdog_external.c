@@ -12,8 +12,10 @@ static int external_watchdog_status_changed = 0;
 static HSSTicks_t wdog_external_last_time = 0u;
 static HSSTicks_t wdog_external_current_time = 0u;
 
-void __wdog_external_ping()
+void __wdog_external_ping(void)
 {
+	HSSTicks_t delayTick;
+
 #if 1
 	/*
 	 *
@@ -67,8 +69,6 @@ static int __wdog_external_handler(void)
 {
 	HSSTicks_t duration_time = (HSSTicks_t)(1 * TICKS_PER_SEC);
 	wdog_external_current_time = HSS_GetTime();
-
-	HSSTicks_t delayTick;
 
 	if (stop_external_watchdog) {
 		if (external_watchdog_status_changed) {

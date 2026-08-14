@@ -13,7 +13,7 @@ void wdog_external_monitoring(void);
 int wdog_external_stop(void);
 int wdog_external_status(void);
 
-void __wdog_external_ping();
+void __wdog_external_ping(void);
 
 #ifdef __cplusplus
 }

@@ -64,6 +64,7 @@ struct telemetry_data {
   int32_t sanity_check_3_3_mA;
   int32_t sanity_check_sddr_vtt;
   int32_t sanity_check_fddr_vtt;
+  int32_t edac_cnt_ddrc;
 };
 
 #ifdef __cplusplus

@@ -34,6 +34,8 @@ static uint32_t publish_count_console = 0;
 #include "wdog_external.h"
 #endif
 
+#include "mss_sysreg.h"
+
 enum telemetry_status {
 	TM_INITIALIZATION,
 	TM_MONITORING,
@@ -303,7 +305,16 @@ static void tm_monitoring_print(int hartid, char *buf, struct telemetry_data *tm
 	do_format_sanity_vtt(hartid, buf, tm_data);
 #endif
 
+	format_log(hartid, buf,
+			"\r\nSYSREG:EDAC_CNT_DDRC(0x%08X): %d\r\n",
+			BASE32_ADDR_MSS_SYSREG + EDAC_CNT_DDRC_OFFSET,
+			*(uint64_t volatile *)(BASE32_ADDR_MSS_SYSREG + EDAC_CNT_DDRC_OFFSET));
+	if (tm_data) {
+		tm_data->edac_cnt_ddrc = *(uint64_t volatile *)(BASE32_ADDR_MSS_SYSREG + EDAC_CNT_DDRC_OFFSET);
+	}
+
 	format_log(hartid, buf, "\r\n");
+
 }
 
 static void print_tm_data(int hartid, char *buf, struct telemetry_data *tm_data)
@@ -390,6 +401,8 @@ static void print_tm_data(int hartid, char *buf, struct telemetry_data *tm_data)
 			tm_data->sanity_check_sddr_vtt);
 	format_log(hartid, buf, "tm_data->sanity_check_fddr_vtt         : %d\r\n",
 			tm_data->sanity_check_fddr_vtt);
+	format_log(hartid, buf, "tm_data->edac_cnt_ddrc                 : %d\r\n",
+			tm_data->edac_cnt_ddrc);
 }
 
 static void tm_monitoring_handler(struct StateMachine * const pMyMachine)

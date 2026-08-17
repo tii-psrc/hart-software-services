@@ -4319,7 +4319,7 @@
             <field Type="RW" name="CAN1" offset="16" width="1">0x0</field>
             <field Type="RW" name="GPIO0" offset="17" width="1">0x1</field>
             <field Type="RW" name="GPIO1" offset="18" width="1">0x1</field>
-            <field Type="RW" name="GPIO2" offset="19" width="1">0x0</field>
+            <field Type="RW" name="GPIO2" offset="19" width="1">0x1</field>
           </register>
         </registers>
       </mss_peripherals>

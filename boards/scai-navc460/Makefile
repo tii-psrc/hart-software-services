@@ -147,6 +147,8 @@ $(BINDIR)/baremetal/drivers/scai_fpgaqspi/scai_fpgaqspi_service.o: CFLAGS=$(CFLA
 EXTRA_SRCS-$(CONFIG_SERVICE_TELEMETRY) += \
         $(BOARD_DIR)/adcs.c
 
+EXTRA_SRCS-$(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL) +=	\
+	baremetal/polarfire-soc-bare-metal-library/src/platform/drivers/mss/mss_gpio/mss_gpio.c \
 
 ################################################################################################
 #

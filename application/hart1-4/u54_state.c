@@ -135,8 +135,10 @@ void HSS_U54_DumpStatesIfChanged(void)
         HSS_Debug_Highlight(HSS_DEBUG_LOG_STATE_TRANSITION); \
         for (int i = HSS_HART_U54_1; i < HSS_HART_NUM_PEERS; i++) {
             mHSS_DEBUG_PRINTF_EX(" [%s]", HSS_U54_GetStateName(HSS_U54_GetState_Ex(i)));
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 						if (HSS_U54_GetState_Ex(i) == HSS_State_Running)
 							running_hart_count++;
+#endif
         }
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 				if (running_hart_count == 1) {

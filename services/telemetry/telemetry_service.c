@@ -422,13 +422,6 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 		memset(buf, 0, sizeof(buf));
 		tm_monitoring_print(HSS_HART_E51, buf, NULL);
 
-#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
-#if 0
-		if (!stop_publish)
-			do_tm_publish((uint8_t)255);
-#endif
-#endif
-
 		tm_ticks = HSS_GetTime();
 	}
 
@@ -439,11 +432,6 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 		tm_monitoring_print(HSS_HART_E51, buf, &tm_data);
 		print_tm_data(HSS_HART_E51, buf, &tm_data);
-
-#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
-		if (!stop_publish)
-			do_tm_publish((uint8_t)255);
-#endif
 
 		clear_request_from_cli();
 	}

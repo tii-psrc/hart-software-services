@@ -38,7 +38,7 @@ void __wdog_external_ping(void)
 	 *      <---------------------------+------------------------->
 	 *                                  |
 	 *                                  |
-	 *       The external watchdog timeout is configured to 10sec
+	 *       The external watchdog timeout is configured to 20sec
 	 *
 	 *
 	 *      <--+--><--------------------+------------------------->

@@ -26,6 +26,7 @@ static uint32_t __sbi_ecall_verbose = 0;
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 static int stop_publish = 0;
+static bool publish_boot_succeeded_pending = false;
 static uint32_t publish_count_timer = 0;
 static uint32_t publish_count_console = 0;
 #endif
@@ -66,6 +67,21 @@ struct StateMachine tm_service = {
 };
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+/*
+ * Request the final HSS_BOOT_BS_LINUX_BOOT_SUCEEDED boot message.
+ *
+ * The packet is not built here: this is called from the M-mode trap context
+ * of whichever U54 issued the SBI ecall, while do_tm_publish() drives the
+ * MMUARTs that the E51 owns. The publish is therefore deferred to
+ * tm_monitoring_handler(), which runs in the E51 superloop.
+ */
+bool set_request_publish_boot_succeeded(void)
+{
+	publish_boot_succeeded_pending = true;
+
+	return publish_boot_succeeded_pending;
+}
+
 int tm_set_stop_publish(void)
 {
 	stop_publish = 1;
@@ -123,6 +139,7 @@ static void tm_init_handler(struct StateMachine * const pMyMachine)
 	init_adcs();
 #if defined(CONFIG_BOARD_SCAI_DPU460) && defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 	stop_publish = 0;
+	publish_boot_succeeded_pending = false;
 	publish_count_timer = 0;
 	publish_count_console = 0;
 	/*
@@ -414,6 +431,17 @@ static void tm_monitoring_handler(struct StateMachine * const pMyMachine)
 
 	HSSTicks_t ticks = HSS_GetTime();
 	size_t msecs = ((ticks - tm_ticks) + (TICKS_PER_MILLISEC / 2)) / TICKS_PER_MILLISEC;
+
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+	/*
+	 * Deliberately not gated on stop_publish: this is the last boot message,
+	 * and the same ecall that requests it also stops publishing.
+	 */
+	if (publish_boot_succeeded_pending) {
+		publish_boot_succeeded_pending = false;
+		do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_SUCEEDED);
+	}
+#endif
 
 	if (CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC && msecs >
 			CONFIG_SERVICE_TELEMETRY_DEBUG_TIMEOUT_SEC*1000)

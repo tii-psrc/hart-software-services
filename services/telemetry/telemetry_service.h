@@ -20,6 +20,7 @@ bool clear_request_from_sbi_ecall(void);
 
 #if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
 int tm_set_stop_publish(void);
+bool set_request_publish_boot_succeeded(void);
 #endif
 
 struct telemetry_data {

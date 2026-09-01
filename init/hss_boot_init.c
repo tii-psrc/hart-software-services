@@ -118,6 +118,23 @@ struct boot_info boot_info = {
 _Static_assert(sizeof(CONFIG_SERVICE_BOOT_DEVICE_NAME) <=
                sizeof(((struct boot_info *)0)->__boot_device),
                "BOOT_DEVICE_NAME is too long");
+
+/*
+ * Which side this board is - nominal or redundant - cannot be detected at
+ * runtime, so it is fixed here, at build time, and nowhere else. Building with
+ * it unset would silently produce an HSS that reports no side at all, so refuse
+ * to build instead of shipping one.
+ *
+ * Only the length is checked: indexing a string literal is not a constant
+ * expression, so "nom" and "red" cannot be distinguished from any other three
+ * character value at compile time. A wrong-but-well-formed value still fails
+ * loudly at runtime - update_boot_w25() leaves the device at 255, and U-Boot
+ * refuses it and passes boot_device=unknown.
+ */
+_Static_assert(sizeof(CONFIG_SERVICE_BOOT_DEVICE_NAME) == sizeof("nom"),
+               "CONFIG_SERVICE_BOOT_DEVICE_NAME must be set to \"nom\" or "
+               "\"red\" - the board def_config leaves it empty on purpose, "
+               "see README-SCAI.md");
 #endif
 
 #if IS_ENABLED(CONFIG_SERVICE_FPGA_QSPI)

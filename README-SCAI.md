@@ -20,19 +20,66 @@ The supported `BOARD` values are `scai-navc250`, `scai-navc460`, `scai-dpu250`, 
    cp boards/scai-dpu460/def_config .config
    ```
 
-2. (Optional) Adjust build options:
+2. Choose the side this build is for — **required**, the build fails without it
+   (see [below](#set-the-boot-device-side-config_service_boot_device_name)):
+
+   ```bash
+   sed -i 's/^CONFIG_SERVICE_BOOT_DEVICE_NAME=.*/CONFIG_SERVICE_BOOT_DEVICE_NAME="nom"/' .config
+   ```
+
+3. (Optional) Adjust other build options:
 
    ```bash
    make BOARD=scai-dpu460 menuconfig
    ```
 
-3. Build:
+4. Build:
 
    ```bash
    make BOARD=scai-dpu460 -j 1
    ```
 
 The eNVM images are produced in `build/`, notably `hss-envm-wrapper.elf` and `build/bootmode1/hss-envm-wrapper-bm1-p0.hex`.
+
+### Set the boot device side (`CONFIG_SERVICE_BOOT_DEVICE_NAME`)
+
+There is no runtime detection of which side a board is on: HSS cannot tell nominal from
+redundant, so the side is fixed at build time by this one string, and nominal and
+redundant need two separate builds.
+
+**Every board's `def_config` leaves this empty on purpose.** A plain copy-and-build
+therefore fails at compile time, in `init/hss_boot_init.c`, rather than quietly producing
+an HSS that reports no side:
+
+```
+error: static assertion failed: "CONFIG_SERVICE_BOOT_DEVICE_NAME must be set to
+"nom" or "red" - the board def_config leaves it empty on purpose, see README-SCAI.md"
+```
+
+Set it to `"nom"` or `"red"` before building, either with `sed` as in step 2 above, or
+under `make BOARD=<board> menuconfig` → **Boot Service** → *Boot Device Name* (the symbol
+depends on `SERVICE_BOOT && SERVICE_FPGA_QSPI`; both are enabled in all four SCAI board
+configs, so it is always visible there).
+
+Note the build guard can only check the length — `"nom"` and `"red"` cannot be told apart
+from any other three-character value at compile time. It catches an unset or malformed
+value, not a build for the wrong side.
+
+Only `"nom"` and `"red"` are accepted downstream. The value is compiled into
+`boot_info.__boot_device`, handed to U-Boot, and ends up on the kernel command line as
+`boot_device=`, where the Linux boot-count service reads it.
+
+Anything else — including the Kconfig default of `""` if the symbol is ever lost — is
+refused rather than guessed at, deliberately, since guessing would attribute a boot to
+the wrong side. The side is reported as `255` in boot telemetry, U-Boot prints
+`ERROR: boot_device not supplied by HSS` and passes `boot_device=unknown`, and
+`scai-boot-count` then exits `FAILED` and leaves the persistent counters untouched. If
+you see any of those, the HSS build is the thing to fix.
+
+Nothing downstream can catch a build made for the wrong side: a `"nom"` build on a
+redundant board boots normally, but its boot telemetry and its persistent boot counters
+are both attributed to the nominal side. Keep the side in the image filename and check it
+before flashing.
 
 
 ## Flashing HSS to eNVM

@@ -76,11 +76,72 @@ uint8_t update_boot_w25(uint8_t boot_w25)
 	return boot_device;
 }
 
+static const char *boot_status_name(uint8_t boot_status)
+{
+	switch (boot_status) {
+	case HSS_BOOT_BS_BOOTLOADER1_STARTED:
+		return "BOOTLOADER1_STARTED";
+
+	case HSS_BOOT_BS_DDR_TRAINING_STARTED:
+		return "DDR_TRAINING_STARTED";
+
+	case HSS_BOOT_BS_DDR_TRAINING_FAILED_REBOOT:
+		return "DDR_TRAINING_FAILED_REBOOT";
+
+	case HSS_BOOT_BS_BOOTLOADER2_STARTED:
+		return "BOOTLOADER2_STARTED";
+
+	case HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT:
+		return "BOOTLOADER2_FAILED_REBOOT";
+
+	case HSS_BOOT_BS_LINUX_BOOT_STARTED:
+		return "LINUX_BOOT_STARTED";
+
+	case HSS_BOOT_BS_LINUX_BOOT_FAILED_REBOOT:
+		return "LINUX_BOOT_FAILED_REBOOT";
+
+	case HSS_BOOT_BS_LINUX_BOOT_SUCEEDED:
+		return "LINUX_BOOT_SUCEEDED";
+
+	default:
+		return "UNKNOWN";
+	}
+}
+
+static const char *boot_device_name(uint8_t device)
+{
+	switch (device) {
+	case BOOT_BD_MSSW25_NOM:
+		return "MSSW25_NOM";
+
+	case BOOT_BD_FPGAW25_NOM:
+		return "FPGAW25_NOM";
+
+	case BOOT_BD_MSSW25_RED:
+		return "MSSW25_RED";
+
+	case BOOT_BD_FPGAW25_RED:
+		return "FPGAW25_RED";
+
+	default:
+		return "UNKNOWN";
+	}
+}
+
 void do_tm_publish(uint8_t boot_status)
 {
 	char buf[1024];
-	format_log(HSS_HART_E51, buf, "\r\nHello World, dev(%d), boot_status(%d)\r\n",
-			(uint32_t)boot_device, (uint32_t)boot_status);
+
+	/*
+	 * One line per published boot message, so the console shows the boot
+	 * progression - 0, 1, 3, 5, 7 on a clean boot - and names anything
+	 * off that path. The device reads UNKNOWN(255) until
+	 * update_boot_w25() has run, which is expected for the first two.
+	 */
+	format_log(HSS_HART_E51, buf,
+			"\r\n[BOOT TM] status %u (%s), device %u (%s)\r\n",
+			(uint32_t)boot_status, boot_status_name(boot_status),
+			(uint32_t)boot_device, boot_device_name(boot_device));
 
 	CCSDS_PrimaryHeader_t ccsdsHeader;
 	PUS_TmSecondaryHeader_t pusTmHeader;

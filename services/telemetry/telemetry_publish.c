@@ -1,6 +1,14 @@
 #include "config.h"
 #include "hss_types.h"
 #include "hss_debug.h"
+#include "hss_clock.h"
+
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+#include "wdog_external.h"
+#endif
+#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_E51)
+#include "mss_watchdog.h"
+#endif
 
 #include "telemetry_publish.h"
 #include "tinycli_hexdump.h"
@@ -171,6 +179,46 @@ void do_tm_publish(uint8_t boot_status)
 	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_2), sendPacketRaw, totalDataSize); // Real send packet via UART
 	MSS_UART_polled_tx(HSS_UART_GetInstance(HSS_HART_U54_3), sendPacketRaw, totalDataSize); // Real send packet via UART
 #endif
+}
+
+/*
+ * Fault-injection helpers, used by the psrc2025_fault* test branches to
+ * stop the boot at a chosen point after publishing a failure status.
+ *
+ * Halting the E51 must not stop the watchdogs from being served, or the halt
+ * turns into a reset: on the DPU460 the FPGA external watchdog resets the
+ * board 20 s after its last ping, and it is only pinged by the wdog service
+ * from the E51 superloop, which a halt no longer runs. The wait therefore
+ * spins in 500 ms steps and serves the watchdogs itself.
+ */
+static void tm_fault_serve_watchdogs(void)
+{
+#if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
+	__wdog_external_ping();
+#endif
+#if IS_ENABLED(CONFIG_SERVICE_WDOG_ENABLE_E51)
+	if (!MSS_WD_forbidden_status(MSS_WDOG0_LO)) {
+		MSS_WD_reload(MSS_WDOG0_LO);
+	}
+#endif
+}
+
+void tm_fault_wait_secs(uint32_t seconds)
+{
+	for (uint32_t i = 0u; i < seconds * 2u; i++) {
+		HSS_SpinDelay_MilliSecs(500u);
+		tm_fault_serve_watchdogs();
+	}
+}
+
+void tm_fault_halt(void)
+{
+	mHSS_DEBUG_PRINTF(LOG_ERROR,
+			"[BOOT TM] fault injection: E51 halted, boot will not proceed\n");
+
+	while (true) {
+		tm_fault_wait_secs(1u);
+	}
 }
 
 void do_tm_publish_init(void *this_uart)

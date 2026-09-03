@@ -33,6 +33,7 @@ void do_tm_publish_init(void *this_uart);
 /* Fault-injection helpers (psrc2025_fault* branches). */
 void tm_fault_wait_secs(uint32_t seconds);
 void tm_fault_halt(void) __attribute__((noreturn));
+void tm_fault_park_u54s(void);
 
 #ifdef __cplusplus
 }

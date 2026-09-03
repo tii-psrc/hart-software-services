@@ -2,6 +2,10 @@
 #include "hss_types.h"
 #include "hss_debug.h"
 #include "hss_clock.h"
+#include "csr_helper.h"
+#include "ssmb_ipi.h"
+#include "sbi/riscv_encoding.h"
+#include "sbi/riscv_asm.h"
 
 #if defined(CONFIG_SERVICE_WDOG_ENABLE_EXTERNAL)
 #include "wdog_external.h"
@@ -218,6 +222,38 @@ void tm_fault_halt(void)
 
 	while (true) {
 		tm_fault_wait_secs(1u);
+	}
+}
+
+/*
+ * Entered on a U54, in M-mode, via IPI_MSG_GOTO: park the hart for good.
+ * Interrupts are already off on arrival (the GOTO handler clears MIE); keep
+ * them off so nothing - not even a later IPI - brings the hart back.
+ */
+static void __attribute__((noreturn)) tm_fault_u54_park(void)
+{
+	csr_write(CSR_MIE, 0u);
+
+	while (true) {
+		wfi();
+	}
+}
+
+/*
+ * Stop whatever the U54s are running - u-boot or Linux - by parking each of
+ * them in tm_fault_u54_park(). This is the same GOTO IPI the reboot service
+ * uses to warm-restart a hart whose watchdog fired, so it reaches a hart that
+ * is running Linux in S-mode: the IPI is taken by the hart's M-mode trap
+ * handler, which switches to the parking loop and never returns.
+ */
+void tm_fault_park_u54s(void)
+{
+	mHSS_DEBUG_PRINTF(LOG_ERROR,
+			"[BOOT TM] fault injection: parking u54_1..u54_4\n");
+
+	for (enum HSSHartId peer = HSS_HART_U54_1; peer < HSS_HART_NUM_PEERS; peer++) {
+		IPI_Send(peer, IPI_MSG_GOTO, 0u, PRV_M, tm_fault_u54_park, NULL);
+		HSS_SpinDelay_MilliSecs(50u);
 	}
 }
 

@@ -279,6 +279,17 @@ bool HSS_BootInit(void)
     bool result = true;
 #if IS_ENABLED(CONFIG_SERVICE_BOOT)
 
+#if defined(CONFIG_SERVICE_TELEMETRY_PUBLISH)
+    /*
+     * FAULT INJECTION (psrc2025_fault2): DDR has trained and the boot image
+     * would now be loaded, on the way to BOOTLOADER2_STARTED (3). Report
+     * DDR_TRAINING_FAILED_REBOOT (2) instead and halt the E51 here, so the
+     * U54s are never given an image and the boot goes no further.
+     */
+    do_tm_publish(HSS_BOOT_BS_DDR_TRAINING_FAILED_REBOOT);
+    tm_fault_halt();
+#endif
+
     mHSS_DEBUG_PRINTF(LOG_NORMAL, "Initializing Boot Image ...\n");
 
     int perf_ctr_index = PERF_CTR_UNINITIALIZED;

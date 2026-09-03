@@ -144,7 +144,15 @@ void HSS_U54_DumpStatesIfChanged(void)
 				if (running_hart_count == 1) {
 					do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_STARTED);
 				} else if (running_hart_count == 4) {
-					do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_STARTED);
+					/*
+					 * FAULT INJECTION (psrc2025_fault4): all four U54s are up,
+					 * where LINUX_BOOT_STARTED (5) is normally reported. Report
+					 * BOOTLOADER2_FAILED_REBOOT (4) instead, park the U54s so
+					 * u-boot/Linux stops right there, and halt the E51.
+					 */
+					do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_FAILED_REBOOT);
+					tm_fault_park_u54s();
+					tm_fault_halt();
 				}
 #endif
 

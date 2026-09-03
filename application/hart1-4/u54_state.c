@@ -145,6 +145,16 @@ void HSS_U54_DumpStatesIfChanged(void)
 					do_tm_publish(HSS_BOOT_BS_BOOTLOADER2_STARTED);
 				} else if (running_hart_count == 4) {
 					do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_STARTED);
+					/*
+					 * FAULT INJECTION (psrc2025_fault6): 15 s after
+					 * LINUX_BOOT_STARTED (5), park the U54s so Linux stops
+					 * wherever it got to, report LINUX_BOOT_FAILED_REBOOT (6)
+					 * and halt the E51.
+					 */
+					tm_fault_wait_secs(15u);
+					tm_fault_park_u54s();
+					do_tm_publish(HSS_BOOT_BS_LINUX_BOOT_FAILED_REBOOT);
+					tm_fault_halt();
 				}
 #endif
 

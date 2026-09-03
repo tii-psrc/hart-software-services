@@ -63,6 +63,17 @@ void hss_main(void);
 
 void hss_main(void)
 {
+    /*
+     * FAULT INJECTION (psrc2025_fault0): stop here, before the wdog service
+     * is told what to monitor, before BOOTLOADER1_STARTED (0) is published
+     * and before the superloop runs a single service. Only HSS_Init() has
+     * run: data/bss, the E51 console UART and OpenSBI setup. One console
+     * line, then a bare spin - no watchdog is served.
+     */
+    mHSS_DEBUG_PRINTF(LOG_ERROR,
+        "[BOOT TM] fault injection: E51 halted before BOOTLOADER1_STARTED, no service will run\n");
+    while (true) { ; }
+
 #if IS_ENABLED(CONFIG_SERVICE_WDOG)
     HSS_Wdog_MonitorHart(HSS_HART_ALL);
 #endif

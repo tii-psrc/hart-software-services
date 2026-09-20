@@ -13,6 +13,20 @@ SCAI-specific changes on top of upstream HSS include:
 
 The supported `BOARD` values are `scai-navc250`, `scai-navc460`, `scai-dpu250`, `scai-dpu460`. Using `scai-dpu460` as the example:
 
+0. environment, it depends on Libero/SoftConsole libraries/executables
+
+The following has been found to work, but you may adjust for where you installed these tools on your machine:
+
+```
+# Microchip Libero
+export PATH=$HOME/Microchip/Libero_SoC_2025.1/Libero_SoC/Designer/bin64:$PATH
+
+# Microchip SoftConsole
+export SC_INSTALL_DIR=$HOME/Microchip/SoftConsole-v2022.2-RISC-V-747
+export PATH=$PATH:$SC_INSTALL_DIR/openocd/bin:$SC_INSTALL_DIR/python3/bin:$SC_INSTALL_DIR/riscv-unknown-elf-gcc/bin
+export FPGENPROG=$HOME/Microchip/Libero_SoC_2025.1/Libero_SoC/Designer/bin64/fpgenprog
+```
+
 1. Apply the board's default configuration:
 
    ```bash

@@ -38,9 +38,10 @@ static int block_incr = 0;
  * Local Defines
  */
 /* This string is updated if any change to ddr driver */
-#define DDR_DRIVER_VERSION_STRING   "0.4.024"
+#define DDR_DRIVER_VERSION_STRING   "0.4.025"
 const char DDR_DRIVER_VERSION[] = DDR_DRIVER_VERSION_STRING;
 /* Version     |  Comment                                                     */
+/* 0.4.025     |  Sergio trying to fix the training                           */
 /* 0.4.024     |  Self-refresh is disabled from UI, api functions added for   */
 /*             |  turning self-refresh off and on.                                         */
 /* 0.4.023     |  Changed default ADDCMD CLK push order for DDR4 to 0,45,90   */
@@ -262,6 +263,9 @@ uint32_t noise_ena = 0x0;
 
 void mpfs_hal_turn_ddr_selfrefresh_on(void)
 {
+    /*SFS I dont want it */
+    return;
+
     uint32_t chip_selects;
     /*
      * Turn on user setting for self refresh
@@ -288,7 +292,8 @@ void mpfs_hal_turn_ddr_selfrefresh_off(void)
 	/*
 	 * Turn on user setting for self refresh
 	 */
-	DDRCFG->MC_BASE2.INIT_SELF_REFRESH.INIT_SELF_REFRESH = 0U;
+	/*SFS: I don't want it 
+          DDRCFG->MC_BASE2.INIT_SELF_REFRESH.INIT_SELF_REFRESH = 0U;*/
 }
 
 uint32_t mpfs_hal_ddr_selfrefresh_status(void)
@@ -412,13 +417,15 @@ static uint32_t ddr_setup(void)
  * the other bits are set to Rreturns0. This signature string "REND" will only
  * ever be read when connected to the Renode MPFS_DDRMock module.
  */
-#ifndef RENODE_SIM_DDR_TRAINING
-    if (0x52454E44 == CFG_DDR_SGMII_PHY->RPC_RESET_MAIN_PLL.RPC_RESET_MAIN_PLL)
-    {
-        ret_status |= DDR_SETUP_DONE;
-        ddr_training_state = DDR_TRAINING_FINISHED;
-    }
-#endif
+/*SFS I don't want it
+//#ifndef RENODE_SIM_DDR_TRAINING
+//    if (0x52454E44 == CFG_DDR_SGMII_PHY->RPC_RESET_MAIN_PLL.RPC_RESET_MAIN_PLL)
+//    {
+//        ret_status |= DDR_SETUP_DONE;
+//        ddr_training_state = DDR_TRAINING_FINISHED;
+//    }
+//#endif
+*/
 
     switch (ddr_training_state)
     {
@@ -526,9 +533,11 @@ static uint32_t ddr_setup(void)
 #ifdef DEBUG_DDR_INIT
             (void)uprint32(g_debug_uart, "\n\r DDR_SANITY_CHECKS FAIL: ",\
                                                                 addr_cmd_value);
-            ddr_training_state = DDR_TRAINING_FAIL;
+            //SFS This sentence is wrong here ddr_training_state = DDR_TRAINING_FAIL;
 #endif
-            break;
+           //Added by SFS
+           ddr_training_state = DDR_TRAINING_FAIL;
+           break;
 
         case DDR_TRAINING_FAIL:
 #ifdef DEBUG_DDR_INIT
@@ -691,8 +700,6 @@ static uint32_t ddr_setup(void)
 
             if(can_increase_offset)
             {
-//                last_dqdqs_offset++;
-//                if(last_dqdqs_offset==11)
                 last_dqdqs_offset+=2;
                 if(last_dqdqs_offset>10)
                 {
@@ -718,9 +725,6 @@ static uint32_t ddr_setup(void)
                         }
                     }
                 }
-
-
-
                 CFG_DDR_SGMII_PHY->rpc156.rpc156 = last_dqdqs_offset;
                 CFG_DDR_SGMII_PHY->rpc3_ODT.rpc3_ODT = last_odt_dq;
                 CFG_DDR_SGMII_PHY->rpc4_ODT.rpc4_ODT = last_odt_dqs;
@@ -1444,8 +1448,7 @@ static uint32_t ddr_setup(void)
             {
                 timeout = MAX_TIMEOUT;
                 ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
-                ddr_training_state = DDR_TRAINING_IP_SM_RDGATE;
-            }
+             }
             if(--timeout == 0U)
             {
                 ddr_training_state = DDR_TRAINING_FAIL_SM_WRLVL;
@@ -1687,7 +1690,6 @@ static uint32_t ddr_setup(void)
                 ddr_training_state = DDR_TRAINING_FAIL_SM2_VERIFY;
             }
             break;
-
 
         case DDR_TRAINING_SET_FINAL_MODE:
             /*
@@ -4204,7 +4206,9 @@ static void init_ddrc(void)
         LIBERO_SETTING_CFG_CAL_READ_PERIOD;
     DDRCFG->MC_BASE2.CFG_NUM_CAL_READS.CFG_NUM_CAL_READS =\
         LIBERO_SETTING_CFG_NUM_CAL_READS;
-    DDRCFG->MC_BASE2.INIT_SELF_REFRESH.INIT_SELF_REFRESH = 0U;
+    //SFS I dont want it. I will replace it for the Libero Parameter DDRCFG->MC_BASE2.INIT_SELF_REFRESH.INIT_SELF_REFRESH = 0U;
+    DDRCFG->MC_BASE2.INIT_SELF_REFRESH.INIT_SELF_REFRESH =\
+        LIBERO_SETTING_INIT_SELF_REFRESH;
     DDRCFG->MC_BASE2.INIT_POWER_DOWN.INIT_POWER_DOWN =\
         LIBERO_SETTING_INIT_POWER_DOWN;
     DDRCFG->MC_BASE2.INIT_FORCE_WRITE.INIT_FORCE_WRITE =\

@@ -143,16 +143,27 @@ bool FPGA_Flash_read(uintptr_t dest, uint32_t off, uint64_t len)
 				mtd->writesize, remaining, len);
 	}
 
-	io_op.mode = MTD_OPS_RAW;
+	/*
+	 * Copies go through the W25N01GV on-die ECC. Only the CLI hex dump
+	 * (dest == 0) stays raw, so it can show the spare area as stored.
+	 */
+	io_op.mode = cur ? MTD_OPS_AUTO_OOB : MTD_OPS_RAW;
 	io_op.len = mtd->writesize;
-	io_op.ooblen = mtd->oobsize;
+	io_op.ooblen = cur ? 0 : mtd->oobsize;
 	io_op.datbuf = buf;
-	io_op.oobbuf = &buf[mtd->writesize];
+	io_op.oobbuf = cur ? NULL : &buf[mtd->writesize];
 
 	while (len) {
 		memset(buf, 0, sizeof(buf));
 
-		mtd_read_oob(mtd, off, &io_op);
+		int ret = mtd_read_oob(mtd, off, &io_op);
+		/* -117 is -EUCLEAN: bitflips were corrected, the data is good */
+		if (ret < 0 && ret != -117) {
+			mHSS_DEBUG_PRINTF(LOG_ERROR, "%s at 0x%08x (%d)\n",
+					ret == -EBADMSG ? "Uncorrectable ECC error" : "Read failed",
+					off, ret);
+			return false;
+		}
 
 		if (cur) {
 			copy_len = (remaining < io_op.retlen) ? remaining : io_op.retlen;
@@ -194,7 +205,8 @@ bool FPGA_Flash_write(uintptr_t src, uint32_t off, uint64_t len)
 				mtd->writesize, remaining, len);
 	}
 
-	io_op.mode = MTD_OPS_RAW;
+	/* ECC on, so the chip stores parity that later reads can check */
+	io_op.mode = MTD_OPS_AUTO_OOB;
 	io_op.len = mtd->writesize;
 	io_op.ooblen = 0;
 	io_op.oobbuf = NULL;
@@ -211,7 +223,12 @@ bool FPGA_Flash_write(uintptr_t src, uint32_t off, uint64_t len)
 			io_op.datbuf = (uint8_t *)src;
 		}
 
-		mtd_write_oob(mtd, off, &io_op);
+		int ret = mtd_write_oob(mtd, off, &io_op);
+		if (ret < 0) {
+			mHSS_DEBUG_PRINTF(LOG_ERROR, "Write failed at 0x%08x (%d)\n",
+					off, ret);
+			return false;
+		}
 
 		off += io_op.retlen;
 		src += write_len;
